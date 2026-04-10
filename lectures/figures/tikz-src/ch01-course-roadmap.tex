@@ -2,7 +2,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{mathpazo}
 \usepackage{amsmath,amssymb}
-\usetikzlibrary{arrows.meta, positioning, calc, backgrounds}
+\usetikzlibrary{arrows.meta, positioning, calc, backgrounds, fit}
 
 \definecolor{stblue}{HTML}{7B97AD}
 \definecolor{rwgold}{HTML}{B8995E}
@@ -18,85 +18,84 @@
 \begin{document}
 \begin{tikzpicture}[
   >={Stealth[length=4mm, width=3mm]},
-  chbox/.style={rounded corners=8pt, line width=1.5pt, minimum height=1.6cm,
-                minimum width=4.8cm, text=dkbrown, align=center, inner sep=10pt},
+  partbox/.style={rounded corners=10pt, line width=1.8pt, text=dkbrown,
+                  align=center, inner sep=12pt},
 ]
 
 % Background
-\fill[cream, rounded corners=14pt] (-1.5,-16) rectangle (27.5,1.5);
-\draw[border, line width=1.5pt, rounded corners=14pt] (-1.5,-16) rectangle (27.5,1.5);
+\fill[cream, rounded corners=14pt] (-1,-15.5) rectangle (25,1.5);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-1,-15.5) rectangle (25,1.5);
 
 % Title
-\node[font=\LARGE\bfseries, text=dkbrown] at (13,0.7) {Course Roadmap: S\&DS 632};
+\node[font=\LARGE\bfseries, text=dkbrown] at (12,0.7)
+  {Course Roadmap: S\&DS 432/632};
 
-% === Row 0: Overview ===
-\node[chbox, fill=stblue!12, draw=stblue, minimum width=7cm] (ch1) at (13,-1.5)
-  {{\Large\bfseries 1. Overview \& Review}\\[2pt]{\large Convex sets, functions, optimality}};
+% ============================================================
+% Row 0: Preliminaries
+% ============================================================
+\node[partbox, fill=wmgray!8, draw=wmgray, minimum width=8cm, minimum height=1.6cm]
+  (prelim) at (12,-1.5)
+  {{\Large\bfseries Part I: Preliminaries}\\[3pt]
+   {\large Convex sets, convex functions, optimality conditions}};
 
-% === Row 1: Two branches ===
-\node[chbox, fill=stblue!12, draw=stblue] (ch2) at (5,-4.5)
-  {{\Large\bfseries 2. Duality}\\[2pt]{\large Lagrangian, KKT, conjugates}};
+% ============================================================
+% Row 1: Duality (left) and First-Order Methods (right)
+% ============================================================
 
-\node[chbox, fill=copper!12, draw=copper] (ch5) at (18,-4.5)
-  {{\Large\bfseries 5. Gradient Descent}\\[2pt]{\large Smooth/strongly convex rates}};
+% Duality box
+\node[partbox, fill=stblue!10, draw=stblue, minimum width=8.5cm, minimum height=2.8cm]
+  (dual) at (5,-5.2)
+  {{\Large\bfseries Part II: Duality}\\[6pt]
+   {\large Lagrange duality, KKT conditions}\\[2pt]
+   {\large Conjugate functions, strong duality}};
 
-% Arrows from ch1 to ch2 and ch5
-\draw[->, line width=2pt, dkbrown] ($(ch1.south)+(-3,0)$) -- (ch2.north);
-\draw[->, line width=2pt, dkbrown] ($(ch1.south)+(3,0)$) -- (ch5.north);
+% First-Order Methods box
+\node[partbox, fill=copper!10, draw=copper, minimum width=11cm, minimum height=2.8cm]
+  (fo) at (18.5,-5.2)
+  {{\Large\bfseries Part IV: First-Order Methods}\\[6pt]
+   {\large Gradient descent \;\textbullet\; Projected GD}\\[2pt]
+   {\large Subgradient \;\textbullet\; Proximal gradient}\\[2pt]
+   {\large Mirror descent \;\textbullet\; Accelerated gradient}};
 
-% === Row 2: Newton + three first-order children of GD ===
-\node[chbox, fill=rwgold!12, draw=rwgold] (ch3) at (5,-7.5)
-  {{\Large\bfseries 3. Newton Methods}\\[2pt]{\large Quadratic convergence}};
+% Arrows from Preliminaries
+\draw[->, line width=2pt, dkbrown]
+  ($(prelim.south)+(-3.5,0)$) -- (dual.north);
+\draw[->, line width=2pt, dkbrown]
+  ($(prelim.south)+(3.5,0)$) -- (fo.north);
 
-\node[chbox, fill=copper!12, draw=copper] (ch6) at (12,-7.5)
-  {{\Large\bfseries 6. Subgradient}\\[2pt]{\large Non-smooth, Lipschitz}};
+% ============================================================
+% Row 2: Second-Order Methods (left, below Duality)
+% ============================================================
+\node[partbox, fill=rwgold!10, draw=rwgold, minimum width=8.5cm, minimum height=2.4cm]
+  (so) at (5,-9.5)
+  {{\Large\bfseries Part III: Second-Order Methods}\\[6pt]
+   {\large Newton methods (quadratic convergence)}\\[2pt]
+   {\large Interior point methods (polynomial time)}};
 
-\node[chbox, fill=copper!12, draw=copper] (ch7) at (18,-7.5)
-  {{\Large\bfseries 7. Proximal Gradient}\\[2pt]{\large ISTA, composite}};
+% Arrow from Duality to Second-Order
+\draw[->, line width=2pt, dkbrown] (dual.south) -- (so.north);
 
-\node[chbox, fill=copper!12, draw=copper] (ch9) at (24,-7.5)
-  {{\Large\bfseries 9. Accelerated Gradient}\\[2pt]{\large Nesterov, lower bounds}};
+% ============================================================
+% Row 3: Applications (center, below both)
+% ============================================================
+\node[partbox, fill=sage!10, draw=sage, minimum width=9cm, minimum height=2.2cm]
+  (app) at (12,-13.2)
+  {{\Large\bfseries Part V: Deep Learning Applications}\\[6pt]
+   {\large Implicit layers, DEQ models,}\\[2pt]
+   {\large differentiable optimization layers}};
 
-% Arrows from duality and GD to row 2
-\draw[->, line width=2pt, dkbrown] (ch2.south) -- (ch3.north);
-\draw[->, line width=2pt, dkbrown] ($(ch5.south)+(-2,0)$) -- (ch6.north);
-\draw[->, line width=2pt, dkbrown] (ch5.south) -- (ch7.north);
-\draw[->, line width=2pt, dkbrown] ($(ch5.south)+(2,0)$) -- (ch9.north);
+% Arrows to Applications
+\draw[->, line width=2pt, dkbrown]
+  (so.south) -- ++(0,-0.6) -| ($(app.north)+(-2,0)$);
+\draw[->, line width=2pt, dkbrown]
+  ($(fo.south)+(0,0)$) -- ++(0,-3.7) -| ($(app.north)+(2,0)$);
 
-% === Row 3: IPM + Mirror Descent ===
-\node[chbox, fill=rwgold!12, draw=rwgold] (ch4) at (5,-10.5)
-  {{\Large\bfseries 4. Interior Point}\\[2pt]{\large Log barrier, central path}};
-
-\node[chbox, fill=copper!12, draw=copper] (ch8) at (12,-10.5)
-  {{\Large\bfseries 8. Mirror Descent}\\[2pt]{\large Bregman divergence}};
-
-\draw[->, line width=2pt, dkbrown] (ch3.south) -- (ch4.north);
-\draw[->, line width=2pt, dkbrown] (ch6.south) -- (ch8.north);
-
-% === Row 4: Implicit Layers ===
-\node[chbox, fill=sage!12, draw=sage, minimum width=7cm] (ch10) at (10,-13.5)
-  {{\Large\bfseries 10. Implicit Layers}\\[2pt]{\large DEQ models, KKT layers, cvxpylayers}};
-
-\draw[->, line width=2pt, dkbrown] (ch2.south east) -- ($(ch10.north)+(-1,0)$);
-
-% === Part region shading ===
-\begin{pgfonlayer}{background}
-  % Part I: Foundations
-  \fill[stblue!5, rounded corners=10pt] (1.5,-0.5) rectangle (9,-5.5);
-  \node[font=\large\bfseries, text=stblue!60] at (2.6,-0.8) {Part I};
-
-  % Part II: Second-order
-  \fill[rwgold!5, rounded corners=10pt] (1.8,-6.3) rectangle (8.2,-11.5);
-  \node[font=\large\bfseries, text=rwgold!60] at (3,-6.6) {Part II};
-
-  % Part III: First-order
-  \fill[copper!5, rounded corners=10pt] (9.2,-3.3) rectangle (26.2,-11.5);
-  \node[font=\large\bfseries, text=copper!60] at (10.4,-3.6) {Part III};
-
-  % Part IV: Applications
-  \fill[sage!5, rounded corners=10pt] (4.5,-12.3) rectangle (15.5,-14.7);
-  \node[font=\large\bfseries, text=sage!60] at (5.8,-12.6) {Part IV};
-\end{pgfonlayer}
+% ============================================================
+% Cross-dependency: dashed arrow from Duality to First-Order
+% ============================================================
+\draw[->, line width=1.5pt, dkbrown, dashed]
+  (dual.east) -- (fo.west)
+  node[midway, above=3pt, font=\normalsize, text=wmgray] {conjugates};
 
 \end{tikzpicture}
 \end{document}
