@@ -1,0 +1,89 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc, decorations.markings}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+
+\begin{document}
+\begin{tikzpicture}[
+  every node/.style={text=dkbrown, font=\large},
+  >=Stealth[length=4mm, width=3mm],
+]
+
+% Background
+\fill[cream, rounded corners=14pt] (-2,-2) rectangle (16,14);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-2,-2) rectangle (16,14);
+
+% Title
+\node[font=\LARGE\bfseries, text=dkbrown] at (7,13.2) {Central Path for LP};
+
+% Polygon vertices (6 corners, filling more of the canvas):
+% A = (1.0, 1.5)    bottom-left
+% B = (6.0, 0.5)    bottom
+% C = (12.0, 2.0)   bottom-right
+% D = (13.5, 6.0)   right  <-- optimal vertex
+% E = (9.0, 10.0)   top-right
+% F = (2.5, 9.0)    top-left
+
+% Feasible region
+\fill[sage, opacity=0.18]
+  (1.0,1.5) -- (6.0,0.5) -- (12.0,2.0) -- (13.5,6.0) -- (9.0,10.0) -- (2.5,9.0) -- cycle;
+\draw[sage, line width=2pt]
+  (1.0,1.5) -- (6.0,0.5) -- (12.0,2.0) -- (13.5,6.0) -- (9.0,10.0) -- (2.5,9.0) -- cycle;
+
+% Central path: starts from interior, curves toward optimal vertex D = (13.5, 6.0)
+\draw[terracotta, line width=2.5pt, dashed,
+  decoration={markings,
+    mark=at position 0.25 with {\arrow{Stealth[length=4mm, width=3mm]}},
+    mark=at position 0.65 with {\arrow{Stealth[length=4mm, width=3mm]}}},
+  postaction={decorate}]
+  plot[smooth, tension=0.45]
+  coordinates {
+    (5.0,5.5) (6.5,5.2) (8.2,5.0) (10.0,5.2) (11.5,5.5) (12.8,5.8) (13.5,6.0)
+  };
+\foreach \x/\y in {5.0/5.5, 6.5/5.2, 8.2/5.0, 10.0/5.2, 11.5/5.5, 12.8/5.8} {
+  \fill[terracotta] (\x,\y) circle (3pt);
+}
+
+% Optimal point at vertex D
+\node[font=\huge, text=lavender] at (13.5,6.0) {$\bigstar$};
+\node[font=\Large\bfseries, text=lavender, anchor=west] at (14.0,6.0) {$x^*$};
+
+% Cost direction: dotted line showing -c direction (pointing toward D)
+\draw[lavender, line width=1.5pt, dotted] (0.5,3.5) -- (14.5,7.0);
+
+% Labels for central path points (well separated)
+\node[font=\large, text=terracotta, anchor=north] at (5.0,5.1) {$x^*(t_1)$};
+\node[font=\large, text=terracotta, anchor=north] at (8.2,4.5) {$x^*(t_2)$};
+\node[font=\large, text=terracotta, anchor=south] at (11.5,5.9) {$x^*(t_k)$};
+
+% Legend (top-left area, clear of polygon)
+\fill[cream, rounded corners=5pt] (0.0,10.5) rectangle (7.2,12.5);
+\draw[border, line width=0.6pt, rounded corners=5pt] (0.0,10.5) rectangle (7.2,12.5);
+
+\draw[sage, line width=2pt] (0.4,12.0) -- (1.3,12.0);
+\fill[sage, opacity=0.18] (0.4,11.7) rectangle (1.3,12.3);
+\node[font=\large, anchor=west] at (1.5,12.0) {Feasible $Ax \leq b$};
+
+\draw[terracotta, line width=2pt, dashed] (0.4,11.2) -- (1.3,11.2);
+\fill[terracotta] (0.85,11.2) circle (3pt);
+\node[font=\large, anchor=west] at (1.5,11.2) {Central path $x^*(t)$};
+
+\draw[lavender, line width=1.5pt, dotted] (0.4,10.8) -- (1.3,10.8);
+\node[font=\large, anchor=west] at (1.5,10.8) {Direction $-c$};
+
+% Annotation
+\node[font=\large\itshape, text=wmgray] at (7,-1.2) {The central path traces through the interior toward the optimal vertex.};
+
+\end{tikzpicture}
+\end{document}

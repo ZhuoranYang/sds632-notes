@@ -1,0 +1,447 @@
+// ============================================================================
+// Warmtone — A warm, muted academic theme for Quarto books
+//
+// Palette: Morandi-inspired desaturated earth tones. Designed for extended
+//          reading of mathematical content with light and dark modes.
+// Typography: Palatino (body), Lato (headings/UI), JetBrains Mono (code)
+// ============================================================================
+
+/*-- scss:defaults --*/
+
+// ---------- Palette tokens (Morandi) ----------
+$ivory:       #f7f3ee;
+$parchment:   #f0ebe5;
+$linen:       #eee9e2;
+$sand:        #e8e2da;
+$clay-light:  #d5cdc4;
+$clay:        #968a80;
+$walnut:      #6b5f56;
+$espresso:    #3d3530;
+
+$slate:       #7b8fa3;   // accent — headings, links, UI
+$slate-light: #e4eaef;
+$slate-mist:  #dfe8ef;
+
+$brass:       #b8995e;   // theorems, propositions
+$brass-bg:    #f0e8d9;
+
+$copper:      #a58b6d;   // lemmas
+$copper-bg:   #ede4d7;
+
+$sky:         #7b97ad;   // definitions
+$sky-bg:      #e0e9f0;
+
+$sage:        #7a9a7e;   // algorithms
+$sage-bg:     #dde8de;
+
+$lavender:    #907ea0;   // remarks
+$lavender-bg: #e8e3ed;
+
+$rosewood:    #ad8480;   // examples
+$rosewood-bg: #ede2e0;
+
+$teal:        #6f9996;   // corollaries
+$teal-bg:     #dde7e6;
+
+$stone:       #a09488;   // proofs
+
+// ---------- Bootstrap overrides ----------
+$body-bg: $ivory;
+$body-color: $espresso;
+$link-color: #6e849a;
+
+// Palatino throughout — elegant humanist serif
+$font-family-sans-serif: 'Palatino Linotype', 'Book Antiqua', Palatino, 'Times New Roman', serif;
+$headings-font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, 'Times New Roman', serif;
+$font-family-monospace: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+$font-size-root: 17px;
+
+$border-color: $clay-light;
+$card-bg: $parchment;
+
+$callout-color-note: $sky;
+$callout-color-tip: $lavender;
+$callout-color-warning: $brass;
+$callout-color-important: $sage;
+$callout-color-caution: $rosewood;
+
+$code-bg: #2d2d2d;
+$code-color: #e0d9d1;
+
+/*-- scss:rules --*/
+
+// ===== CSS custom properties for Plotly figures =====
+:root {
+  --fig-bg:             #{$parchment};
+  --fig-plot-bg:        #faf7f3;
+  --fig-text:           #{$espresso};
+  --fig-grid:           #e0d9d1;
+  --fig-axis:           #{$clay};
+  --fig-region:         rgba(123,143,163,0.18);
+  --fig-region-stroke:  #{$sky};
+  --fig-vertex:         #8a6e5e;
+  --fig-optimal:        #b56b6b;
+  --fig-contour:        #{$brass};
+  --fig-line1:          #{$rosewood};
+  --fig-line2:          #{$sky};
+  --fig-sage:           rgba(122,154,126,0.2);
+  --fig-sage-stroke:    #{$sage};
+  --fig-mesh:           #8fa3b8;
+  --fig-lavender:       rgba(144,126,160,0.18);
+  --fig-lavender-stroke: #{$lavender};
+}
+
+// ===== Instructor label =====
+.quarto-title-meta-heading {
+  font-size: 1.15rem !important;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: $walnut;
+}
+.quarto-title-meta-contents {
+  font-size: 1.25rem !important;
+}
+
+// ===== General typography =====
+body {
+  line-height: 1.78;
+  transition: background 0.3s, color 0.3s;
+}
+
+h1, h2, h3, h4 {
+  font-family: $headings-font-family;
+}
+
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-weight: 600;
+  border-bottom: 2px solid $slate;
+  padding-bottom: 0.4rem;
+}
+
+h3 {
+  font-weight: 600;
+}
+
+// ===== Theorem-like environments =====
+// Force the title ("Theorem 3.2 (Name)") onto its own line
+.theorem-title {
+  display: block;
+  font-family: $headings-font-family;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+  margin-bottom: 0.5rem;
+}
+
+@mixin callout-block($border, $bg, $title-color) {
+  border-left: 4px solid $border;
+  background: $bg;
+  padding: 1.3rem 1.6rem;
+  border-radius: 8px;
+  margin: 1.75rem 0;
+  box-shadow: 0 1px 4px rgba(61,53,48,0.06);
+
+  .theorem-title {
+    color: $title-color;
+  }
+}
+
+div.theorem, div.proposition, div.conjecture {
+  @include callout-block($brass, $brass-bg, $brass);
+}
+
+div.lemma {
+  @include callout-block($copper, $copper-bg, $copper);
+}
+
+div.corollary {
+  @include callout-block($teal, $teal-bg, $teal);
+}
+
+div.definition {
+  @include callout-block($sky, $sky-bg, $sky);
+}
+
+div.example {
+  @include callout-block($rosewood, $rosewood-bg, $rosewood);
+}
+
+// ===== Proof — transparent, elegant =====
+div.proof {
+  border-left: 3px solid $stone;
+  background: transparent;
+  padding: 0.75rem 0 0.75rem 1.5rem;
+  margin: 1.75rem 0;
+  border-radius: 0;
+  box-shadow: none;
+
+  > .proof-title {
+    font-family: $font-family-sans-serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: $espresso;
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid $clay-light;
+  }
+
+  .proof-body {
+    font-size: 0.96rem;
+    line-height: 1.85;
+    opacity: 0.92;
+  }
+}
+
+// ===== Callout customization =====
+.callout {
+  border-radius: 8px !important;
+  box-shadow: 0 1px 4px rgba(61,53,48,0.06);
+}
+
+.callout-title-container {
+  font-family: $headings-font-family;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+// Remark (callout-tip)
+div.callout-tip {
+  border-left-color: $lavender !important;
+  .callout-title-container { color: $lavender; }
+}
+
+// Algorithm (callout-important)
+div.callout-important {
+  border-left-color: $sage !important;
+  .callout-title-container { color: $sage; }
+}
+
+// ===== Figures and Plotly =====
+.figure-container,
+.quarto-figure {
+  margin: 2rem 0;
+  background: $parchment;
+  border: 1px solid $clay-light;
+  border-radius: 8px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(61,53,48,0.06);
+  overflow: hidden;
+}
+
+.figure-caption,
+figcaption {
+  text-align: center;
+  font-family: $headings-font-family;
+  font-size: 0.86rem;
+  color: $clay;
+  margin-top: 0.75rem;
+  font-style: italic;
+}
+
+// Plotly containers
+.figure-container .js-plotly-plot,
+.quarto-figure .js-plotly-plot {
+  border-radius: 6px;
+}
+
+.js-plotly-plot .modebar {
+  background: transparent !important;
+}
+
+.js-plotly-plot .modebar-btn {
+  color: $clay !important;
+}
+
+// ===== Code blocks =====
+div.sourceCode {
+  border-radius: 8px;
+  border: 1px solid $clay-light;
+  box-shadow: 0 1px 4px rgba(61,53,48,0.06);
+}
+
+.code-copy-button {
+  border-color: $clay-light !important;
+  color: $clay !important;
+  &:hover {
+    background: $slate-light !important;
+    color: $slate !important;
+  }
+}
+
+// ===== Tables =====
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-striped-bg: #{$linen};
+  border-color: $clay-light;
+
+  th {
+    font-family: $headings-font-family;
+    font-weight: 600;
+    background: $sand;
+  }
+}
+
+// ===== KaTeX =====
+.katex {
+  font-size: 1.06em;
+}
+
+.katex-display {
+  position: relative;
+  margin: 1.5rem 0;
+}
+
+.katex-display > .katex,
+.katex-display > .katex > .katex-html {
+  position: static !important;
+}
+
+.katex-display > .katex {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.katex-display:has(.tag) > .katex {
+  margin-right: 3.5em;
+}
+
+.katex-display > .katex > .katex-html > .tag {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+// Math inside theorem-like environments — inherit env background, no extra layer
+div.theorem .katex-display,
+div.lemma .katex-display,
+div.definition .katex-display,
+div.corollary .katex-display,
+div.proposition .katex-display,
+div.example .katex-display {
+  margin: 1rem -0.5rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 6px;
+  background: transparent;
+}
+
+div.proof .katex-display {
+  background: transparent;
+  margin: 1.1rem 0 1.1rem 0.25rem;
+}
+
+// ===== Pseudocode =====
+.pseudocode {
+  font-family: $font-family-monospace;
+  background: $linen;
+  border: 1px solid $clay-light;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin: 1rem 0;
+  font-size: 0.92rem;
+  line-height: 1.9;
+  white-space: pre-wrap;
+
+  .kw { color: $lavender; font-weight: 600; }
+  .cm { color: $clay; font-style: italic; }
+}
+
+// ===== Sidebar refinements =====
+.sidebar nav[role="doc-toc"] {
+  font-family: $headings-font-family;
+  font-size: 0.86rem;
+}
+
+// ===== Print =====
+@media print {
+  .callout, div.theorem, div.definition, div.example, div.corollary {
+    break-inside: avoid;
+  }
+  .figure-container, .quarto-figure {
+    break-inside: avoid;
+  }
+}
+
+// ===== Dark mode =====
+[data-bs-theme="dark"] {
+  --bs-body-bg: #262220;
+  --bs-body-color: #e0d9d1;
+
+  // Figure CSS vars for dark Plotly
+  --fig-bg: #2e2a27;
+  --fig-plot-bg: #33302c;
+  --fig-text: #e0d9d1;
+  --fig-grid: #3e3830;
+  --fig-axis: #857b72;
+  --fig-region: rgba(157,176,196,0.2);
+  --fig-region-stroke: #8aa2b8;
+  --fig-vertex: #b8967e;
+  --fig-optimal: #c88080;
+  --fig-contour: #c4a66a;
+  --fig-line1: #b89490;
+  --fig-line2: #8aa2b8;
+  --fig-sage: rgba(138,171,143,0.2);
+  --fig-sage-stroke: #8aab8f;
+  --fig-lavender: rgba(160,144,176,0.2);
+  --fig-lavender-stroke: #a090b0;
+
+  div.theorem, div.proposition, div.conjecture {
+    background: #363226; border-color: #c4a66a;
+    .theorem-title { color: #c4a66a; }
+  }
+
+  div.lemma {
+    background: #342e24; border-color: #bfa07a;
+    .theorem-title { color: #bfa07a; }
+  }
+
+  div.corollary {
+    background: #283432; border-color: #7faba8;
+    .theorem-title { color: #7faba8; }
+  }
+
+  div.definition {
+    background: #2d3640; border-color: #8aa2b8;
+    .theorem-title { color: #8aa2b8; }
+  }
+
+  div.example {
+    background: #362c2c; border-color: #b89490;
+    .theorem-title { color: #b89490; }
+  }
+
+  div.proof {
+    border-color: #bfb0a4;
+    > .proof-title { color: #e0d9d1; }
+  }
+
+  .figure-container, .quarto-figure {
+    background: #2e2a27;
+    border-color: #443d37;
+  }
+
+  div.callout-tip {
+    border-left-color: #a090b0 !important;
+    .callout-title-container { color: #a090b0; }
+  }
+
+  div.callout-important {
+    border-left-color: #8aab8f !important;
+    .callout-title-container { color: #8aab8f; }
+  }
+
+  .pseudocode {
+    background: #2e2a27; border-color: #443d37;
+  }
+
+  h2 { border-bottom-color: #9db0c4; }
+
+  .table th { background: #33302c; }
+
+  div.sourceCode { border-color: #443d37; }
+}

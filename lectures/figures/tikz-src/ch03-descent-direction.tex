@@ -1,0 +1,92 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc, decorations.pathreplacing}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+
+\begin{document}
+\begin{tikzpicture}[>={Stealth[length=4mm, width=3mm]}, line width=1.5pt]
+
+% Background
+\fill[cream, rounded corners=14pt] (-1.5,-2.5) rectangle (13,8.5);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-1.5,-2.5) rectangle (13,8.5);
+
+% Title
+\node[font=\LARGE\bfseries, text=dkbrown] at (5.75,7.8)
+  {Descent Direction};
+
+% === Contour plot of f (elliptical contours) ===
+
+% Draw several contour ellipses (tilted slightly)
+\foreach \r/\op in {1.2/0.06, 2.0/0.06, 2.8/0.06, 3.6/0.06, 4.4/0.06} {
+  \draw[stblue!\op!stblue, line width=0.8pt, stblue!25]
+    (7.5,3.0) ellipse ({\r*1.4} and {\r*0.7});
+}
+
+% Fill innermost contour
+\fill[stblue!8] (7.5,3.0) ellipse (1.68 and 0.84);
+
+% Redraw contours on top
+\foreach \r in {1.2, 2.0, 2.8, 3.6, 4.4} {
+  \draw[stblue!30, line width=0.8pt]
+    (7.5,3.0) ellipse ({\r*1.4} and {\r*0.7});
+}
+
+% Minimum point x*
+\fill[stblue] (7.5,3.0) circle (4pt);
+\node[font=\large\bfseries, text=stblue, below] at (7.5,2.7) {$x^*$};
+
+% Current point x
+\fill[terracotta] (3.5,4.2) circle (5pt);
+\node[font=\Large\bfseries, text=terracotta, above left] at (3.5,4.4) {$x$};
+
+% Gradient direction (pointing away from minimum)
+\draw[->, terracotta!60, line width=2pt] (3.5,4.2) -- (1.8,4.8);
+\node[font=\large\bfseries, text=terracotta!70, above] at (1.8,5.0) {$\nabla f(x)$};
+
+% Negative gradient (descent direction)
+\draw[->, sage, line width=2.5pt] (3.5,4.2) -- (5.2,3.6);
+\node[font=\large\bfseries, text=sage!80!black, below right] at (5.0,3.4)
+  {$-\nabla f(x)$};
+
+% General descent direction d (at angle)
+\draw[->, rwgold, line width=2.5pt] (3.5,4.2) -- (5.8,4.6);
+\node[font=\large\bfseries, text=rwgold, above] at (5.8,4.8) {$d$};
+
+% Dashed arc showing the cone of descent directions
+% The gradient points roughly at angle 160 deg from x, so descent directions
+% are those with angle < 90 from -gradient direction
+\draw[wmgray, line width=1pt, dashed]
+  (3.5,4.2) ++ (70:2.2) arc (70:-50:2.2);
+\node[font=\large, text=wmgray, align=center] at (6.2,6.4)
+  {descent directions:\\$\nabla f(x)^\top d < 0$};
+
+% Separating line (perpendicular to gradient through x)
+% Gradient direction is roughly (1.8-3.5, 4.8-4.2) = (-1.7, 0.6)
+% Perpendicular is (0.6, 1.7)
+\draw[wmgray, line width=0.8pt, dotted]
+  ($(3.5,4.2) + (0.6,1.7)*1.2$) -- ($(3.5,4.2) - (0.6,1.7)*1.2$);
+
+% Annotation: condition
+\node[font=\large, text=dkbrown, fill=cream, inner sep=4pt,
+      rounded corners=3pt, align=left] at (5.75,-1.5)
+  {$d$ is a descent direction at $x$ if
+   $\nabla f(x)^\top d < 0$
+   (acute angle with $-\nabla f(x)$)};
+
+% Small angle arc between d and -grad f
+\draw[rwgold, line width=1pt, ->] ($(3.5,4.2) + (-20:1.2)$) arc (-20:12:1.2);
+\node[font=\small, text=rwgold] at (4.9,3.9) {$\theta$};
+
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,64 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc, fit, decorations.pathreplacing}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+
+\begin{document}
+\begin{tikzpicture}[
+  every node/.style={text=dkbrown, font=\large},
+  propbox/.style={rounded corners=6pt, line width=1.2pt, minimum height=1.2cm, minimum width=58mm, align=center, text=dkbrown, inner sep=8pt},
+  >=Stealth[length=4mm, width=3mm],
+]
+
+% Background
+\fill[cream, rounded corners=14pt] (-1,-6.2) rectangle (20,2.0);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-1,-6.2) rectangle (20,2.0);
+
+% Title
+\node[font=\LARGE\bfseries, text=dkbrown] at (9.5,1.2) {Duality Between Strong Convexity and Smoothness};
+
+% Left box: f
+\draw[stblue, line width=1.8pt, rounded corners=8pt] (0.5,-4.2) rectangle (8,0);
+\node[font=\LARGE\bfseries, text=stblue, fill=cream, inner sep=4pt, rounded corners=3pt] at (4.25,0) {$f$};
+
+% Properties of f
+\node[propbox, fill=sage!12, draw=sage] (fsc) at (4.25,-1.4) {$m$-strongly convex};
+\node[propbox, fill=rwgold!12, draw=rwgold] (fsm) at (4.25,-2.8) {$L$-smooth ($\nabla f$ is $L$-Lipschitz)};
+
+\node[font=\large, text=wmgray] at (4.25,-3.85) {$\kappa = L/m$};
+
+% Right box: f*
+\draw[lavender, line width=1.8pt, rounded corners=8pt] (11.5,-4.2) rectangle (19,0);
+\node[font=\LARGE\bfseries, text=lavender, fill=cream, inner sep=4pt, rounded corners=3pt] at (15.25,0) {$f^*$};
+
+% Properties of f*
+\node[propbox, fill=rwgold!12, draw=rwgold] (fssm) at (15.25,-1.4) {$1/m$-smooth ($\nabla f^*$ is $1/m$-Lip.)};
+\node[propbox, fill=sage!12, draw=sage] (fssc) at (15.25,-2.8) {$1/L$-strongly convex};
+
+\node[font=\large, text=wmgray] at (15.25,-3.85) {$\kappa = L/m$};
+
+% Bidirectional arrows
+\draw[terracotta, line width=1.5pt, <->] (7.5,-1.4) -- (12.0,-1.4);
+\draw[terracotta, line width=1.5pt, <->] (7.5,-2.8) -- (12.0,-2.8);
+
+% Labels on arrows
+\node[font=\large\bfseries, text=terracotta, fill=cream, inner sep=3pt] at (9.75,-1.0) {conjugate};
+\node[font=\large\bfseries, text=terracotta, fill=cream, inner sep=3pt] at (9.75,-3.2) {conjugate};
+
+% Bottom annotation
+\node[font=\large\itshape, text=dkbrown] at (9.5,-4.8) {Strong convexity and smoothness are dual properties under the conjugate transform.};
+\node[font=\large\itshape, text=dkbrown] at (9.5,-5.35) {The condition number $\kappa = L/m$ is preserved.};
+
+\end{tikzpicture}
+\end{document}

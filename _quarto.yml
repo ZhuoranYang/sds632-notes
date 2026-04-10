@@ -1,0 +1,83 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "S&DS 432/632 — Advanced Optimization Techniques"
+  subtitle: "Lecture notes for S&DS 432/632, covering duality, Newton and interior point methods, first-order algorithms, and deep learning applications"
+  author:
+    - name: "Zhuoran Yang"
+      url: "https://zhuoranyang.github.io/"
+  chapters:
+    - index.qmd
+    - part: "Preliminaries"
+      chapters:
+        - lectures/01-review.qmd
+    - part: "Duality"
+      chapters:
+        - lectures/02-lagrange-duality.qmd
+        - lectures/02b-dual-conjugacy.qmd
+    - part: "Second-Order Methods"
+      chapters:
+        - lectures/03-newton-methods.qmd
+        - lectures/04-interior-point.qmd
+    - part: "First-Order Methods"
+      chapters:
+        - lectures/05-gradient-descent.qmd
+        - lectures/05b-projected-gradient-descent.qmd
+        - lectures/06-subgradient.qmd
+        - lectures/07-proximal-gradient.qmd
+        - lectures/08-mirror-descent.qmd
+        - lectures/09-accelerated-gradient.qmd
+    - part: "Applications in Deep Learning"
+      chapters:
+        - lectures/11-implicit-layer.qmd
+    - lectures/summary.qmd
+
+  page-navigation: true
+  search: true
+  sidebar:
+    style: floating
+    collapse-level: 2
+
+format:
+  html:
+    theme: [default, _warmtone.scss]
+    code-copy: true
+    code-overflow: wrap
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    html-math-method: katex
+    fig-path: lectures/figures/
+    include-in-header:
+      - text: |
+          <script type="text/x-mathjax-config">
+            MathJax.Hub.Config({
+              skipStartupTypeset: true,
+              messageStyle: "none",
+              tex2jax: { inlineMath: [], displayMath: [], processEnvironments: false }
+            });
+          </script>
+          <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_SVG"></script>
+          <script src="https://cdn.plot.ly/plotly-2.35.0.min.js" charset="utf-8"></script>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    include-after-body:
+      - file: _plotly-theme.html
+
+lightbox: auto
+
+language:
+  title-block-author-single: "Instructor"
+
+crossref:
+  chapters: true
+  thm-title: "Theorem"
+  lem-title: "Lemma"
+  cor-title: "Corollary"
+  prp-title: "Proposition"
+  def-title: "Definition"
+  exm-title: "Example"
+  exr-title: "Exercise"

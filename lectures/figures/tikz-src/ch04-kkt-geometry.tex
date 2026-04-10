@@ -1,0 +1,108 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc, decorations.pathreplacing}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+
+\begin{document}
+\begin{tikzpicture}[
+  every node/.style={text=dkbrown, font=\large},
+  >=Stealth[length=4mm, width=3mm],
+]
+
+% Background
+\fill[cream, rounded corners=14pt] (-2,-6.2) rectangle (17.5,7.5);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-2,-6.2) rectangle (17.5,7.5);
+
+% Title
+\node[font=\LARGE\bfseries, text=dkbrown] at (7.75,6.8) {Geometric Interpretation of Constrained Optimality};
+
+% === LEFT PANEL: Non-optimal point ===
+\node[font=\large\bfseries, text=wmgray] at (3.5,5.8) {At a non-optimal $x$};
+
+% Feasible affine subspace (tilted line)
+\draw[stblue, line width=2pt] (-0.5,0.5) -- (7.5,4.5);
+\node[font=\large, text=stblue] at (1.2,-0.1) {$\{x : Ax = b\}$};
+
+% Point x
+\fill[dkbrown] (3.5,2.5) circle (4pt);
+\node[below, font=\large\bfseries, yshift=-4pt] at (3.5,2.5) {$x$};
+
+% Gradient at x (not in rowspace — has both components)
+\draw[->, rwgold, line width=2pt] (3.5,2.5) -- (2.0,5.2)
+  node[above, font=\large, text=rwgold, xshift=4pt] {$\nabla f(x)$};
+
+% Decomposition: rowspace component (perpendicular to feasible line)
+\draw[->, terracotta, line width=1.5pt, dashed] (3.5,2.5) -- (2.7,3.9);
+
+% Decomposition: nullspace component (along the feasible set)
+\draw[->, sage, line width=1.5pt, dashed] (2.7,3.9) -- (2.0,5.2);
+
+% Labels in clear area (left side)
+\node[font=\normalsize, text=terracotta, anchor=east] at (1.8,3.2) {rowspace$(A)$};
+\draw[terracotta, line width=0.5pt, ->] (1.8,3.2) -- (2.9,3.3);
+
+\node[font=\normalsize, text=sage, anchor=east] at (1.0,4.8) {null$(A)$};
+\draw[sage, line width=0.5pt, ->] (1.0,4.8) -- (2.2,4.7);
+
+% Annotation box
+\draw[sage, rounded corners=3pt, line width=0.6pt] (-0.8,1.0) rectangle (2.4,2.0);
+\fill[sage, opacity=0.06, rounded corners=3pt] (-0.8,1.0) rectangle (2.4,2.0);
+\node[font=\normalsize, text=sage, align=center] at (0.8,1.5) {null$(A)$ part $\neq 0$\\[1pt]can still improve};
+
+% Contour lines (ellipses, rotated to align with feasible set)
+\draw[wmgray, opacity=0.25, line width=0.6pt, rotate around={27:(3.5,2.5)}] (3.5,2.5) ellipse (2.0cm and 0.7cm);
+\draw[wmgray, opacity=0.15, line width=0.6pt, rotate around={27:(3.5,2.5)}] (3.5,2.5) ellipse (3.2cm and 1.1cm);
+
+% === RIGHT PANEL: Optimal point ===
+\node[font=\large\bfseries, text=wmgray] at (12.5,5.8) {At the optimum $x^*$};
+
+% Feasible affine subspace (tilted line)
+\draw[stblue, line width=2pt] (8.5,0.5) -- (16.5,4.5);
+
+% Point x*
+\fill[terracotta] (12.5,2.5) circle (4pt);
+\node[below, font=\large\bfseries, text=terracotta, yshift=-4pt] at (12.5,2.5) {$x^*$};
+
+% Gradient at x* (entirely perpendicular to feasible set)
+\draw[->, rwgold, line width=2pt] (12.5,2.5) -- (11.2,4.8)
+  node[above, font=\large, text=rwgold, xshift=4pt] {$\nabla f(x^*)$};
+
+% Dashed overlay showing it's in rowspace
+\draw[->, terracotta, line width=1.5pt, dashed] (12.5,2.5) -- (11.2,4.8);
+
+% Label
+\node[font=\normalsize, text=terracotta, anchor=west] at (13.4,4.0) {$\in$ rowspace$(A)$};
+\draw[terracotta, line width=0.5pt, ->] (13.4,4.0) -- (11.9,3.8);
+
+% Annotation box
+\draw[sage, rounded corners=3pt, line width=0.6pt] (13.2,1.0) rectangle (16.8,2.0);
+\fill[sage, opacity=0.06, rounded corners=3pt] (13.2,1.0) rectangle (16.8,2.0);
+\node[font=\normalsize, text=sage, align=center] at (15.0,1.5) {null$(A)$ part $= 0$\\[1pt]optimal!};
+
+% Contour lines
+\draw[wmgray, opacity=0.25, line width=0.6pt, rotate around={27:(12.5,2.5)}] (12.5,2.5) ellipse (2.0cm and 0.7cm);
+\draw[wmgray, opacity=0.15, line width=0.6pt, rotate around={27:(12.5,2.5)}] (12.5,2.5) ellipse (3.2cm and 1.1cm);
+
+% === BOTTOM: Summary box ===
+\draw[lavender, line width=0.8pt, dashed, rounded corners=5pt] (-1.0,-5.8) rectangle (16.5,-3.4);
+\fill[lavender, opacity=0.06, rounded corners=5pt] (-1.0,-5.8) rectangle (16.5,-3.4);
+\node[font=\large\bfseries, text=lavender] at (7.75,-3.9) {Optimality condition};
+\node[font=\large, text=dkbrown] at (7.75,-4.6) {$\nabla f(x^*) \in \text{rowspace}(A)$, \; i.e.\ $\nabla f(x^*) + A^\top \nu^* = 0$};
+\node[font=\normalsize, text=wmgray] at (7.75,-5.3) {The gradient has no component along the feasible directions $\text{null}(A)$};
+
+% Divider between panels
+\draw[border, line width=0.8pt, dashed] (8.0,-2.8) -- (8.0,5.5);
+
+\end{tikzpicture}
+\end{document}

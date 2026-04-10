@@ -1,0 +1,84 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc, fit, decorations.pathreplacing}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+
+\begin{document}
+\begin{tikzpicture}[
+  every node/.style={text=dkbrown, font=\large},
+  >=Stealth[length=4mm, width=3mm],
+]
+
+% Background
+\fill[cream, rounded corners=14pt] (-2.5,-4.0) rectangle (17.5,12);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-2.5,-4.0) rectangle (17.5,12);
+
+% Title
+\node[font=\LARGE\bfseries, text=dkbrown] at (7.5,11.2) {Two-Phase Convergence of Newton's Method};
+
+% Axes
+\draw[->, line width=1pt, dkbrown] (0,0) -- (14.5,0) node[below left, font=\large] {iteration $k$};
+\draw[->, line width=1pt, dkbrown] (0,0) -- (0,10) node[above left, font=\large] {$f(x_k) - p^*$};
+
+% Phase I region
+\fill[stblue, opacity=0.04] (0,0.05) rectangle (8.2,9.5);
+\node[font=\Large\bfseries, text=stblue] at (4.1,9.0) {Phase I: Damped};
+\node[font=\large, text=stblue] at (4.1,8.3) {stepsize $\alpha = m/M$};
+\node[font=\large, text=stblue] at (4.1,7.6) {constant decrease $\gamma$ per step};
+
+% Phase II region
+\fill[sage, opacity=0.04] (8.2,0.05) rectangle (14.8,9.5);
+\node[font=\Large\bfseries, text=sage] at (11.5,9.0) {Phase II: Pure Newton};
+\node[font=\large, text=sage] at (11.5,8.3) {stepsize $\alpha = 1$};
+\node[font=\large, text=sage] at (11.5,7.6) {quadratic (double-exp) convergence};
+
+% Phase boundary
+\draw[wmgray, line width=1.2pt, dashed] (8.2,0) -- (8.2,9.5);
+\node[font=\large, text=wmgray] at (8.2,-0.6) {$\|\nabla f(x_k)\| = \eta$};
+
+% Phase I: Linear decrease
+\draw[stblue, line width=2.2pt] plot coordinates {(0.6,7.0) (1.8,6.4) (3.0,5.8) (4.2,5.2) (5.4,4.6) (6.6,4.0) (8.2,3.0)};
+\foreach \x/\y in {0.6/7.0, 1.8/6.4, 3.0/5.8, 4.2/5.2, 5.4/4.6, 6.6/4.0, 8.2/3.0} {
+  \fill[stblue] (\x,\y) circle (3.5pt);
+}
+
+% Phase II: Rapid drop
+\draw[sage, line width=2.2pt] plot[smooth, tension=0.4]
+  coordinates {(8.2,3.0) (9.4,1.8) (10.6,0.7) (11.8,0.25) (12.6,0.1) (13.4,0.04)};
+\foreach \x/\y in {8.2/3.0, 9.4/1.8, 10.6/0.7, 11.8/0.25, 12.6/0.1} {
+  \fill[sage] (\x,\y) circle (3.5pt);
+}
+
+% p* line
+\draw[terracotta, dashed, line width=0.8pt] (0,0) -- (14.5,0);
+\node[font=\large, text=terracotta, anchor=south west] at (14.6,0.1) {$p^*$};
+
+% Gamma annotation
+\draw[rwgold, line width=1.2pt] (1.4,7.0) -- (1.4,6.4);
+\draw[rwgold, line width=0.8pt] (1.1,7.0) -- (1.7,7.0);
+\draw[rwgold, line width=0.8pt] (1.1,6.4) -- (1.7,6.4);
+\node[font=\large, text=rwgold, anchor=west] at (1.8,6.7) {$\gamma$};
+
+% Log scale note box — positioned in upper Phase II area, clear of curve
+\draw[wmgray, rounded corners=5pt, line width=0.6pt] (9.0,5.0) rectangle (14.6,6.4);
+\fill[wmgray, opacity=0.05, rounded corners=5pt] (9.0,5.0) rectangle (14.6,6.4);
+\node[font=\large, text=dkbrown] at (11.8,5.9) {On a log scale, Phase II error};
+\node[font=\large, text=dkbrown] at (11.8,5.3) {decreases as $(1/2)^{2^{k-k_0}}$};
+
+% Complexity annotation at bottom
+\draw[terracotta, opacity=0.1, rounded corners=5pt] (-1.0,-3.2) rectangle (16.0,-2.3);
+\node[font=\large, text=dkbrown] at (7.5,-2.75) {Total iterations: $K(\varepsilon) = (f(x^0) - p^*)/\gamma + \log\log(2m^2/(L^2\varepsilon))$};
+
+\end{tikzpicture}
+\end{document}

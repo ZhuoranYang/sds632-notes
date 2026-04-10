@@ -1,0 +1,52 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc, fit, decorations.pathreplacing}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+
+\begin{document}
+\begin{tikzpicture}[
+  every node/.style={text=dkbrown, font=\large},
+  condbox/.style={rounded corners=6pt, line width=1.5pt, minimum height=1.8cm, minimum width=84mm, align=left, inner sep=10pt, text=dkbrown},
+  >=Stealth[length=4mm, width=3mm],
+]
+
+% Background
+\fill[cream, rounded corners=14pt] (-1,-10.2) rectangle (20,1.5);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-1,-10.2) rectangle (20,1.5);
+
+% Title
+\node[font=\LARGE\bfseries, text=dkbrown] at (9.5,0.6) {The Four KKT Conditions};
+
+% Condition 1: Primal Feasibility
+\node[condbox, fill=sage!12, draw=sage] (c1) at (4.5,-1.6) {\textbf{1. Primal Feasibility}\\[3pt] $f_i(x) \leq 0$, \quad $h_j(x) = 0$};
+
+% Condition 2: Dual Feasibility
+\node[condbox, fill=stblue!12, draw=stblue] (c2) at (14.5,-1.6) {\textbf{2. Dual Feasibility}\\[3pt] $\lambda_i \geq 0$ for all $i \in [m]$};
+
+% Condition 3: Complementary Slackness
+\node[condbox, fill=rwgold!12, draw=rwgold] (c3) at (4.5,-4.3) {\textbf{3. Complementary Slackness}\\[3pt] $\lambda_i \cdot f_i(x) = 0$ for all $i$};
+
+% Condition 4: Stationarity
+\node[condbox, fill=lavender!12, draw=lavender] (c4) at (14.5,-4.3) {\textbf{4. Stationarity}\\[3pt] $\nabla f + \sum \lambda_i \nabla f_i + \sum \mu_j \nabla h_j = 0$};
+
+% Central conclusion box
+\node[rounded corners=6pt, fill=terracotta!12, draw=terracotta, line width=1.8pt, minimum height=1.4cm, minimum width=100mm, align=center, font=\Large\bfseries, text=terracotta, inner sep=8pt] (conclusion) at (9.5,-6.8) {KKT satisfied\; $\Longleftrightarrow$\; Optimality\; (when Slater holds)};
+
+% Interpretation annotation
+\draw[wmgray, line width=0.8pt, dashed, rounded corners=6pt] (-0.2,-8.0) rectangle (19.2,-9.5);
+\node[font=\large\itshape, text=dkbrown] at (9.5,-8.45) {Complementary slackness: either the constraint is tight ($f_i = 0$) or the multiplier is zero ($\lambda_i = 0$).};
+\node[font=\large\itshape, text=dkbrown] at (9.5,-9.05) {Stationarity: the gradient of the Lagrangian vanishes at the optimal primal point.};
+
+\end{tikzpicture}
+\end{document}

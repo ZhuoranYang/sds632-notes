@@ -1,0 +1,108 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc, fit, decorations.pathreplacing}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+
+\begin{document}
+\begin{tikzpicture}[
+  every node/.style={text=dkbrown, font=\large},
+  >=Stealth[length=4mm, width=3mm],
+]
+
+% Background
+\fill[cream, rounded corners=14pt] (-2,-5.5) rectangle (18,10);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-2,-5.5) rectangle (18,10);
+
+% Title
+\node[font=\LARGE\bfseries, text=dkbrown] at (8,9.2) {Barrier Method: Warm-Starting Along the Central Path};
+
+% Feasible region (larger, more room for labels)
+\draw[sage, line width=1.5pt] plot[smooth cycle, tension=0.7]
+  coordinates {(0.8,0.8) (3.2,-0.2) (9.6,0.2) (14,1.6) (15,4.0) (13,6.8) (6.5,7.5) (2.2,6.4) (0.2,3.8)};
+\fill[sage, opacity=0.06] plot[smooth cycle, tension=0.7]
+  coordinates {(0.8,0.8) (3.2,-0.2) (9.6,0.2) (14,1.6) (15,4.0) (13,6.8) (6.5,7.5) (2.2,6.4) (0.2,3.8)};
+
+% Feasible region label (bottom-left, outside the path)
+\node[font=\normalsize, text=sage, anchor=north west] at (0.0,-0.2) {Feasible region};
+\node[font=\normalsize, text=sage, anchor=north west] at (0.0,-0.7) {$\{x : f_i(x) < 0,\; Ax = b\}$};
+
+% Central path (curved dashed, well spaced)
+\draw[rwgold, line width=2.5pt, dashed] plot[smooth, tension=0.5]
+  coordinates {(3.5,5.0) (5.8,4.2) (8.0,3.4) (10.2,2.8) (12.2,2.2) (13.8,1.8)};
+
+% Newton iterations at each subproblem (blue inner-loop paths)
+% Newton for t^0
+\draw[stblue, line width=1.2pt, opacity=0.7] plot[smooth, tension=0.5]
+  coordinates {(2.2,5.8) (2.8,5.4) (3.2,5.1) (3.5,5.0)};
+\fill[stblue, opacity=0.6] (2.2,5.8) circle (3pt);
+\fill[stblue, opacity=0.6] (2.8,5.4) circle (3pt);
+
+% Newton for t^1
+\draw[stblue, line width=1.2pt, opacity=0.7] plot[smooth, tension=0.5]
+  coordinates {(5.0,4.4) (6.4,3.9) (7.4,3.6) (8.0,3.4)};
+\fill[stblue, opacity=0.6] (5.0,4.4) circle (3pt);
+\fill[stblue, opacity=0.6] (6.4,3.9) circle (3pt);
+
+% Newton for t^2
+\draw[stblue, line width=1.2pt, opacity=0.7] plot[smooth, tension=0.5]
+  coordinates {(9.2,3.2) (10.0,2.9) (10.8,2.6) (12.2,2.2)};
+\fill[stblue, opacity=0.6] (9.2,3.2) circle (3pt);
+\fill[stblue, opacity=0.6] (10.0,2.9) circle (3pt);
+
+% Points along central path (gold dots with white ring)
+\fill[rwgold] (3.5,5.0) circle (6pt);
+\draw[white, line width=1pt] (3.5,5.0) circle (6pt);
+
+\fill[rwgold] (8.0,3.4) circle (5.5pt);
+\draw[white, line width=1pt] (8.0,3.4) circle (5.5pt);
+
+\fill[rwgold] (12.2,2.2) circle (5.5pt);
+\draw[white, line width=1pt] (12.2,2.2) circle (5.5pt);
+
+% x* (optimal, terracotta, larger)
+\fill[terracotta] (13.8,1.8) circle (8pt);
+\draw[white, line width=1.5pt] (13.8,1.8) circle (8pt);
+
+% Labels for central path points (positioned to avoid overlap)
+\node[font=\large\bfseries, text=rwgold, anchor=south east] at (3.2,5.4) {$x^*(t^0)$};
+\node[font=\normalsize, text=wmgray, anchor=east] at (2.6,4.6) {analytic center};
+
+\node[font=\large\bfseries, text=rwgold, anchor=south] at (8.0,3.8) {$x^*(t^1)$};
+
+\node[font=\large\bfseries, text=rwgold, anchor=south west] at (12.4,2.6) {$x^*(t^2)$};
+
+\node[font=\Large\bfseries, text=terracotta, anchor=west] at (14.4,1.5) {$x^*$};
+
+% Central path label (above the path, clear area)
+\node[font=\large\itshape, text=rwgold] at (10.0,5.2) {Central path};
+\node[font=\large, text=rwgold] at (10.0,4.7) {$\{x^*(t) : t > 0\}$};
+\draw[rwgold, line width=0.5pt, ->] (8.8,4.7) -- (8.2,3.7);
+
+% t increasing annotation
+\draw[->, line width=1.2pt, wmgray] (4.5,-1.5) -- (13,-1.5);
+\node[font=\large, text=wmgray] at (8.75,-2.0) {$t$ increasing\quad ($t^{k+1} = \mu \cdot t^k$)};
+\node[font=\large, text=wmgray] at (8.75,-2.6) {Duality gap:\; $f(x^*(t)) - p^* \leq m/t \to 0$};
+
+% Legend
+\draw[rwgold, line width=2pt, dashed] (0.0,-3.5) -- (1.6,-3.5);
+\node[font=\large, text=dkbrown, anchor=west] at (1.8,-3.5) {Central path};
+\draw[stblue, line width=1.2pt] (5.2,-3.5) -- (6.6,-3.5);
+\fill[stblue, opacity=0.6] (5.9,-3.5) circle (3pt);
+\node[font=\large, text=dkbrown, anchor=west] at (6.8,-3.5) {Newton iterations (inner loop)};
+
+% Key insight text (no box)
+\node[font=\large\bfseries, text=lavender] at (8,-4.5) {Key: Warm-start each $(P_t)$ using the previous solution $x^*(t^k)$};
+
+\end{tikzpicture}
+\end{document}

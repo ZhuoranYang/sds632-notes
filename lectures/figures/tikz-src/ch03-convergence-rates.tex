@@ -1,0 +1,82 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc, fit, decorations.pathreplacing}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+\definecolor{rosewood}{HTML}{AD8480}
+
+\begin{document}
+\begin{tikzpicture}[
+  every node/.style={text=dkbrown, font=\large},
+  >=Stealth[length=4mm, width=3mm],
+]
+
+% Background
+\fill[cream, rounded corners=14pt] (-2,-3.5) rectangle (18,11);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-2,-3.5) rectangle (18,11);
+
+% Title
+\node[font=\LARGE\bfseries, text=dkbrown] at (8,10.2) {Comparison of Convergence Rates};
+
+% Axes
+\draw[->, line width=1pt, dkbrown] (0,0) -- (15.5,0) node[right, font=\large] {iteration $k$};
+\draw[->, line width=1pt, dkbrown] (0,0) -- (0,9) node[above, font=\large] {$\log e_k$};
+
+% Grid lines
+\foreach \y in {1.5,3,4.5,6,7.5} {
+  \draw[wmgray, opacity=0.15, line width=0.5pt] (0,\y) -- (15,\y);
+}
+
+% Tick labels
+\foreach \x/\lab in {2.5/2, 5/4, 7.5/6, 10/8, 12.5/10, 15/12} {
+  \node[font=\large, text=wmgray] at (\x,-0.4) {\lab};
+}
+
+% Sublinear: e_k = C/sqrt(k)
+\draw[rosewood, line width=2.5pt] plot[smooth, tension=0.4]
+  coordinates {(0.6,8.0) (2.5,6.8) (5,5.6) (7.5,4.7) (10,4.1) (12.5,3.7) (15,3.3)};
+\foreach \x/\y in {0.6/8.0, 5/5.6, 10/4.1, 15/3.3} {
+  \fill[rosewood] (\x,\y) circle (3pt);
+}
+\node[font=\Large\bfseries, text=rosewood, fill=cream, inner sep=3pt,
+      rounded corners=2pt, anchor=west] at (10.5,5.2)
+  {Sublinear: $e_k \sim C/\sqrt{k}$};
+
+% Linear: e_k = C*q^k (straight line on log scale)
+\draw[stblue, line width=2.5pt] plot[smooth]
+  coordinates {(0.6,8.0) (2.5,7.0) (5,5.8) (7.5,4.6) (10,3.3) (12.5,2.1) (15,0.9)};
+\foreach \x/\y in {0.6/8.0, 5/5.8, 10/3.3, 15/0.9} {
+  \fill[stblue] (\x,\y) circle (3pt);
+}
+\node[font=\Large\bfseries, text=stblue, fill=cream, inner sep=3pt,
+      rounded corners=2pt, anchor=west] at (10.5,2.8)
+  {Linear: $e_k \sim Cq^k$};
+
+% Quadratic: e_k = q^(2^k) -- drops incredibly fast
+\draw[sage, line width=2.5pt] plot[smooth, tension=0.4]
+  coordinates {(0.6,8.0) (2.5,7.4) (5,5.9) (6.8,3.7) (8,1.2) (8.8,0.25)};
+\foreach \x/\y in {0.6/8.0, 2.5/7.4, 5/5.9, 6.8/3.7, 8/1.2, 8.8/0.25} {
+  \fill[sage] (\x,\y) circle (3.5pt);
+}
+\node[font=\Large\bfseries, text=sage, fill=cream, inner sep=3pt,
+      rounded corners=2pt, anchor=west] at (9.5,1.8)
+  {Quadratic: $e_k \sim q^{2^k}$};
+\draw[sage, line width=0.8pt, ->] (9.4,1.6) -- (8.9,0.5);
+
+% Bottom annotation
+\draw[wmgray, rounded corners=5pt, line width=0.6pt] (0,-2.8) rectangle (16,-2.0);
+\fill[wmgray, opacity=0.04, rounded corners=5pt] (0,-2.8) rectangle (16,-2.0);
+\node[font=\large\itshape, text=dkbrown] at (8,-2.4) {On a log scale: sublinear flattens, linear is a straight line, quadratic plummets.};
+
+\end{tikzpicture}
+\end{document}

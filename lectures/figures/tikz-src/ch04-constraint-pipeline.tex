@@ -1,0 +1,83 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc, fit, decorations.pathreplacing}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+\definecolor{rosewood}{HTML}{AD8480}
+
+\begin{document}
+\begin{tikzpicture}[
+  every node/.style={text=dkbrown, font=\large},
+  stepbox/.style={rounded corners=6pt, line width=1.5pt, minimum height=3.0cm, minimum width=46mm, align=center, text=dkbrown, inner sep=7pt},
+  >=Stealth[length=4mm, width=3mm],
+]
+
+% Background
+\fill[cream, rounded corners=14pt] (-0.5,-6.2) rectangle (21.5,1.5);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-0.5,-6.2) rectangle (21.5,1.5);
+
+% Title
+\node[font=\LARGE\bfseries, text=dkbrown] at (10.5,0.6) {From Equality Constraints to Full Inequality Constraints};
+
+% Step 1
+\node[stepbox, fill=sage!12, draw=sage] (s1) at (2.8,-2.0) {%
+  \textbf{Equality-Constrained}\\[2pt]
+  \textbf{Newton}\\[-1pt]
+  \rule{38mm}{0.4pt}\\[3pt]
+  {$\min f(x)$ s.t.\ $Ax=b$}\\[2pt]
+  {Solve KKT system via}\\[1pt]
+  {Newton--Raphson}
+};
+
+% Step 2
+\node[stepbox, fill=rwgold!12, draw=rwgold] (s2) at (10.5,-2.0) {%
+  \textbf{Log Barrier \&}\\[2pt]
+  \textbf{Barrier Method}\\[-1pt]
+  \rule{38mm}{0.4pt}\\[3pt]
+  {$\min\, t\,f(x) + \phi(x)$}\\[2pt]
+  {Sequence of smooth}\\[1pt]
+  {problems, $t$ increasing}
+};
+
+% Step 3
+\node[stepbox, fill=stblue!12, draw=stblue] (s3) at (18.2,-2.0) {%
+  \textbf{Primal--Dual}\\[2pt]
+  \textbf{Interior Point}\\[-1pt]
+  \rule{38mm}{0.4pt}\\[3pt]
+  {Newton on perturbed}\\[2pt]
+  {KKT: update $(x, \lambda, \nu)$}\\[1pt]
+  {simultaneously}
+};
+
+% Arrows between steps (with more room for labels)
+\draw[->, line width=1.5pt, sage] (s1.east) -- (s2.west)
+  node[midway, above, font=\large, text=sage, yshift=2pt] {add}
+  node[midway, below, font=\large, text=sage, yshift=-2pt] {barrier};
+\draw[->, line width=1.5pt, stblue] (s2.east) -- (s3.west)
+  node[midway, above, font=\large, text=stblue, yshift=2pt] {Newton}
+  node[midway, below, font=\large, text=stblue, yshift=-2pt] {on KKT};
+
+% Key insight banner
+\draw[rosewood, line width=1pt, dashed, rounded corners=6pt] (1.5,-4.5) rectangle (19.5,-5.5);
+\fill[rosewood, opacity=0.06, rounded corners=6pt] (1.5,-4.5) rectangle (19.5,-5.5);
+\node[font=\large\bfseries, text=dkbrown] at (4.8,-4.8) {Key Idea:};
+\node[font=\large, text=dkbrown, anchor=west] at (6.1,-4.8) {Replace hard inequality constraints $f_i(x) \leq 0$ with};
+\node[font=\large, text=dkbrown] at (10.5,-5.2) {smooth log barrier $\phi(x) = -\sum \log(-f_i(x))$};
+
+% Bottom labels
+\node[font=\normalsize, text=sage] at (2.8,-5.9) {Handles $Ax = b$};
+\node[font=\normalsize, text=rwgold, align=center] at (10.5,-5.9) {+ inequalities $f_i(x) \leq 0$};
+\node[font=\normalsize, text=stblue, align=center] at (18.2,-5.9) {Infeasible start OK};
+
+\end{tikzpicture}
+\end{document}

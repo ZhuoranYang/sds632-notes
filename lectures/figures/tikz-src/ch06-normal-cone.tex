@@ -1,0 +1,122 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, calc}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+
+\begin{document}
+\begin{tikzpicture}[>={Stealth[length=4mm, width=3mm]}]
+
+% Background
+\fill[cream, rounded corners=14pt] (-0.5,-2.2) rectangle (13.5,10.8);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-0.5,-2.2) rectangle (13.5,10.8);
+
+% Title
+\node[text=dkbrown, font=\Large\bfseries] at (6.5,10.0)
+  {Normal Cone $N_{\mathcal{C}}(x) = \partial I_{\mathcal{C}}(x)$};
+
+% ================================================================
+% Convex set C — smooth blob
+% ================================================================
+\fill[sage, opacity=0.15]
+  plot[smooth cycle, tension=0.75] coordinates {
+    (0.8,3.2) (1.4,5.5) (2.6,7.0) (4.6,7.4)
+    (6.6,7.0) (7.8,5.6) (8.1,4.0) (7.0,2.2)
+    (4.6,1.6) (2.1,1.8)
+  };
+\draw[sage!80!black, line width=2pt]
+  plot[smooth cycle, tension=0.75] coordinates {
+    (0.8,3.2) (1.4,5.5) (2.6,7.0) (4.6,7.4)
+    (6.6,7.0) (7.8,5.6) (8.1,4.0) (7.0,2.2)
+    (4.6,1.6) (2.1,1.8)
+  };
+
+% Label C
+\node[text=sage!70!black, font=\LARGE\bfseries] at (2.8,3.3) {$\mathcal{C}$};
+
+% ================================================================
+% Boundary point x and normal cone
+% ================================================================
+% Point x on the right side of the boundary
+% Boundary neighbors: (7.8,5.6) -> (8.1,4.0) -> (7.0,2.2)
+% Outward normal at (8.1,4.0) points roughly to the right
+\coordinate (x) at (8.1,4.0);
+
+% Normal cone shaded region — cone emanating outward from x
+% Central direction ~ 7 degrees, cone edges at +37 and -23 (60-degree spread)
+\fill[lavender, opacity=0.13]
+  (x) -- ++(37:4.5cm) arc[start angle=37, end angle=-23, radius=4.5cm] -- cycle;
+\draw[lavender!60!black, line width=0.8pt, dashed]
+  (x) -- ++(37:4.5cm);
+\draw[lavender!60!black, line width=0.8pt, dashed]
+  (x) -- ++(-23:4.5cm);
+
+% Normal cone arrows from x — three directions evenly within the cone
+% Arrows at 22, 7, -8 degrees (well inside the 37/-23 edges)
+\draw[lavender!80!black, line width=2pt, ->]
+  (x) -- ++(22:3.0cm);
+\node[text=lavender!70!black, font=\large, above right=2pt]
+  at ($(x)+(22:3.0cm)$) {$g_1$};
+
+\draw[lavender!80!black, line width=2pt, ->]
+  (x) -- ++(7:3.4cm);
+\node[text=lavender!70!black, font=\large, right=3pt]
+  at ($(x)+(7:3.4cm)$) {$g_2$};
+
+\draw[lavender!80!black, line width=2pt, ->]
+  (x) -- ++(-9:2.8cm);
+\node[text=lavender!70!black, font=\large, below right=2pt]
+  at ($(x)+(-9:2.8cm)$) {$g_3$};
+
+% Normal cone label — positioned above the cone region
+\node[text=lavender!70!black, font=\large\bfseries]
+  at (11.6,7.4) {$N_{\mathcal{C}}(x)$};
+\draw[lavender!60!black, line width=0.8pt, ->]
+  (11.6,7.0) to[out=-100, in=50] ($(x)+(28:2.0cm)$);
+
+% Point x (drawn on top of everything)
+\fill[terracotta] (x) circle (5pt);
+\draw[white, line width=1pt] (x) circle (5pt);
+\node[text=terracotta, font=\Large\bfseries, below left=6pt and 2pt] at (x) {$x$};
+
+% ================================================================
+% Interior point x_int with trivial normal cone
+% ================================================================
+\coordinate (xint) at (4.3,4.6);
+
+\fill[stblue!80!black] (xint) circle (4pt);
+\draw[white, line width=0.8pt] (xint) circle (4pt);
+\node[text=stblue!80!black, font=\large\bfseries, below=6pt] at (xint)
+  {$x_{\mathrm{int}}$};
+
+% Zero vector annotation — callout box above the interior point
+\node[text=stblue!70!black, font=\large, align=center,
+      fill=cream, inner sep=5pt, rounded corners=3pt,
+      draw=stblue!30, line width=0.8pt]
+  at (4.3,6.3) {$N_{\mathcal{C}}(x_{\mathrm{int}}) = \{0\}$};
+\draw[stblue!50, line width=0.8pt, ->]
+  (4.3,5.8) -- ($(xint)+(0,0.25)$);
+
+% ================================================================
+% Annotation box at the bottom
+% ================================================================
+\node[text=dkbrown, font=\large,
+      fill=cream, inner sep=10pt,
+      draw=border, line width=1pt, rounded corners=6pt]
+  at (6.5,-1.2)
+  {$\partial I_{\mathcal{C}}(x) = N_{\mathcal{C}}(x)
+   = \bigl\{\, y : \langle y,\, z - x \rangle \leq 0
+   \;\;\forall\, z \in \mathcal{C} \,\bigr\}$};
+
+\end{tikzpicture}
+\end{document}

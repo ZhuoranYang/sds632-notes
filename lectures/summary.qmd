@@ -1,0 +1,254 @@
+---
+number-sections: false
+---
+
+# Course Summary {.unnumbered}
+
+This course traced an arc from the classical duality theory of convex
+optimization, through second-order and first-order algorithmic
+paradigms, to the modern interface between optimization and deep
+learning. We began by reviewing convex analysis and developing
+Lagrangian duality---the theoretical lens through which constraints,
+optimality conditions, and algorithmic design are best understood. We
+then studied Newton and interior point methods, which exploit curvature
+information to achieve rapid (often polynomial-time) convergence for
+structured problems. The bulk of the course was devoted to first-order
+methods---gradient descent, subgradient methods, proximal gradient,
+mirror descent, and Nesterov's acceleration---where we established a
+precise hierarchy of convergence rates and proved that acceleration is
+optimal among all first-order methods. Finally, we connected this
+algorithmic toolkit to modern deep learning by showing how optimization
+problems can be embedded as differentiable layers inside neural
+networks.
+
+
+## Part I: Preliminaries (Chapter 1) {.unnumbered}
+
+Chapter 1 set the stage by reviewing the prerequisite material from
+S&DS 431/631: convex sets, convex functions, operations preserving
+convexity, norms and dual norms, and first-order optimality conditions.
+
+
+## Part II: Duality (Chapters 2--3) {.unnumbered}
+
+Chapter 2 developed **Lagrange duality** in depth. Starting from the
+Lagrangian $L(x, \lambda, \nu)$ and the dual function
+$g(\lambda, \nu) = \inf_x L(x, \lambda, \nu)$, we proved weak duality
+($g(\lambda, \nu) \leq p^*$ for all feasible dual variables) and
+established Slater's condition as a sufficient criterion for strong
+duality ($g(\lambda^*, \nu^*) = p^*$). The KKT conditions emerged as
+necessary and sufficient optimality conditions under strong duality,
+providing a certificate that an algorithm can use to verify convergence.
+
+Chapter 3 introduced the conjugate function
+$f^*(y) = \sup_x \{\langle y, x \rangle - f(x)\}$ and the
+biconjugation theorem $f^{**} = f$ for closed convex functions, which
+unified many duality results and reappeared in later chapters on
+proximal and mirror descent. We used conjugates to re-derive Lagrange
+duality, established the fundamental correspondence between smoothness
+and strong convexity, and proved strong duality under Slater's
+condition via the separating hyperplane theorem.
+
+
+## Part III: Second-Order Methods (Chapters 4--5) {.unnumbered}
+
+In Chapter 4 we studied **Newton's method**, which replaces the gradient
+step with a step that also accounts for curvature via the Hessian:
+$x^{k+1} = x^k - [\nabla^2 f(x^k)]^{-1} \nabla f(x^k)$. We analyzed
+the method in two phases. In the *damped Newton phase*, when the iterate
+is far from the optimum, a backtracking line search guarantees a fixed
+decrease in the objective per step. In the *pure Newton phase*, once the
+iterate enters a neighborhood of the minimizer, the method achieves
+**quadratic convergence**:
+$\|x^{k+1} - x^*\| \leq C \|x^k - x^*\|^2$, meaning the number of
+correct digits doubles at every iteration. The Newton decrement
+$\lambda(x) = (\nabla f(x)^\top [\nabla^2 f(x)]^{-1} \nabla f(x))^{1/2}$
+served as an affine-invariant measure of proximity to the optimum.
+
+Chapter 5 developed **interior point methods** for constrained convex
+optimization. The key idea is to replace inequality constraints with a
+logarithmic barrier $\phi(x) = -\sum_i \log(-f_i(x))$, converting the
+constrained problem into a sequence of unconstrained problems
+parametrized by a barrier parameter $t > 0$. As $t \to \infty$, the
+solutions trace the **central path** and converge to the constrained
+optimum. Each problem on the central path is solved (approximately) by
+Newton's method, and the barrier parameter is increased by a fixed
+multiplicative factor at each outer iteration. This yields an overall
+complexity of $O(\sqrt{m} \log(1/\varepsilon))$ Newton steps for $m$
+constraints---a polynomial-time algorithm that is both theoretically
+elegant and practically efficient.
+
+
+## Part IV: First-Order Methods (Chapters 6--10) {.unnumbered}
+
+The heart of the course was the systematic study of first-order methods,
+which access the objective only through gradient (or subgradient)
+evaluations and are the methods of choice for large-scale problems.
+
+**Gradient descent** (Chapter 6) served as the baseline. We proved
+convergence rates under three settings: $O(1/k)$ for smooth convex
+functions, linear convergence $O((1 - \mu/L)^k)$ for $\mu$-strongly
+convex and $L$-smooth functions (with condition number
+$\kappa = L/\mu$), and a stationary-point guarantee for nonconvex
+smooth functions. We also introduced **projected gradient descent** for
+constrained problems, which simply projects each iterate back onto the
+feasible set.
+
+**Subgradient methods** (Chapter 7) extended the framework to nonsmooth
+convex functions. Since the subgradient need not be a descent direction,
+the analysis required tracking the best iterate rather than the last.
+With a diminishing step size $\alpha^k = O(1/\sqrt{k})$, the method
+achieves $O(1/\sqrt{k})$ convergence---slower than gradient descent, but
+applicable to a much broader class of problems.
+
+**Proximal gradient** (Chapter 8) provided a unifying framework for
+composite optimization problems of the form $\min_x f(x) + g(x)$, where
+$f$ is smooth and $g$ is convex but possibly nonsmooth (e.g., an
+$\ell_1$ penalty). The proximal operator
+$\operatorname{prox}_{\alpha g}(x) = \operatorname*{argmin}_u \{g(u) + \frac{1}{2\alpha}\|u - x\|_2^2\}$
+generalizes both the gradient step and the projection step. The
+resulting algorithm, ISTA (Iterative Shrinkage-Thresholding Algorithm),
+converges at $O(1/k)$ for convex objectives and at a linear rate under
+strong convexity.
+
+**Mirror descent** (Chapter 9) generalized gradient descent to
+non-Euclidean geometries. By replacing the squared Euclidean distance
+with a **Bregman divergence**
+$D_\phi(x, y) = \phi(x) - \phi(y) - \langle \nabla \phi(y), x - y \rangle$
+induced by a strongly convex mirror map $\phi$, the algorithm adapts to
+the geometry of the constraint set. The canonical example is the
+simplex: using the negative entropy $\phi(x) = \sum_i x_i \log x_i$
+yields the **exponentiated gradient** (multiplicative weights) update,
+which achieves $O(\sqrt{\log n / k})$ convergence on the
+$n$-simplex---exponentially better in dimension than projected gradient
+descent.
+
+**Accelerated gradient methods** (Chapter 10) closed the gap between
+gradient descent and the information-theoretic limits. Nesterov's
+celebrated construction of hard instances proved that no first-order
+method can converge faster than $\Omega(1/k^2)$ for smooth convex
+functions or $\Omega\!\bigl(\exp(-k/\sqrt{\kappa})\bigr)$ for strongly
+convex functions. His accelerated gradient method matches both lower
+bounds, achieving $O(1/k^2)$ and
+$O\!\bigl(\exp(-k/\sqrt{\kappa})\bigr)$ respectively, by introducing a
+momentum (extrapolation) step. The estimate sequence technique provided
+a unifying proof framework, and FISTA (Fast ISTA) extended acceleration
+to the composite proximal setting. Restart strategies made acceleration
+practical when the strong convexity parameter is unknown.
+
+
+## Part V: Applications in Deep Learning {.unnumbered}
+
+The final part of the course connected the optimization theory developed
+throughout the course to modern deep learning.
+
+We studied **implicit layers**---the idea of embedding an
+optimization problem as a differentiable layer inside a neural network.
+The forward pass solves an optimization problem (parametrized by the
+layer's input), and the backward pass differentiates through the
+optimality conditions using the **implicit function theorem**. For
+unconstrained problems, this reduces to differentiating through the
+stationarity condition $\nabla_x f(x^*(\theta), \theta) = 0$; for
+constrained problems, we differentiate through the full KKT system. This
+paradigm connects duality and KKT conditions from Chapters 2--3 to
+end-to-end deep learning, enabling applications in bilevel optimization,
+hyperparameter tuning, meta-learning, and structured prediction. Deep
+equilibrium models (DEQs), which define a layer's output as the fixed
+point of an implicit equation, are a prominent example of this approach.
+
+
+## Convergence Rates at a Glance {.unnumbered}
+
+The following table summarizes the convergence guarantees established in
+the course. Here $k$ denotes the iteration count, $L$ the smoothness
+constant, $\mu$ the strong convexity parameter,
+$\kappa = L/\mu$ the condition number, $m$ the number of inequality
+constraints, and $n$ the dimension.
+
+| **Method** | **Problem Class** | **Rate** | **Per-Iteration Cost** | **Key Assumption** |
+|---|---|---|---|---|
+| GD | Smooth convex | $O(1/k)$ | $O(n)$ | $L$-smooth |
+| GD | Strongly convex | $O((1 - 1/\kappa)^k)$ | $O(n)$ | $\mu$-strongly convex, $L$-smooth |
+| Subgradient | Convex | $O(1/\sqrt{k})$ | $O(n)$ | Bounded subgradients |
+| Proximal GD (ISTA) | Composite convex | $O(1/k)$ | $O(n) +$ prox eval | $f$ smooth, $g$ prox-friendly |
+| Mirror descent | Convex | $O(1/\sqrt{k})$ | $O(n) +$ mirror map | Bounded domain, Bregman div. |
+| Accelerated GD | Smooth convex | $O(1/k^2)$ | $O(n)$ | $L$-smooth |
+| Accelerated GD | Strongly convex | $O(\exp(-k/\sqrt{\kappa}))$ | $O(n)$ | $\mu$-strongly convex, $L$-smooth |
+| Newton (pure phase) | Self-concordant | Quadratic | $O(n^3)$ | Hessian available, close to $x^*$ |
+| Newton (damped phase) | Self-concordant | Linear | $O(n^3)$ | Hessian available |
+| Interior point | Constrained convex | $O(\sqrt{m}\log(1/\varepsilon))$ Newton steps | $O(n^3)$ per Newton step | $m$ inequality constraints |
+
+: {tbl-colwidths="[18,18,22,22,20]"}
+
+::: {.callout-important}
+## Lower Bound
+
+Nesterov (1983) proved that for any first-order method operating on
+$L$-smooth convex functions, there exists a function for which the
+convergence rate is no better than $\Omega(1/k^2)$. This means that
+accelerated gradient descent is **optimal** among first-order methods
+for smooth convex optimization. Similarly, for $\mu$-strongly convex and
+$L$-smooth functions, the optimal first-order rate is
+$\Omega\!\bigl(\exp(-k/\sqrt{\kappa})\bigr)$.
+:::
+
+
+## Connections to Research {.unnumbered}
+
+The material in this course provides the foundation for several active
+and rapidly evolving research directions.
+
+**Variance reduction.** Stochastic gradient descent (SGD) is the
+dominant algorithm for training machine learning models, but its
+$O(1/\sqrt{k})$ rate for convex problems is slower than the $O(1/k)$
+rate of full gradient descent. Variance-reduced methods such as SVRG
+(Johnson and Zhang, 2013) and SARAH (Nguyen et al., 2017) achieve the
+best of both worlds: they use stochastic gradient evaluations (cheap per
+iteration) while matching the $O(1/k)$ or linear convergence rates of
+full gradient methods. These algorithms exploit a control variate
+constructed from periodic full gradient evaluations, and their analysis
+builds directly on the smooth convex theory of Chapter 6.
+
+**ADMM and distributed optimization.** The Alternating Direction Method
+of Multipliers (ADMM) combines ideas from duality (Chapters 2--3) and
+proximal operators (Chapter 8) to decompose large-scale problems into
+smaller subproblems that can be solved in parallel. ADMM is widely used
+in distributed and federated optimization, where data or computation is
+spread across multiple machines. Recent work has focused on
+communication efficiency, asynchronous variants, and convergence
+guarantees for nonconvex formulations.
+
+**Nonconvex optimization landscape.** While this course focused
+primarily on convex optimization, many modern applications---including
+deep learning---involve nonconvex objectives. A growing body of work
+characterizes the optimization landscape of specific nonconvex problems
+(e.g., matrix sensing, phase retrieval, training shallow neural
+networks) and shows that, under structural assumptions, all local minima
+are global and saddle points can be escaped efficiently. These results
+often leverage the smooth convergence theory of Chapter 6 combined with
+random initialization and perturbation arguments.
+
+**Online optimization and regret bounds.** Mirror descent (Chapter 9) is
+intimately connected to online convex optimization, where an algorithm
+must make decisions sequentially against an adversary. The regret---the
+cumulative suboptimality relative to the best fixed decision in
+hindsight---can be bounded using the same Bregman divergence machinery.
+Online mirror descent achieves $O(\sqrt{T})$ regret over $T$ rounds, and
+the choice of mirror map can be tailored to the geometry of the decision
+set, just as in the offline setting. This framework underpins bandit
+algorithms, portfolio optimization, and the theoretical analysis of
+game-theoretic equilibria.
+
+
+## Acknowledgments {.unnumbered}
+
+These lecture notes were developed for S&DS 432/632 at Yale University.
+The presentation draws heavily on two outstanding courses whose publicly
+available materials shaped much of the treatment here:
+
+- **Yuxin Chen**, [*Large-Scale Optimization for Data Science*](https://yuxinchen2020.github.io/large_scale_optimization/index.html), University of Pennsylvania.
+- **Lieven Vandenberghe**, [*EE 236C: Optimization Methods for Large-Scale Systems*](https://www.seas.ucla.edu/~vandenbe/ee236c.html), UCLA.
+
+I am grateful to both for making their course materials publicly
+available; a significant portion of these lecture notes was informed by
+studying their presentations.

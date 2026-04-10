@@ -1,0 +1,746 @@
+<!--
+  Interactive Plotly Figures for SDS632 Chapter 02: Duality
+
+  Three self-contained figures:
+    1. Lagrangian Dual Function Explorer
+    2. Conjugate Function Geometric Construction
+    3. Strong Duality and Slater's Condition
+
+  Each figure is wrapped in a <div> that can be copy-pasted into a Quarto {=html} block.
+  Load Plotly CDN once at the top, then each figure is independent.
+-->
+
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+<style>
+  .interactive-figure-container {
+    font-family: 'Palatino Linotype', 'Palatino', 'Book Antiqua', 'Georgia', serif;
+    background: #f0ebe5;
+    border-radius: 8px;
+    padding: 24px 20px 16px 20px;
+    margin: 28px auto;
+    max-width: 960px;
+    box-shadow: 0 2px 12px rgba(61,53,48,0.08);
+  }
+  .interactive-figure-container h3 {
+    font-family: 'Palatino Linotype', 'Palatino', 'Book Antiqua', 'Georgia', serif;
+    color: #3d3530;
+    font-size: 1.15em;
+    font-weight: 600;
+    margin: 0 0 6px 0;
+    letter-spacing: 0.01em;
+  }
+  .interactive-figure-container .fig-subtitle {
+    color: #968a80;
+    font-size: 0.92em;
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+  }
+  .interactive-figure-container .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 14px 0 8px 0;
+    flex-wrap: wrap;
+  }
+  .interactive-figure-container .slider-row label {
+    font-size: 0.95em;
+    color: #3d3530;
+    min-width: 80px;
+  }
+  .interactive-figure-container .slider-row input[type="range"] {
+    flex: 1;
+    min-width: 180px;
+    max-width: 420px;
+    accent-color: #7b97ad;
+    height: 6px;
+  }
+  .interactive-figure-container .slider-row .slider-value {
+    font-size: 0.95em;
+    color: #b8995e;
+    font-weight: 600;
+    min-width: 60px;
+  }
+  .interactive-figure-container .dropdown-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 10px 0 6px 0;
+  }
+  .interactive-figure-container .dropdown-row label {
+    font-size: 0.95em;
+    color: #3d3530;
+  }
+  .interactive-figure-container .dropdown-row select {
+    font-family: 'Palatino Linotype', 'Palatino', 'Book Antiqua', 'Georgia', serif;
+    font-size: 0.92em;
+    padding: 4px 10px;
+    border: 1px solid #e0d9d1;
+    border-radius: 4px;
+    background: #faf7f3;
+    color: #3d3530;
+  }
+  .interactive-figure-container .panels {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .interactive-figure-container .panels > div {
+    flex: 1;
+    min-width: 300px;
+  }
+  .interactive-figure-container .info-box {
+    background: #faf7f3;
+    border-left: 3px solid #7b97ad;
+    border-radius: 0 4px 4px 0;
+    padding: 10px 14px;
+    margin: 10px 0 4px 0;
+    font-size: 0.88em;
+    color: #3d3530;
+    line-height: 1.6;
+  }
+</style>
+
+
+<!-- ============================================================
+     FIGURE 1: Lagrangian Dual Function Explorer
+     ============================================================ -->
+<div class="interactive-figure-container" id="fig1-wrapper">
+  <h3>Figure 1: Lagrangian Dual Function Explorer</h3>
+  <p class="fig-subtitle">
+    Problem: min<sub>x</sub> &frac12;x&sup2; + x &ensp; s.t. &ensp; x &ge; 1
+    &emsp;|&emsp;
+    Lagrangian: L(x, &lambda;) = &frac12;x&sup2; + x + &lambda;(1 &minus; x)
+  </p>
+  <div class="slider-row">
+    <label for="fig1-lambda">&lambda; =</label>
+    <input type="range" id="fig1-lambda" min="0" max="3" step="0.02" value="1.0">
+    <span class="slider-value" id="fig1-lambda-val">1.00</span>
+  </div>
+  <div class="panels">
+    <div id="fig1-left"></div>
+    <div id="fig1-right"></div>
+  </div>
+  <div class="info-box" id="fig1-info">
+    Drag the slider to explore how the Lagrangian changes with &lambda;.
+  </div>
+</div>
+
+<script>
+(function() {
+  const C = {
+    bg: '#f0ebe5', plotBg: '#faf7f3', text: '#3d3530', grid: '#e0d9d1',
+    axis: '#968a80', blue: '#7b97ad', gold: '#b8995e', sage: '#7a9a7e',
+    terracotta: '#c47a6a', lavender: '#907ea0', rosewood: '#ad8480'
+  };
+  const font = {family: "'Palatino Linotype','Palatino','Book Antiqua','Georgia',serif", color: C.text};
+
+  // Problem: min 0.5*x^2 + x  s.t. x >= 1  (constraint: 1-x <= 0)
+  // Lagrangian: L(x,lam) = 0.5*x^2 + x + lam*(1 - x) = 0.5*x^2 + (1-lam)*x + lam
+  // Minimizer: dL/dx = x + 1 - lam = 0 => x*(lam) = lam - 1
+  // Dual: g(lam) = L(x*(lam), lam) = 0.5*(lam-1)^2 + (1-lam)*(lam-1) + lam
+  //      = 0.5*(lam-1)^2 - (lam-1)^2 + lam = -0.5*(lam-1)^2 + lam
+  //      = -0.5*lam^2 + 2*lam - 0.5
+  // Primal: feasible x>=1, f(x)=0.5x^2+x, min at x=1 => p* = 0.5+1 = 1.5
+  // Dual: max g(lam) s.t. lam>=0 => g'(lam) = -lam+2=0 => lam*=2, g(2)=-2+4-0.5=1.5
+  // Strong duality: p*=d*=1.5
+
+  const pStar = 1.5;
+  const lamStar = 2.0;
+  const dStar = 1.5;
+
+  function lagrangian(x, lam) {
+    return 0.5*x*x + (1 - lam)*x + lam;
+  }
+  function xMinimizer(lam) {
+    return lam - 1;
+  }
+  function dual(lam) {
+    return -0.5*lam*lam + 2*lam - 0.5;
+  }
+
+  // x range for left plot
+  const xVals = [];
+  for (let x = -2; x <= 4; x += 0.05) xVals.push(x);
+
+  // lambda range for right plot (precomputed dual curve)
+  const lamVals = [];
+  const gVals = [];
+  for (let l = 0; l <= 3; l += 0.02) {
+    lamVals.push(l);
+    gVals.push(dual(l));
+  }
+
+  const axisStyle = {
+    gridcolor: C.grid, gridwidth: 1, zerolinecolor: C.axis, zerolinewidth: 1.5,
+    linecolor: C.axis, linewidth: 1, tickfont: {size: 12, ...font}, titlefont: {size: 14, ...font}
+  };
+
+  function makeLeftLayout() {
+    return {
+      paper_bgcolor: C.bg, plot_bgcolor: C.plotBg, font: font,
+      margin: {t: 36, b: 52, l: 56, r: 16},
+      title: {text: 'L(x, \u03BB) as a function of x', font: {size: 14, ...font}},
+      xaxis: {...axisStyle, title: 'x', range: [-2, 4]},
+      yaxis: {...axisStyle, title: 'L(x, \u03BB)', range: [-2, 8]},
+      showlegend: true,
+      legend: {x: 0.6, y: 0.95, bgcolor: 'rgba(250,247,243,0.85)', bordercolor: C.grid, borderwidth: 1, font: {size: 11, ...font}},
+      hovermode: 'closest'
+    };
+  }
+
+  function makeRightLayout() {
+    return {
+      paper_bgcolor: C.bg, plot_bgcolor: C.plotBg, font: font,
+      margin: {t: 36, b: 52, l: 56, r: 16},
+      title: {text: 'Dual function g(\u03BB)', font: {size: 14, ...font}},
+      xaxis: {...axisStyle, title: '\u03BB', range: [-0.2, 3.2]},
+      yaxis: {...axisStyle, title: 'g(\u03BB)', range: [-1.5, 2.5]},
+      showlegend: true,
+      legend: {x: 0.5, y: 0.95, bgcolor: 'rgba(250,247,243,0.85)', bordercolor: C.grid, borderwidth: 1, font: {size: 11, ...font}},
+      hovermode: 'closest'
+    };
+  }
+
+  const plotConfig = {displayModeBar: false, responsive: true};
+
+  function updateFig1(lam) {
+    // Left panel: L(x, lam)
+    const Lvals = xVals.map(x => lagrangian(x, lam));
+    const xStar = xMinimizer(lam);
+    const LStar = lagrangian(xStar, lam);
+
+    // The original objective
+    const fVals = xVals.map(x => 0.5*x*x + x);
+
+    const leftTraces = [
+      // Original objective (faded)
+      {x: xVals, y: fVals, mode: 'lines', line: {color: C.sage, width: 2, dash: 'dot'}, name: 'f(x) = \u00BDx\u00B2 + x'},
+      // Lagrangian
+      {x: xVals, y: Lvals, mode: 'lines', line: {color: C.blue, width: 2.5}, name: 'L(x, \u03BB)'},
+      // Minimizer point
+      {x: [xStar], y: [LStar], mode: 'markers+text', marker: {size: 10, color: C.gold, line: {width: 2, color: C.text}},
+       text: ['x*(\u03BB) = ' + xStar.toFixed(2)], textposition: 'top right', textfont: {size: 12, color: C.gold, ...font},
+       name: 'Minimizer', showlegend: false},
+      // Primal optimal value line
+      {x: [-2, 4], y: [pStar, pStar], mode: 'lines', line: {color: C.terracotta, width: 1.5, dash: 'dash'}, name: 'p* = ' + pStar.toFixed(1)},
+      // Feasible region shading: x >= 1
+      {x: [1, 1], y: [-2, 8], mode: 'lines', line: {color: C.rosewood, width: 1.5, dash: 'dashdot'}, name: 'x = 1 (constraint)', showlegend: true}
+    ];
+
+    // Right panel: dual function g(lam), highlight current point
+    const gCurrent = dual(lam);
+
+    // Build up traced portion of dual
+    const lamTraced = [];
+    const gTraced = [];
+    for (let l = 0; l <= lam + 0.001; l += 0.02) {
+      lamTraced.push(l);
+      gTraced.push(dual(l));
+    }
+
+    const rightTraces = [
+      // Full dual curve (faded)
+      {x: lamVals, y: gVals, mode: 'lines', line: {color: C.blue, width: 1.5, dash: 'dot'}, name: 'g(\u03BB) (full)', opacity: 0.4},
+      // Traced dual curve
+      {x: lamTraced, y: gTraced, mode: 'lines', line: {color: C.blue, width: 2.5}, name: 'g(\u03BB) (traced)'},
+      // Current point
+      {x: [lam], y: [gCurrent], mode: 'markers+text', marker: {size: 10, color: C.gold, line: {width: 2, color: C.text}},
+       text: ['g(' + lam.toFixed(2) + ') = ' + gCurrent.toFixed(2)], textposition: 'top left', textfont: {size: 12, color: C.gold, ...font},
+       name: 'Current', showlegend: false},
+      // Primal line
+      {x: [-0.2, 3.2], y: [pStar, pStar], mode: 'lines', line: {color: C.terracotta, width: 1.5, dash: 'dash'}, name: 'p* = ' + pStar.toFixed(1)},
+      // Dual optimal
+      {x: [lamStar], y: [dStar], mode: 'markers+text', marker: {size: 9, color: C.terracotta, symbol: 'star', line: {width: 1.5, color: C.text}},
+       text: ['d* = ' + dStar.toFixed(1)], textposition: 'bottom right', textfont: {size: 12, color: C.terracotta, ...font},
+       name: 'd* (dual optimal)', showlegend: false}
+    ];
+
+    // Duality gap annotation
+    const gap = pStar - gCurrent;
+    const gapText = gap < 0.02
+      ? 'Strong duality: p* = d* = ' + pStar.toFixed(1) + ' (zero gap!)'
+      : 'Duality gap at \u03BB = ' + lam.toFixed(2) + ':  p* \u2212 g(\u03BB) = ' + gap.toFixed(3);
+
+    document.getElementById('fig1-info').innerHTML = gapText +
+      '<br>Minimizer: x*(\u03BB) = \u03BB \u2212 1 = ' + xStar.toFixed(2) +
+      ' &emsp;|&emsp; g(\u03BB) = \u2212\u00BD\u03BB\u00B2 + 2\u03BB \u2212 \u00BD = ' + gCurrent.toFixed(3);
+
+    Plotly.react('fig1-left', leftTraces, makeLeftLayout(), plotConfig);
+    Plotly.react('fig1-right', rightTraces, makeRightLayout(), plotConfig);
+  }
+
+  document.getElementById('fig1-lambda').addEventListener('input', function() {
+    const lam = parseFloat(this.value);
+    document.getElementById('fig1-lambda-val').textContent = lam.toFixed(2);
+    updateFig1(lam);
+  });
+
+  // Initial render
+  updateFig1(1.0);
+})();
+</script>
+
+
+<!-- ============================================================
+     FIGURE 2: Conjugate Function Geometric Construction
+     ============================================================ -->
+<div class="interactive-figure-container" id="fig2-wrapper">
+  <h3>Figure 2: Conjugate Function Geometric Construction</h3>
+  <p class="fig-subtitle">
+    f*(y) = sup<sub>x</sub> { xy &minus; f(x) } &emsp;|&emsp;
+    The conjugate is the largest intercept of the line with slope y that stays below f.
+  </p>
+  <div class="dropdown-row">
+    <label for="fig2-func">Function:</label>
+    <select id="fig2-func">
+      <option value="x2" selected>f(x) = x&sup2;</option>
+      <option value="exp">f(x) = e<sup>x</sup></option>
+    </select>
+  </div>
+  <div class="slider-row">
+    <label for="fig2-y">y (slope) =</label>
+    <input type="range" id="fig2-y" min="-3" max="5" step="0.04" value="2.0">
+    <span class="slider-value" id="fig2-y-val">2.00</span>
+  </div>
+  <div class="panels">
+    <div id="fig2-left"></div>
+    <div id="fig2-right"></div>
+  </div>
+  <div class="info-box" id="fig2-info">
+    Drag the slider to change the slope y and watch the conjugate build up.
+  </div>
+</div>
+
+<script>
+(function() {
+  const C = {
+    bg: '#f0ebe5', plotBg: '#faf7f3', text: '#3d3530', grid: '#e0d9d1',
+    axis: '#968a80', blue: '#7b97ad', gold: '#b8995e', sage: '#7a9a7e',
+    terracotta: '#c47a6a', lavender: '#907ea0', rosewood: '#ad8480'
+  };
+  const font = {family: "'Palatino Linotype','Palatino','Book Antiqua','Georgia',serif", color: C.text};
+  const axisStyle = {
+    gridcolor: C.grid, gridwidth: 1, zerolinecolor: C.axis, zerolinewidth: 1.5,
+    linecolor: C.axis, linewidth: 1, tickfont: {size: 12, ...font}, titlefont: {size: 14, ...font}
+  };
+  const plotConfig = {displayModeBar: false, responsive: true};
+
+  // f(x) = x^2:  f*(y) = sup_x {xy - x^2} => x* = y/2, f*(y) = y^2/4
+  // f(x) = e^x:  f*(y) = sup_x {xy - e^x}
+  //   For y <= 0: sup = +inf not attained (actually -inf? no)
+  //   Actually: d/dx (xy - e^x) = y - e^x = 0 => x* = ln(y) (y>0)
+  //   f*(y) = y ln(y) - y  for y > 0;  f*(0) = 0;  f*(y) = +inf for y < 0
+  //   Convention: f*(y) = -inf for y < 0
+
+  const funcs = {
+    x2: {
+      f: x => x*x,
+      xStarOfY: y => y/2,
+      fStar: y => y*y/4,
+      fStarLabel: 'f*(y) = y\u00B2/4',
+      xRange: [-3, 3],
+      yFuncRange: [-0.5, 10],
+      ySliderRange: [-3, 5],
+      conjYRange: [-1, 7],
+      conjXRange: [-3.2, 5.2]
+    },
+    exp: {
+      f: x => Math.exp(x),
+      xStarOfY: y => (y > 0) ? Math.log(y) : -Infinity,
+      fStar: y => (y > 1e-8) ? y*Math.log(y) - y : 0,
+      fStarLabel: 'f*(y) = y ln y \u2212 y',
+      xRange: [-3, 3],
+      yFuncRange: [-1, 12],
+      ySliderRange: [-1, 5],
+      conjYRange: [-2, 8],
+      conjXRange: [-1.2, 5.2]
+    }
+  };
+
+  let currentFunc = 'x2';
+
+  function getXvals(range) {
+    const v = [];
+    for (let x = range[0]; x <= range[1]; x += 0.04) v.push(x);
+    return v;
+  }
+
+  function makeLeftLayout(fc) {
+    return {
+      paper_bgcolor: C.bg, plot_bgcolor: C.plotBg, font: font,
+      margin: {t: 36, b: 52, l: 56, r: 16},
+      title: {text: 'f(x) and the line yx', font: {size: 14, ...font}},
+      xaxis: {...axisStyle, title: 'x', range: fc.xRange},
+      yaxis: {...axisStyle, title: '', range: fc.yFuncRange},
+      showlegend: true,
+      legend: {x: 0.02, y: 0.98, bgcolor: 'rgba(250,247,243,0.85)', bordercolor: C.grid, borderwidth: 1, font: {size: 11, ...font}},
+      hovermode: 'closest'
+    };
+  }
+
+  function makeRightLayout(fc) {
+    return {
+      paper_bgcolor: C.bg, plot_bgcolor: C.plotBg, font: font,
+      margin: {t: 36, b: 52, l: 56, r: 16},
+      title: {text: 'Conjugate f*(y)', font: {size: 14, ...font}},
+      xaxis: {...axisStyle, title: 'y', range: fc.conjXRange},
+      yaxis: {...axisStyle, title: 'f*(y)', range: fc.conjYRange},
+      showlegend: true,
+      legend: {x: 0.02, y: 0.98, bgcolor: 'rgba(250,247,243,0.85)', bordercolor: C.grid, borderwidth: 1, font: {size: 11, ...font}},
+      hovermode: 'closest'
+    };
+  }
+
+  function updateFig2(y) {
+    const fc = funcs[currentFunc];
+    const xVals = getXvals(fc.xRange);
+
+    // f(x)
+    const fVals = xVals.map(x => fc.f(x));
+
+    // Line: yx
+    const lineVals = xVals.map(x => y * x);
+
+    // Gap: yx - f(x)
+    const gapVals = xVals.map(x => y * x - fc.f(x));
+
+    // Supremum point
+    const xStar = fc.xStarOfY(y);
+    const fStarY = fc.fStar(y);
+    const isFinite = Math.abs(xStar) < 100;
+
+    // Tangent line through the supremum point: the line yx - f*(y)
+    // This line: t(x) = yx - f*(y), passes through (xStar, f(xStar)) with slope y
+    const tangentVals = xVals.map(x => y * x - fStarY);
+
+    const leftTraces = [
+      // f(x)
+      {x: xVals, y: fVals, mode: 'lines', line: {color: C.blue, width: 2.5}, name: 'f(x)'},
+      // Line yx
+      {x: xVals, y: lineVals, mode: 'lines', line: {color: C.gold, width: 2, dash: 'dash'}, name: 'yx (slope = y)'},
+      // Tangent line yx - f*(y)
+      {x: xVals, y: tangentVals, mode: 'lines', line: {color: C.sage, width: 1.5, dash: 'dot'}, name: 'yx \u2212 f*(y)'}
+    ];
+
+    if (isFinite) {
+      const fAtStar = fc.f(xStar);
+      // Vertical gap segment at supremum
+      leftTraces.push({
+        x: [xStar, xStar], y: [fAtStar, y * xStar],
+        mode: 'lines', line: {color: C.terracotta, width: 2.5},
+        name: 'Gap = f*(y) = ' + fStarY.toFixed(2), showlegend: true
+      });
+      // Supremum point on f
+      leftTraces.push({
+        x: [xStar], y: [fAtStar],
+        mode: 'markers', marker: {size: 9, color: C.terracotta, line: {width: 1.5, color: C.text}},
+        name: 'x* = ' + xStar.toFixed(2), showlegend: false
+      });
+      // Supremum point on line
+      leftTraces.push({
+        x: [xStar], y: [y * xStar],
+        mode: 'markers', marker: {size: 9, color: C.gold, symbol: 'diamond', line: {width: 1.5, color: C.text}},
+        showlegend: false
+      });
+    }
+
+    // Right panel: conjugate
+    const yMin = (currentFunc === 'exp') ? 0.02 : fc.conjXRange[0];
+    const yMax = fc.conjXRange[1];
+    const conjYVals = [];
+    const conjFStarVals = [];
+    for (let yy = yMin; yy <= yMax; yy += 0.04) {
+      conjYVals.push(yy);
+      conjFStarVals.push(fc.fStar(yy));
+    }
+
+    // Traced portion up to current y
+    const conjYTraced = [];
+    const conjFStarTraced = [];
+    for (let yy = yMin; yy <= y + 0.001; yy += 0.04) {
+      if (yy <= yMax) {
+        conjYTraced.push(yy);
+        conjFStarTraced.push(fc.fStar(yy));
+      }
+    }
+
+    const rightTraces = [
+      // Full conjugate (faded)
+      {x: conjYVals, y: conjFStarVals, mode: 'lines', line: {color: C.lavender, width: 1.5, dash: 'dot'}, name: fc.fStarLabel + ' (full)', opacity: 0.4},
+      // Traced conjugate
+      {x: conjYTraced, y: conjFStarTraced, mode: 'lines', line: {color: C.lavender, width: 2.5}, name: fc.fStarLabel},
+    ];
+
+    if (isFinite && y >= yMin) {
+      rightTraces.push({
+        x: [y], y: [fStarY],
+        mode: 'markers+text', marker: {size: 10, color: C.gold, line: {width: 2, color: C.text}},
+        text: ['(' + y.toFixed(1) + ', ' + fStarY.toFixed(2) + ')'],
+        textposition: 'top left', textfont: {size: 12, color: C.gold, ...font},
+        name: 'Current point', showlegend: false
+      });
+    }
+
+    const infoText = isFinite
+      ? 'At y = ' + y.toFixed(2) + ':&emsp; x*(y) = ' + xStar.toFixed(3) + '&emsp;|&emsp; f*(y) = sup<sub>x</sub>{xy \u2212 f(x)} = ' + fStarY.toFixed(3)
+      : 'At y = ' + y.toFixed(2) + ':&emsp; f*(y) is not finite (supremum is unbounded)';
+    document.getElementById('fig2-info').innerHTML = infoText;
+
+    Plotly.react('fig2-left', leftTraces, makeLeftLayout(fc), plotConfig);
+    Plotly.react('fig2-right', rightTraces, makeRightLayout(fc), plotConfig);
+  }
+
+  function resetSliderRange() {
+    const fc = funcs[currentFunc];
+    const slider = document.getElementById('fig2-y');
+    slider.min = fc.ySliderRange[0];
+    slider.max = fc.ySliderRange[1];
+    if (currentFunc === 'exp') {
+      slider.min = 0.04;
+      slider.value = 2.0;
+    } else {
+      slider.value = 2.0;
+    }
+    document.getElementById('fig2-y-val').textContent = parseFloat(slider.value).toFixed(2);
+    updateFig2(parseFloat(slider.value));
+  }
+
+  document.getElementById('fig2-y').addEventListener('input', function() {
+    const y = parseFloat(this.value);
+    document.getElementById('fig2-y-val').textContent = y.toFixed(2);
+    updateFig2(y);
+  });
+
+  document.getElementById('fig2-func').addEventListener('change', function() {
+    currentFunc = this.value;
+    resetSliderRange();
+  });
+
+  // Initial render
+  updateFig2(2.0);
+})();
+</script>
+
+
+<!-- ============================================================
+     FIGURE 3: Strong Duality and Slater's Condition
+     ============================================================ -->
+<div class="interactive-figure-container" id="fig3-wrapper">
+  <h3>Figure 3: Strong Duality and Slater's Condition</h3>
+  <p class="fig-subtitle">
+    Problem: min<sub>x</sub> (x &minus; 2)&sup2; &ensp; s.t. &ensp; x &minus; t &le; 0
+    &emsp;|&emsp;
+    The G-set in the (u, p) plane reveals the primal and dual values geometrically.
+  </p>
+  <div class="slider-row">
+    <label for="fig3-t">t (constraint bound) =</label>
+    <input type="range" id="fig3-t" min="-1" max="5" step="0.05" value="1.5">
+    <span class="slider-value" id="fig3-t-val">1.50</span>
+  </div>
+  <div class="slider-row">
+    <label for="fig3-lam">&lambda; (hyperplane slope) =</label>
+    <input type="range" id="fig3-lam" min="0" max="6" step="0.05" value="1.0">
+    <span class="slider-value" id="fig3-lam-val">1.00</span>
+  </div>
+  <div class="panels">
+    <div id="fig3-main" style="min-width: 100%;"></div>
+  </div>
+  <div class="info-box" id="fig3-info">
+    Adjust t to change the constraint and &lambda; to rotate the supporting hyperplane.
+  </div>
+</div>
+
+<script>
+(function() {
+  const C = {
+    bg: '#f0ebe5', plotBg: '#faf7f3', text: '#3d3530', grid: '#e0d9d1',
+    axis: '#968a80', blue: '#7b97ad', gold: '#b8995e', sage: '#7a9a7e',
+    terracotta: '#c47a6a', lavender: '#907ea0', rosewood: '#ad8480'
+  };
+  const font = {family: "'Palatino Linotype','Palatino','Book Antiqua','Georgia',serif", color: C.text};
+  const axisStyle = {
+    gridcolor: C.grid, gridwidth: 1, zerolinecolor: C.axis, zerolinewidth: 1.5,
+    linecolor: C.axis, linewidth: 1, tickfont: {size: 12, ...font}, titlefont: {size: 14, ...font}
+  };
+  const plotConfig = {displayModeBar: false, responsive: true};
+
+  // Problem: min_x (x-2)^2 s.t. x - t <= 0, i.e., x <= t
+  // Constraint function: g(x) = x - t
+  // The G-set: { (g(x), f(x)) : x in R } = { (x-t, (x-2)^2) : x in R }
+  // Let u = x - t, then x = u + t, so p = (u + t - 2)^2
+  // G-set is the parabola p = (u + t - 2)^2 in the (u, p) plane
+  //
+  // Primal: p* = inf{ p : (u,p) in G, u <= 0 }
+  //   Feasible: x <= t => u <= 0.
+  //   If t >= 2: unconstrained min is at x=2 (u = 2-t <= 0), p* = 0
+  //   If t < 2: constrained min at x = t (u = 0), p* = (t-2)^2
+  //
+  // Lagrangian: L(x,lam) = (x-2)^2 + lam*(x-t)
+  // dL/dx = 2(x-2) + lam = 0 => x*(lam) = 2 - lam/2
+  // g(lam) = (2 - lam/2 - 2)^2 + lam*(2 - lam/2 - t) = lam^2/4 + lam*(2 - lam/2 - t)
+  //        = lam^2/4 + 2*lam - lam^2/2 - lam*t = -lam^2/4 + (2-t)*lam
+  // Dual: max g(lam) s.t. lam >= 0
+  //   g'(lam) = -lam/2 + (2-t) = 0 => lam* = 2(2-t) = 4-2t
+  //   If t < 2: lam* = 4-2t > 0, d* = g(lam*) = -(4-2t)^2/4 + (2-t)(4-2t) = -(2-t)^2 + 2(2-t)^2 = (2-t)^2
+  //   If t >= 2: lam* = 0 (constraint lam>=0), d* = g(0) = 0
+  //   So d* = p* always! Strong duality holds.
+  //
+  // Supporting hyperplane interpretation:
+  //   In (u,p) plane, for given lambda, the hyperplane is: p + lam*u = alpha
+  //   i.e. p = alpha - lam*u
+  //   g(lam) = inf over G of (p + lam*u) = inf_x { (x-2)^2 + lam*(x-t) }
+  //   The hyperplane p = g(lam) - lam*u supports G from below
+  //
+  // Slater's condition: exists x s.t. g(x) = x - t < 0, i.e., x < t.
+  //   Always holds (as long as feasible set is non-empty, t > -inf).
+  //   Slater's is trivially satisfied for linear constraints.
+  //   We can show the intuition: when t is very small (close to the boundary
+  //   of feasibility), the gap between the G-set and the supporting hyperplane
+  //   is visually clear.
+
+  function updateFig3(t, lam) {
+    // Build the G-set parabola: p = (u + t - 2)^2
+    const uVals = [];
+    const pVals = [];
+    for (let u = -4; u <= 6; u += 0.05) {
+      uVals.push(u);
+      pVals.push((u + t - 2) * (u + t - 2));
+    }
+
+    // Primal value
+    let pStar, xPrimal;
+    if (t >= 2) {
+      pStar = 0;
+      xPrimal = 2;
+    } else {
+      pStar = (t - 2) * (t - 2);
+      xPrimal = t;
+    }
+    const uPrimal = xPrimal - t;  // u at primal optimum
+
+    // Dual function value at current lambda
+    // g(lam) = -lam^2/4 + (2-t)*lam
+    function dualFunc(l) {
+      return -l*l/4 + (2-t)*l;
+    }
+    const gLam = dualFunc(lam);
+
+    // Optimal dual
+    const lamOpt = Math.max(0, 2*(2-t));
+    const dStar = dualFunc(lamOpt);
+
+    // Supporting hyperplane: p = gLam - lam*u  =>  p = -lam*u + gLam
+    const hpU = [-4, 6];
+    const hpP = hpU.map(u => -lam * u + gLam);
+
+    // Optimal supporting hyperplane
+    const hpOptP = hpU.map(u => -lamOpt * u + dStar);
+
+    // Feasible region boundary: u = 0 vertical line
+    // Epigraph of G: region above the parabola, but we show G as a curve
+
+    // The "A" set (epigraph): shade area above G for u going right and p going up
+    // For visual clarity, we fill from the curve upward
+    const fillU = uVals.slice();
+    const fillP = pVals.slice();
+    // Close the path above
+    fillU.push(6); fillP.push(20);
+    fillU.push(-4); fillP.push(20);
+
+    const traces = [
+      // Epigraph fill (light)
+      {x: fillU, y: fillP, fill: 'toself', fillcolor: 'rgba(122,154,126,0.12)',
+       line: {color: 'rgba(0,0,0,0)', width: 0}, name: 'Epigraph (A)', showlegend: true, hoverinfo: 'skip'},
+      // G-set curve
+      {x: uVals, y: pVals, mode: 'lines', line: {color: C.sage, width: 2.5},
+       name: 'G = {(g(x), f(x))}'},
+      // Feasible boundary u = 0
+      {x: [0, 0], y: [-1, 20], mode: 'lines', line: {color: C.rosewood, width: 1.5, dash: 'dashdot'},
+       name: 'u = 0 (feasibility boundary)'},
+      // Supporting hyperplane (current lambda)
+      {x: hpU, y: hpP, mode: 'lines', line: {color: C.gold, width: 2},
+       name: '\u03BB = ' + lam.toFixed(2) + ':  g(\u03BB) = ' + gLam.toFixed(2)},
+      // Optimal supporting hyperplane
+      {x: hpU, y: hpOptP, mode: 'lines', line: {color: C.terracotta, width: 2, dash: 'dash'},
+       name: '\u03BB* = ' + lamOpt.toFixed(2) + ':  d* = ' + dStar.toFixed(2)},
+      // Primal optimal point
+      {x: [uPrimal], y: [pStar], mode: 'markers+text',
+       marker: {size: 11, color: C.terracotta, line: {width: 2, color: C.text}},
+       text: ['p* = ' + pStar.toFixed(2)], textposition: 'top right',
+       textfont: {size: 13, color: C.terracotta, ...font},
+       name: 'Primal optimal', showlegend: false},
+      // Dual intercept at u=0 (current lambda)
+      {x: [0], y: [gLam], mode: 'markers+text',
+       marker: {size: 9, color: C.gold, symbol: 'triangle-up', line: {width: 1.5, color: C.text}},
+       text: ['g(\u03BB)'], textposition: 'bottom left',
+       textfont: {size: 12, color: C.gold, ...font},
+       name: 'g(\u03BB) intercept', showlegend: false},
+      // Dual optimal intercept
+      {x: [0], y: [dStar], mode: 'markers+text',
+       marker: {size: 9, color: C.terracotta, symbol: 'star', line: {width: 1.5, color: C.text}},
+       text: ['d*'], textposition: 'bottom left',
+       textfont: {size: 12, color: C.terracotta, ...font},
+       name: 'd* intercept', showlegend: false}
+    ];
+
+    // If there's a duality gap for this lambda, show it
+    if (Math.abs(pStar - gLam) > 0.02) {
+      traces.push({
+        x: [0, 0], y: [gLam, pStar],
+        mode: 'lines+text', line: {color: C.lavender, width: 3},
+        text: ['', 'gap = ' + (pStar - gLam).toFixed(2)],
+        textposition: ['bottom center', 'top center'],
+        textfont: {size: 11, color: C.lavender, ...font},
+        name: 'Duality gap', showlegend: false
+      });
+    }
+
+    const layout = {
+      paper_bgcolor: C.bg, plot_bgcolor: C.plotBg, font: font,
+      margin: {t: 36, b: 56, l: 60, r: 30},
+      title: {text: 'G-set and supporting hyperplanes in the (u, p) plane', font: {size: 14, ...font}},
+      xaxis: {...axisStyle, title: 'u = g(x) = x \u2212 t  (constraint value)', range: [-4, 6]},
+      yaxis: {...axisStyle, title: 'p = f(x) = (x \u2212 2)\u00B2  (objective)', range: [-2, 14]},
+      showlegend: true,
+      legend: {x: 0.55, y: 0.98, bgcolor: 'rgba(250,247,243,0.92)', bordercolor: C.grid, borderwidth: 1, font: {size: 11, ...font}},
+      hovermode: 'closest'
+    };
+
+    Plotly.react('fig3-main', traces, layout, plotConfig);
+
+    // Info box
+    const gap = pStar - dStar;
+    const slater = 'Slater\'s condition: \u2203 x\u0304 with g(x\u0304) = x\u0304 \u2212 t < 0 (any x\u0304 < t) \u2014 ';
+    const slaterHolds = (t > -10) ? '<span style="color:' + C.sage + '; font-weight:600">satisfied</span>' : '<span style="color:' + C.terracotta + '; font-weight:600">not satisfied</span>';
+    const gapStr = gap < 0.001
+      ? '<span style="color:' + C.sage + '; font-weight:600">Strong duality holds: p* = d* = ' + pStar.toFixed(2) + '</span>'
+      : '<span style="color:' + C.terracotta + '">Duality gap: p* \u2212 d* = ' + gap.toFixed(3) + '</span>';
+
+    document.getElementById('fig3-info').innerHTML =
+      't = ' + t.toFixed(2) + ':&emsp; p* = ' + pStar.toFixed(2) + ', &ensp; d* = ' + dStar.toFixed(2) +
+      '&emsp;|&emsp; \u03BB* = ' + lamOpt.toFixed(2) +
+      '<br>' + slater + slaterHolds +
+      '&emsp;|&emsp;' + gapStr +
+      '<br>Current hyperplane: \u03BB = ' + lam.toFixed(2) + ', g(\u03BB) = ' + gLam.toFixed(2) +
+      (Math.abs(pStar - gLam) > 0.02 ? '  (sub-optimal \u2014 not yet the tightest bound)' : '  (optimal \u2014 tightest lower bound!)');
+  }
+
+  document.getElementById('fig3-t').addEventListener('input', function() {
+    const t = parseFloat(this.value);
+    document.getElementById('fig3-t-val').textContent = t.toFixed(2);
+    const lam = parseFloat(document.getElementById('fig3-lam').value);
+    updateFig3(t, lam);
+  });
+
+  document.getElementById('fig3-lam').addEventListener('input', function() {
+    const lam = parseFloat(this.value);
+    document.getElementById('fig3-lam-val').textContent = lam.toFixed(2);
+    const t = parseFloat(document.getElementById('fig3-t').value);
+    updateFig3(t, lam);
+  });
+
+  // Initial render
+  updateFig3(1.5, 1.0);
+})();
+</script>

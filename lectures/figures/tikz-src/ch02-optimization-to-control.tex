@@ -1,0 +1,99 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc, fit, decorations.pathreplacing, shapes.geometric}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+
+\begin{document}
+\begin{tikzpicture}[
+  every node/.style={text=dkbrown, font=\large},
+  mainbox/.style={rounded corners=8pt, line width=1.8pt, minimum height=2.2cm, minimum width=7cm, align=center, inner sep=10pt, text=dkbrown},
+  arrowlabel/.style={font=\normalsize\itshape, text=wmgray, align=center},
+  grouplabel/.style={font=\normalsize\bfseries, fill=cream, inner sep=3pt},
+  >=Stealth[length=5mm, width=3.5mm],
+]
+
+% Background
+\fill[cream, rounded corners=14pt] (-1.2,-15.2) rectangle (22.2,2.5);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-1.2,-15.2) rectangle (22.2,2.5);
+
+% Title
+\node[font=\LARGE\bfseries, text=dkbrown] at (10.5,1.7) {From Finite-Dimensional Optimization to Optimal Control};
+
+% === Dashed grouping for finite-dim (draw FIRST, behind boxes) ===
+\draw[stblue, line width=1pt, dashed, rounded corners=8pt] (-0.4,-3.1) rectangle (21.4,0.8);
+% Label sits ON the dashed line with cream fill
+\node[grouplabel, text=stblue] at (10.5,0.8) {Finite-Dimensional Optimization: $\;\min_x f(x)$ \;\;s.t.\;\; $h(x)=0$};
+
+% === Top row: finite-dim with two strategies ===
+\node[mainbox, fill=stblue!12, draw=stblue] (kkt) at (3.5,-1.2) {%
+  \textbf{KKT Conditions}\\[3pt]
+  Write optimality conditions:\\[1pt]
+  $\nabla_x \mathcal{L}(x, \lambda, \mu) = 0$\\[2pt]
+  {\normalsize \textbf{Necessary} (general); \textbf{sufficient} (convex)}
+};
+
+\node[mainbox, fill=stblue!12, draw=stblue] (primal) at (17.5,-1.2) {%
+  \textbf{Solve the Primal}\\[3pt]
+  Find $x^* = \arg\min f(x)$\\[1pt]
+  directly over the feasible set\\[2pt]
+  {\normalsize \textbf{Sufficient} by construction}
+};
+
+% === Dashed grouping for optimal control (draw FIRST, behind boxes) ===
+\draw[sage!70!black, line width=1pt, dashed, rounded corners=8pt] (-0.4,-8.0) rectangle (21.4,-4.1);
+\node[grouplabel, text=sage!70!black] at (10.5,-4.1) {Optimal Control: $\;\min_{u(\cdot)} \int_0^T \ell(x,u)\,dt + \Phi(x_T)$ \;\;s.t.\;\; $\dot{x} = f(x,u)$};
+
+% === Middle row: optimal control with two strategies ===
+\node[mainbox, fill=sage!12, draw=sage] (pont) at (3.5,-6.1) {%
+  \textbf{Pontryagin's Principle}\\[3pt]
+  Write optimality conditions:\\[1pt]
+  $\dot{p} = -\nabla_x H$, \quad $\nabla_u H = 0$\\[2pt]
+  {\normalsize \textbf{Necessary} (general); \textbf{sufficient} (convex)}
+};
+
+\node[mainbox, fill=lavender!12, draw=lavender] (hjb) at (17.5,-6.1) {%
+  \textbf{HJB Equation}\\[3pt]
+  Solve for the value function:\\[1pt]
+  $-\partial_t V = \min_u H(x, u, \nabla_x V)$\\[2pt]
+  {\normalsize \textbf{Sufficient} (verification theorem)}
+};
+
+% === Vertical arrows: KKT -> Pontryagin, Primal -> HJB ===
+\draw[rwgold, line width=2.2pt, ->] (kkt.south) -- (pont.north) node[arrowlabel, midway, left=4pt] {KKT in\\[1pt]function space};
+
+\draw[rwgold, line width=2.2pt, ->] (primal.south) -- (hjb.north) node[arrowlabel, midway, right=4pt] {dynamic\\[1pt]programming};
+
+% === Horizontal arrows: conditions <-> direct ===
+\draw[wmgray, line width=1.2pt, <->] (kkt.east) -- (primal.west) node[arrowlabel, midway, above=2pt] {$\lambda^*_i = -\partial p^*(u)/\partial u_i$};
+
+\draw[wmgray, line width=1.2pt, <->] (pont.east) -- (hjb.west) node[arrowlabel, midway, above=2pt] {$p(t) = \nabla_x V(x(t), t)$};
+
+% === Bottom: connection box ===
+\node[mainbox, fill=terracotta!12, draw=terracotta, minimum width=16cm] (connection) at (10.5,-10.4) {%
+  \textbf{Unifying Identity: Costate = Value-Function Gradient}\\[4pt]
+  $p^*(t) = \nabla_x V\bigl(x^*(t), t\bigr)$\\[4pt]
+  {\normalsize KKT multiplier $\;\longleftrightarrow\;$ shadow price of constraint $\;\longleftrightarrow\;$ costate trajectory}
+};
+
+\draw[sage, line width=1.8pt, ->] (pont.south) ++(1,0) -- ++(0,-0.7) -| ($(connection.north west)+(2,0)$);
+\draw[lavender, line width=1.8pt, ->] (hjb.south) ++(-1,0) -- ++(0,-0.7) -| ($(connection.north east)+(-2,0)$);
+
+% === Bottom annotation ===
+\draw[wmgray, line width=0.8pt, dashed, rounded corners=6pt] (0.2,-11.9) rectangle (20.8,-14.6);
+\node[font=\large\itshape, text=dkbrown, align=center] at (10.5,-12.45) {Left column: \textbf{write optimality conditions} and solve the resulting system};
+\node[font=\large\itshape, text=dkbrown, align=center] at (10.5,-13.15) {Right column: \textbf{solve the primal problem directly} (feasible set search / dynamic programming)};
+\node[font=\large\itshape, text=dkbrown, align=center] at (10.5,-13.95) {Convexity promotes necessary conditions to sufficient conditions in both settings};
+
+\end{tikzpicture}
+\end{document}

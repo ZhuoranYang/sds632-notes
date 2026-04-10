@@ -1,0 +1,75 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc, fit, decorations.pathreplacing}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+
+\begin{document}
+\begin{tikzpicture}[
+  every node/.style={text=dkbrown, font=\large},
+  >=Stealth[length=4mm, width=3mm],
+]
+
+% Background
+\fill[cream, rounded corners=14pt] (-1.5,-2.8) rectangle (17.5,12);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-1.5,-2.8) rectangle (17.5,12);
+
+% Title
+\node[font=\LARGE\bfseries, text=dkbrown] at (7.75,11.2) {Geometric Meaning of the Conjugate $f^*(y)$};
+
+% Axes
+\draw[->, line width=1pt, dkbrown] (0,0) -- (15,0) node[right, font=\large] {$x$};
+\draw[->, line width=1pt, dkbrown] (0,0) -- (0,10.5) node[above, font=\large] {$t$};
+
+% f(x) curve
+\draw[stblue, line width=2.5pt] plot[smooth, tension=0.6] coordinates {(1.2,9.2) (3.6,3.7) (6.6,3.1) (9.6,1.9) (12.6,1.5) (14.4,2.0)};
+\node[font=\Large\bfseries, text=stblue] at (14.8,3.2) {$f(x)$};
+
+% Linear function y*x (dashed)
+\draw[rwgold, line width=1.8pt, dashed] (0.6,8.8) -- (13.2,1.8);
+\node[font=\large, text=rwgold] at (13.8,1.0) {$t = y \cdot x$};
+
+% Point on f(x) where gap is maximized
+\fill[terracotta] (6.6,3.1) circle (4pt);
+% Point on linear function at x*
+\fill[rwgold] (6.6,5.6) circle (4pt);
+
+% Vertical gap line with arrows
+\draw[terracotta, line width=2pt] (6.6,3.3) -- (6.6,5.4);
+\draw[terracotta, line width=1.5pt, -{Stealth[length=3mm]}] (6.6,4.6) -- (6.6,3.4);
+\draw[terracotta, line width=1.5pt, -{Stealth[length=3mm]}] (6.6,4.1) -- (6.6,5.3);
+
+% f*(y) label on gap
+\node[font=\Large\bfseries, text=terracotta, anchor=west] at (7.1,4.6) {$f^*(y)$};
+\node[font=\large, text=terracotta, anchor=west] at (7.1,3.9) {$= y \cdot x^* - f(x^*)$};
+
+% x* label on axis
+\draw[wmgray, dashed, line width=0.6pt] (6.6,0) -- (6.6,2.9);
+\node[font=\large, text=dkbrown] at (6.6,-0.4) {$x^*$};
+
+% Tangent line at x* (parallel to y*x)
+\draw[sage, line width=1.2pt, dashed] (3.0,5.3) -- (10.2,1.0);
+\node[font=\large\itshape, text=sage, anchor=west] at (10.4,0.4) {tangent at $x^*$ has slope $y$};
+
+% Annotation box
+\draw[wmgray, line width=0.8pt, rounded corners=6pt] (8.5,6.8) rectangle (16.5,9.6);
+\fill[wmgray, opacity=0.05, rounded corners=6pt] (8.5,6.8) rectangle (16.5,9.6);
+\node[font=\Large\bfseries, text=dkbrown, anchor=west] at (8.8,9.1) {Key idea:};
+\node[font=\large, text=dkbrown, anchor=west] at (8.8,8.3) {$f^*(y) = \max_x$ of the vertical gap};
+\node[font=\large, text=dkbrown, anchor=west] at (8.8,7.5) {between the line $y \cdot x$ and $f(x)$.};
+
+% Note about slope at bottom
+\node[font=\large\itshape, text=wmgray, anchor=west] at (0,-1.8) {At the maximizer $x^*$: $\nabla f(x^*) = y$, i.e., the tangent to $f$ has slope $y$.};
+
+\end{tikzpicture}
+\end{document}

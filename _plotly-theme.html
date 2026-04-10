@@ -1,0 +1,44 @@
+<script>
+// Plotly Warmtone theming helpers — shared across all lectures
+// Reads CSS custom properties set by _warmtone.scss (light/dark aware)
+const plotlyConfig = {responsive: true, displayModeBar: false};
+const figFont = '"Source Serif 4", Georgia, "Times New Roman", serif';
+const figFontHeading = '"Crimson Pro", Georgia, serif';
+
+function css(v) {
+  return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+}
+
+function legendStyle() {
+  return {
+    font: {family: figFont, size: 13, color: css('--fig-text')},
+    bgcolor: css('--fig-bg') + 'dd',
+    bordercolor: css('--fig-grid'),
+    borderwidth: 1,
+  };
+}
+
+function themeLayout(extra) {
+  return Object.assign({
+    paper_bgcolor: css('--fig-bg'),
+    plot_bgcolor: css('--fig-plot-bg'),
+    font: {family: figFont, color: css('--fig-text'), size: 14},
+  }, extra || {});
+}
+
+function themeAxis(title, extra) {
+  return Object.assign({
+    title: {text: title, font: {family: figFont, size: 14}},
+    gridcolor: css('--fig-grid'),
+    zerolinecolor: css('--fig-grid'),
+    linecolor: css('--fig-axis'),
+    tickfont: {family: figFont, size: 12, color: css('--fig-axis')},
+  }, extra || {});
+}
+
+// Plotly color sequences matching the Warmtone palette
+const warmtonePalette = [
+  '#7b97ad', '#b8995e', '#ad8480', '#7a9a7e', '#907ea0',
+  '#6f9996', '#8a6e5e', '#b56b6b', '#8fa3b8', '#a09488'
+];
+</script>

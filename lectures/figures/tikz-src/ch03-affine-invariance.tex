@@ -1,0 +1,84 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc, fit, decorations.pathreplacing}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+
+\begin{document}
+\begin{tikzpicture}[
+  every node/.style={text=dkbrown, font=\large},
+  >=Stealth[length=4mm, width=3mm],
+]
+
+% Background
+\fill[cream, rounded corners=14pt] (-1,-4.0) rectangle (20,6.5);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-1,-4.0) rectangle (20,6.5);
+
+% Title
+\node[font=\LARGE\bfseries, text=dkbrown] at (9.5,5.7) {Affine Invariance of Newton's Method};
+
+% Left panel
+\draw[stblue, line width=1.2pt, rounded corners=8pt] (0.3,-2.8) rectangle (8.5,4.5);
+\fill[stblue, opacity=0.03, rounded corners=8pt] (0.3,-2.8) rectangle (8.5,4.5);
+\node[font=\Large\bfseries, text=stblue] at (4.4,4.0) {Original coordinates: $f(x)$};
+
+% Circular contours (well-conditioned)
+\draw[wmgray, line width=0.8pt, dashed] (4.4,0.8) circle (0.85);
+\draw[wmgray, line width=0.8pt, dashed] (4.4,0.8) circle (1.55);
+\draw[wmgray, line width=0.8pt, dashed] (4.4,0.8) circle (2.25);
+\draw[wmgray, line width=0.8pt, dashed] (4.4,0.8) circle (2.9);
+
+% Iterates in original space
+\fill[terracotta] (2.2,2.6) circle (4pt);
+\node[font=\large, text=terracotta, anchor=east] at (2.0,2.6) {$x^0$};
+\draw[->, line width=1.2pt, terracotta] (2.35,2.5) -- (3.2,1.6);
+\fill[terracotta] (3.35,1.5) circle (4pt);
+\node[font=\large, text=terracotta, anchor=east] at (3.2,1.2) {$x^1$};
+\draw[->, line width=1.2pt, terracotta] (3.5,1.4) -- (4.2,0.95);
+\fill[terracotta] (4.4,0.8) circle (4pt);
+\draw[terracotta, line width=1.2pt] (4.4,0.8) circle (6pt);
+\node[font=\large\bfseries, text=terracotta, anchor=west] at (4.65,0.5) {$x^*$};
+
+% Right panel
+\draw[sage, line width=1.2pt, rounded corners=8pt] (10.5,-2.8) rectangle (18.7,4.5);
+\fill[sage, opacity=0.03, rounded corners=8pt] (10.5,-2.8) rectangle (18.7,4.5);
+\node[font=\Large\bfseries, text=sage] at (14.6,4.0) {Transformed: $\bar{f}(y) = f(Ty)$};
+
+% Elliptical contours (ill-conditioned after transform)
+\draw[wmgray, line width=0.8pt, dashed, rotate around={-30:(14.6,0.8)}] (14.6,0.8) ellipse (0.6 and 1.2);
+\draw[wmgray, line width=0.8pt, dashed, rotate around={-30:(14.6,0.8)}] (14.6,0.8) ellipse (1.1 and 2.2);
+\draw[wmgray, line width=0.8pt, dashed, rotate around={-30:(14.6,0.8)}] (14.6,0.8) ellipse (1.55 and 2.9);
+
+% Iterates in transformed space
+\fill[sage] (12.4,2.6) circle (4pt);
+\node[font=\large, text=sage, anchor=east] at (12.2,2.6) {$y^0$};
+\draw[->, line width=1.2pt, sage] (12.55,2.5) -- (13.4,1.55);
+\fill[sage] (13.55,1.4) circle (4pt);
+\node[font=\large, text=sage, anchor=east] at (13.4,1.1) {$y^1$};
+\draw[->, line width=1.2pt, sage] (13.7,1.35) -- (14.4,0.9);
+\fill[sage] (14.6,0.8) circle (4pt);
+\draw[sage, line width=1.2pt] (14.6,0.8) circle (6pt);
+\node[font=\large\bfseries, text=sage, anchor=west] at (14.85,0.5) {$y^*$};
+
+% Bidirectional arrow between panels
+\draw[->, line width=1.8pt, rwgold] (8.7,0.8) -- (10.3,0.8);
+\node[font=\Large\bfseries, text=rwgold] at (9.5,1.5) {$x = Ty$};
+\node[font=\large\itshape, text=rwgold] at (9.5,0.1) {coord.\ change};
+
+% Bottom annotation
+\draw[wmgray, line width=0.8pt, rounded corners=5pt] (0,-3.5) rectangle (19,-2.9);
+\fill[wmgray, opacity=0.04, rounded corners=5pt] (0,-3.5) rectangle (19,-2.9);
+\node[font=\large, text=dkbrown] at (9.5,-3.2) {Newton produces the same iterates: $T(y_k + d_{\mathrm{nt},\bar{f}}(y_k)) = x_k + d_{\mathrm{nt},f}(x_k)$ and $\lambda_{\bar{f}}(y) = \lambda_f(x)$.};
+
+\end{tikzpicture}
+\end{document}

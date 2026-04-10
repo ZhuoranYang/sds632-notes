@@ -1,0 +1,84 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc, fit, decorations.pathreplacing}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+
+\begin{document}
+\begin{tikzpicture}[
+  every node/.style={text=dkbrown, font=\large},
+  levelbox/.style={rounded corners=6pt, line width=1.8pt, minimum height=1.6cm, align=center, text=dkbrown, inner sep=8pt},
+  >=Stealth[length=4mm, width=3mm],
+]
+
+% Background
+\fill[cream, rounded corners=14pt] (-1.5,-14) rectangle (18.5,1.5);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-1.5,-14) rectangle (18.5,1.5);
+
+% Title
+\node[font=\LARGE\bfseries, text=dkbrown] at (8.5,0.6) {Hierarchy of Second-Order Methods};
+
+% Level 1: Quadratic
+\node[levelbox, fill=sage!20, draw=sage, minimum width=72mm] (l1) at (8.5,-1.2) {%
+  \textbf{Quadratic:}\; $\min\, x^\top Q\, x/2 + b^\top x$\\[3pt]
+  {\color{sage} Closed form: $x^* = -Q^{-1}b$}
+};
+
+% Arrow
+\draw[->, line width=1.5pt, wmgray] (8.5,-2.2) -- (8.5,-3.0)
+  node[midway, right, font=\large, text=wmgray, xshift=2pt] {add $Ax = b$};
+
+% Level 2: Equality-constrained QP
+\node[levelbox, fill=stblue!15, draw=stblue, minimum width=96mm] (l2) at (8.5,-4.0) {%
+  \textbf{Equality-Constrained QP}\\[3pt]
+  {\color{stblue} Solve KKT system (closed form)}
+};
+
+% Arrow
+\draw[->, line width=1.5pt, wmgray] (8.5,-5.0) -- (8.5,-5.8)
+  node[midway, right, font=\large, text=wmgray, xshift=2pt] {general $f$ (smooth)};
+
+% Level 3: Equality-constrained smooth
+\node[levelbox, fill=rwgold!15, draw=rwgold, minimum width=120mm, minimum height=2.0cm] (l3) at (8.5,-7.2) {%
+  \textbf{Equality-Constrained Smooth Problem}\\[3pt]
+  {\color{rwgold} Newton's method: reduce to sequence of equality-constrained QPs}\\[1pt]
+  {\color{wmgray} (2nd-order Taylor expansion at each step)}
+};
+
+% Arrow
+\draw[->, line width=1.5pt, wmgray] (8.5,-8.5) -- (8.5,-9.3)
+  node[midway, right, font=\large, text=wmgray, xshift=2pt] {add $f_i(x) \leq 0$};
+
+% Level 4: General constrained convex
+\node[levelbox, fill=terracotta!15, draw=terracotta, minimum width=135mm, minimum height=2.0cm] (l4) at (8.5,-10.8) {%
+  \textbf{Inequality + Equality Constrained Convex Problem}\\[3pt]
+  {\color{terracotta} IPM: reduce to sequence of equality-constrained smooth problems}\\[1pt]
+  {\color{wmgray} (log barrier converts inequalities to smooth penalty)}
+};
+
+% Side annotations
+\node[font=\large, text=sage] at (-0.8,-1.2) {Easiest};
+\node[font=\large, text=terracotta] at (-0.8,-10.8) {Hardest};
+\draw[->, wmgray, dashed, line width=0.8pt] (-0.8,-1.8) -- (-0.8,-10.2);
+
+% Right annotation
+\node[font=\large, text=wmgray, rotate=90, anchor=south] at (17.5,-6.0) {Each level reduces to the one above};
+
+% Footer (well below Level 4)
+\draw[lavender, line width=0.8pt, dashed, rounded corners=5pt] (1.5,-13.5) rectangle (15.5,-12.4);
+\fill[lavender, opacity=0.06, rounded corners=5pt] (1.5,-13.5) rectangle (15.5,-12.4);
+\node[font=\large\bfseries, text=lavender] at (8.5,-12.7) {Unifying principle: reduce constrained problems to simpler ones,};
+\node[font=\large, text=lavender] at (8.5,-13.2) {each solvable by Newton's method};
+
+\end{tikzpicture}
+\end{document}

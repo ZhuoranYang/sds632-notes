@@ -1,0 +1,207 @@
+\documentclass[tikz,border=12pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta, positioning, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+\definecolor{stblue}{HTML}{7B97AD}
+\definecolor{rwgold}{HTML}{B8995E}
+\definecolor{sage}{HTML}{7A9A7E}
+\definecolor{dkbrown}{HTML}{3D3530}
+\definecolor{wmgray}{HTML}{7B7067}
+\definecolor{cream}{HTML}{F9F6F0}
+\definecolor{border}{HTML}{D4C9B8}
+\definecolor{terracotta}{HTML}{C47A6A}
+\definecolor{lavender}{HTML}{907EA0}
+\definecolor{rosewood}{HTML}{AD8480}
+
+\begin{document}
+\begin{tikzpicture}[
+  every node/.style={text=dkbrown, font=\large},
+  >=Stealth[length=4mm, width=3mm],
+]
+
+% Background
+\fill[cream, rounded corners=14pt] (-1.5,-4) rectangle (16,12.5);
+\draw[border, line width=1.5pt, rounded corners=14pt] (-1.5,-4) rectangle (16,12.5);
+
+% Title
+\node[font=\LARGE\bfseries, text=dkbrown] at (7.25,11.7) {Log Barrier Approximation $\widehat{I}_t(u) = -\frac{1}{t}\log(-u)$};
+
+% Coordinate system:
+% u in [-2, 0] -> x in [0, 13]  => x = (u+2)*6.5
+% y in [-5, 50] -> y in [0, 10] => y_tikz = (val+5)/55 * 10
+
+% Axes
+\draw[->, line width=1pt, dkbrown] (0,0.909) -- (14,0.909) node[right, font=\large] {$u$};
+\draw[->, line width=1pt, dkbrown] (13,0) -- (13,10.5) node[above, font=\large] {$\widehat{I}_t(u)$};
+
+% u-axis tick labels
+\foreach \u/\lab in {0/{$-2$}, 3.25/{$-1.5$}, 6.5/{$-1$}, 9.75/{$-0.5$}} {
+  \node[font=\large, text=wmgray, below] at (\u,0.75) {\lab};
+  \draw[wmgray, line width=0.5pt] (\u,0.8) -- (\u,1.0);
+}
+\node[font=\large, text=wmgray, below] at (13,0.75) {$0$};
+
+% y-axis tick labels
+% y=0: y_tikz = 5/55*10 = 0.909
+% y=10: y_tikz = 15/55*10 = 2.727
+% y=20: y_tikz = 25/55*10 = 4.545
+% y=30: y_tikz = 35/55*10 = 6.364
+% y=40: y_tikz = 45/55*10 = 8.182
+\foreach \val/\ytik in {0/0.909, 10/2.727, 20/4.545, 30/6.364, 40/8.182} {
+  \node[font=\large, text=wmgray, right] at (13.1,\ytik) {\val};
+  \draw[wmgray, line width=0.5pt] (12.9,\ytik) -- (13.1,\ytik);
+}
+
+% Grid lines
+\foreach \ytik in {0.909, 2.727, 4.545, 6.364, 8.182} {
+  \draw[wmgray, opacity=0.12, line width=0.5pt] (0,\ytik) -- (13,\ytik);
+}
+
+% Horizontal line at y=0 (indicator reference)
+\draw[wmgray, line width=0.6pt, dashed] (0,0.909) -- (13,0.909);
+
+% Log barrier curves: -(1/t)*log(-u)
+% Coordinates: x=(u+2)*6.5, y_tikz=(val+5)/55*10
+
+% t=0.1 (very gentle curve, large values)
+% u=-2: -(1/0.1)*ln(2)=-10*0.693=-6.93  -> y_t=(−6.93+5)/55*10=−0.35 (below axis, skip)
+% u=-1.5: -10*ln(1.5)=-10*0.405=-4.05 -> y_t=0.17
+% u=-1: -10*ln(1)=0 -> y_t=0.909
+% u=-0.5: -10*ln(0.5)=-10*(-0.693)=6.93 -> y_t=2.17
+% u=-0.2: -10*ln(0.2)=16.09 -> y_t=3.835
+% u=-0.1: -10*ln(0.1)=23.03 -> y_t=5.096
+% u=-0.05: -10*ln(0.05)=29.96 -> y_t=6.356
+% u=-0.02: -10*ln(0.02)=39.12 -> y_t=8.02
+% u=-0.01: -10*ln(0.01)=46.05 -> y_t=9.28
+
+\draw[stblue, line width=2pt] plot[smooth, tension=0.5]
+  coordinates {
+    (3.25,0.17)
+    (6.5,0.909)
+    (9.75,2.17)
+    (11.7,3.835)
+    (12.35,5.096)
+    (12.675,6.356)
+    (12.87,8.02)
+    (12.935,9.28)
+  };
+
+% t=0.5
+% u=-2: -(1/0.5)*ln(2)=-2*0.693=-1.386 -> y_t=0.657
+% u=-1.5: -2*0.405=-0.811 -> y_t=0.762
+% u=-1: -2*0=0 -> y_t=0.909
+% u=-0.5: -2*(-0.693)=1.386 -> y_t=1.161
+% u=-0.2: -2*(-1.609)=3.219 -> y_t=1.494
+% u=-0.1: -2*(-2.303)=4.605 -> y_t=1.746
+% u=-0.05: -2*(-2.996)=5.991 -> y_t=1.998
+% u=-0.02: -2*(-3.912)=7.824 -> y_t=2.331
+% u=-0.01: -2*(-4.605)=9.21 -> y_t=2.584
+
+\draw[rwgold, line width=2pt] plot[smooth, tension=0.5]
+  coordinates {
+    (0,0.657)
+    (3.25,0.762)
+    (6.5,0.909)
+    (9.75,1.161)
+    (11.7,1.494)
+    (12.35,1.746)
+    (12.675,1.998)
+    (12.87,2.331)
+    (12.935,2.584)
+  };
+
+% t=1
+% u=-2: -ln(2)=-0.693 -> y_t=0.783
+% u=-1: 0 -> y_t=0.909
+% u=-0.5: 0.693 -> y_t=1.035
+% u=-0.2: 1.609 -> y_t=1.202
+% u=-0.1: 2.303 -> y_t=1.328
+% u=-0.05: 2.996 -> y_t=1.454
+% u=-0.02: 3.912 -> y_t=1.620
+% u=-0.01: 4.605 -> y_t=1.746
+
+\draw[sage, line width=2pt] plot[smooth, tension=0.5]
+  coordinates {
+    (0,0.783)
+    (3.25,0.835)
+    (6.5,0.909)
+    (9.75,1.035)
+    (11.7,1.202)
+    (12.35,1.328)
+    (12.675,1.454)
+    (12.87,1.620)
+    (12.935,1.746)
+  };
+
+% t=5
+% u=-2: -(1/5)*ln(2)=-0.1386 -> y_t=0.884
+% u=-1: 0 -> y_t=0.909
+% u=-0.5: 0.1386 -> y_t=0.934
+% u=-0.2: 0.3219 -> y_t=0.968
+% u=-0.1: 0.4605 -> y_t=0.993
+% u=-0.05: 0.5991 -> y_t=1.017
+% u=-0.02: 0.7824 -> y_t=1.050
+% u=-0.01: 0.9210 -> y_t=1.075
+
+\draw[terracotta, line width=2pt] plot[smooth, tension=0.5]
+  coordinates {
+    (0,0.884)
+    (3.25,0.896)
+    (6.5,0.909)
+    (9.75,0.934)
+    (11.7,0.968)
+    (12.35,0.993)
+    (12.675,1.017)
+    (12.87,1.050)
+    (12.935,1.075)
+  };
+
+% t=10
+% u=-2: -(1/10)*ln(2)=-0.0693 -> y_t=0.896
+% u=-1: 0 -> y_t=0.909
+% u=-0.5: 0.0693 -> y_t=0.922
+% u=-0.2: 0.1609 -> y_t=0.938
+% u=-0.1: 0.2303 -> y_t=0.951
+% u=-0.05: 0.2996 -> y_t=0.963
+% u=-0.02: 0.3912 -> y_t=0.980
+% u=-0.01: 0.4605 -> y_t=0.993
+
+\draw[lavender, line width=2pt] plot[smooth, tension=0.5]
+  coordinates {
+    (0,0.896)
+    (3.25,0.903)
+    (6.5,0.909)
+    (9.75,0.922)
+    (11.7,0.938)
+    (12.35,0.951)
+    (12.675,0.963)
+    (12.87,0.980)
+    (12.935,0.993)
+  };
+
+% Indicator function reference (thick step)
+\draw[wmgray, line width=1.5pt, dashed] (0,0.909) -- (12.95,0.909);
+\draw[wmgray, line width=1.5pt, dashed] (13,0.909) -- (13,10);
+\node[font=\large, text=wmgray, anchor=south west] at (13.15,9.0) {$\mathbb{I}_{(-\infty,0]}$};
+
+% Legend
+\fill[cream, rounded corners=5pt] (0.5,6.2) rectangle (5.2,10.5);
+\draw[border, line width=0.6pt, rounded corners=5pt] (0.5,6.2) rectangle (5.2,10.5);
+\draw[stblue, line width=2pt] (0.9,10.0) -- (1.8,10.0);
+\node[font=\large, anchor=west] at (2.0,10.0) {$t = 0.1$};
+\draw[rwgold, line width=2pt] (0.9,9.3) -- (1.8,9.3);
+\node[font=\large, anchor=west] at (2.0,9.3) {$t = 0.5$};
+\draw[sage, line width=2pt] (0.9,8.6) -- (1.8,8.6);
+\node[font=\large, anchor=west] at (2.0,8.6) {$t = 1$};
+\draw[terracotta, line width=2pt] (0.9,7.9) -- (1.8,7.9);
+\node[font=\large, anchor=west] at (2.0,7.9) {$t = 5$};
+\draw[lavender, line width=2pt] (0.9,7.2) -- (1.8,7.2);
+\node[font=\large, anchor=west] at (2.0,7.2) {$t = 10$};
+\node[font=\large, text=dkbrown] at (2.85,6.6) {$\uparrow$ as $t$ increases};
+
+\end{tikzpicture}
+\end{document}
