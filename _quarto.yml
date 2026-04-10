@@ -1,6 +1,8 @@
 project:
   type: book
   output-dir: _book
+  render:
+    - "!notebooks/"
 
 book:
   title: "S&DS 432/632 — Advanced Optimization Techniques"
