@@ -7,7 +7,7 @@ This chapter consolidates the prerequisite material from S&DS 431/631 that subse
 ::: {.callout-tip}
 ## Companion Notebook
 
-A [Jupyter notebook](../notebooks/overview-svm-cvxpy.ipynb) accompanies this chapter with runnable Python implementations of SVM formulation and solution using CVXPY, gradient descent basics, and convex optimization examples.
+A [Jupyter notebook](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/overview-svm-cvxpy.ipynb) accompanies this chapter with runnable Python implementations of SVM formulation and solution using CVXPY, gradient descent basics, and convex optimization examples.
 :::
 
 ## Convex Sets {#sec-convex-sets}

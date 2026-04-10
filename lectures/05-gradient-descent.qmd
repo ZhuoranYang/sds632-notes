@@ -8,7 +8,7 @@ Gradient descent is the workhorse of modern optimization. Its simplicity---updat
 ::: {.callout-tip}
 ## Companion Notebook
 
-A [Jupyter notebook](../notebooks/gradient-descent.ipynb) accompanies this chapter with runnable Python implementations of gradient descent convergence experiments, Polyak--Łojasiewicz functions, and comparisons of step size strategies.
+A [Jupyter notebook](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/gradient-descent.ipynb) accompanies this chapter with runnable Python implementations of gradient descent convergence experiments, Polyak--Łojasiewicz functions, and comparisons of step size strategies.
 :::
 
 ## Gradient Descent and Structural Conditions {#sec-vanilla-gd}

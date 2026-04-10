@@ -9,7 +9,7 @@ The theory originates from linear programming, where the dual problem always yie
 ::: {.callout-tip}
 ## Companion Notebook
 
-A [Jupyter notebook](../notebooks/duality-gap.ipynb) accompanies this chapter with runnable Python implementations of Lagrange duality computations, duality gap visualization, and strong duality examples.
+A [Jupyter notebook](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/duality-gap.ipynb) accompanies this chapter with runnable Python implementations of Lagrange duality computations, duality gap visualization, and strong duality examples.
 :::
 
 ## Introduction {#sec-overview}

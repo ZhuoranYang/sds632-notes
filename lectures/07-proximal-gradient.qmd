@@ -11,7 +11,7 @@ The beauty of the proximal gradient method is that it achieves the same converge
 ::: {.callout-tip}
 ## Companion Notebook
 
-A [Jupyter notebook](../notebooks/subgradient-proximal-gradient.ipynb) accompanies this chapter with runnable Python implementations of proximal gradient (ISTA/FISTA) implementations, soft-thresholding for Lasso, and convergence comparisons with subgradient methods.
+A [Jupyter notebook](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/subgradient-proximal-gradient.ipynb) accompanies this chapter with runnable Python implementations of proximal gradient (ISTA/FISTA) implementations, soft-thresholding for Lasso, and convergence comparisons with subgradient methods.
 :::
 
 ## What Will Be Covered {#sec-overview}

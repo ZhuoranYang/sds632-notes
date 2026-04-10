@@ -17,7 +17,7 @@ Interior point methods are among the most practically important algorithms in op
 ::: {.callout-tip}
 ## Companion Notebook
 
-A [Jupyter notebook for equality-constrained Newton's method](../notebooks/equality-constrained-newton.ipynb) and a [Jupyter notebook for interior point methods](../notebooks/interior-point.ipynb) accompany this chapter with runnable Python implementations of equality-constrained Newton's method (Versions I and II) for analytic centering, and the interior point method with barrier functions and central path visualization.
+A [Jupyter notebook for equality-constrained Newton's method](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/equality-constrained-newton.ipynb) and a [Jupyter notebook for interior point methods](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/interior-point.ipynb) accompany this chapter with runnable Python implementations of equality-constrained Newton's method (Versions I and II) for analytic centering, and the interior point method with barrier functions and central path visualization.
 :::
 
 ## Setting: General Convex Programs {#sec-introduction}
