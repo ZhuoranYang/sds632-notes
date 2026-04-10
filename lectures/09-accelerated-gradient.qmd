@@ -11,7 +11,7 @@ Acceleration is one of the most celebrated results in continuous optimization. B
 ::: {.callout-tip}
 ## Companion Notebook
 
-A [Jupyter notebook](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/accelerated-gradient.ipynb) accompanies this chapter with runnable Python implementations of Nesterov's accelerated gradient, FISTA for Lasso, momentum trajectory visualization, condition number dependence experiments, and adaptive restart strategies.
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/accelerated-gradient.ipynb) A companion notebook accompanies this chapter with runnable Python implementations of Nesterov's accelerated gradient, FISTA for Lasso, momentum trajectory visualization, condition number dependence experiments, and adaptive restart strategies.
 :::
 
 ## What Will Be Covered {#sec-overview}

@@ -13,7 +13,7 @@ This means the convergence theory of Newton--Raphson for root-finding transfers 
 ::: {.callout-tip}
 ## Companion Notebook
 
-A [Jupyter notebook](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/newton-method.ipynb) accompanies this chapter with runnable Python implementations of all the key examples: Newton's method for minimization, Newton--Raphson behaviors, Newton fractals, damped Newton with line search, and convergence experiments.
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/newton-method.ipynb) A companion notebook accompanies this chapter with runnable Python implementations of all the key examples: Newton's method for minimization, Newton--Raphson behaviors, Newton fractals, damped Newton with line search, and convergence experiments.
 :::
 
 ## Setting and Iterative Algorithms {#sec-setting}

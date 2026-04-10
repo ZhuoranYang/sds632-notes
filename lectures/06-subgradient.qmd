@@ -13,7 +13,7 @@ Armed with these tools, we develop the **subgradient method**: at each step, mov
 ::: {.callout-tip}
 ## Companion Notebook
 
-A [Jupyter notebook](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/subgradient-proximal-gradient.ipynb) accompanies this chapter with runnable Python implementations of subgradient methods and proximal gradient descent, including ISTA for Lasso and convergence comparisons.
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/subgradient-proximal-gradient.ipynb) A companion notebook accompanies this chapter with runnable Python implementations of subgradient methods and proximal gradient descent, including ISTA for Lasso and convergence comparisons.
 :::
 
 ## What Will Be Covered {#sec-overview}

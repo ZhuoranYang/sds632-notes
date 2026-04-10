@@ -29,7 +29,7 @@ This chapter draws extensively on the tutorial *Deep Implicit Layers: Neural ODE
 ::: {.callout-tip}
 ## Companion Notebook
 
-A [Jupyter notebook](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/implicit-layers.ipynb) accompanies this chapter with runnable Python implementations of differentiable optimization layers using CvxpyLayers, implicit differentiation through fixed points, and deep equilibrium model examples.
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/implicit-layers.ipynb) A companion notebook accompanies this chapter with runnable Python implementations of differentiable optimization layers using CvxpyLayers, implicit differentiation through fixed points, and deep equilibrium model examples.
 :::
 
 ## What Will Be Covered {#sec-overview}

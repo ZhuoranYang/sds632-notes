@@ -10,7 +10,7 @@ In this chapter we develop both approaches. We begin by studying the Euclidean p
 ::: {.callout-tip}
 ## Companion Notebook
 
-A [Jupyter notebook](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/projected-gradient-frank-wolfe.ipynb) accompanies this chapter with runnable Python implementations of projected gradient descent and the Frank--Wolfe (conditional gradient) method on constrained problems.
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ZhuoranYang/sds632-notes/blob/main/notebooks/projected-gradient-frank-wolfe.ipynb) A companion notebook accompanies this chapter with runnable Python implementations of projected gradient descent and the Frank--Wolfe (conditional gradient) method on constrained problems.
 :::
 
 ## The Projection Operator {#sec-projection-operator}
