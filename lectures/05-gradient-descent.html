@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>6&nbsp; Gradient Descent – S&amp;DS 432/632 — Advanced Optimization Techniques</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../lectures/05b-projected-gradient-descent.html" rel="next">
+<link href="../lectures/04-interior-point.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-1db14e1c4cc35bfe1d9badc9e4551eed.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-434abab37f7d394f280d9c89d7fbc13f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    skipStartupTypeset: true,
+    messageStyle: "none",
+    tex2jax: { inlineMath: [], displayMath: [], processEnvironments: false }
+  });
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_SVG"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.0.min.js" charset="utf-8"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../lectures/05-gradient-descent.html">First-Order Methods</a></li><li class="breadcrumb-item"><a href="../lectures/05-gradient-descent.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Gradient Descent</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">S&amp;DS 432/632 — Advanced Optimization Techniques</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Welcome</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Preliminaries</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/01-review.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Review of Convex Optimization</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Duality</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/02-lagrange-duality.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lagrange Duality</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/02b-dual-conjugacy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Dual Conjugacy</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Second-Order Methods</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/03-newton-methods.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Newton Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/04-interior-point.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Interior Point Methods</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">First-Order Methods</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/05-gradient-descent.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Gradient Descent</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/05b-projected-gradient-descent.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Projected Gradient Descent and Frank–Wolfe</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/06-subgradient.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Subgradient Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/07-proximal-gradient.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Proximal Gradient Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/08-mirror-descent.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Mirror Descent</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/09-accelerated-gradient.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Accelerated Gradient Methods</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Applications in Deep Learning</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/11-implicit-layer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Implicit Layers</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/summary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Course Summary</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-vanilla-gd" id="toc-sec-vanilla-gd" class="nav-link active" data-scroll-target="#sec-vanilla-gd"><span class="header-section-number">6.1</span> Gradient Descent and Structural Conditions</a>
+  <ul class="collapse">
+  <li><a href="#sec-strong-convexity" id="toc-sec-strong-convexity" class="nav-link" data-scroll-target="#sec-strong-convexity"><span class="header-section-number">6.1.1</span> Strong Convexity</a></li>
+  <li><a href="#sec-smoothness" id="toc-sec-smoothness" class="nav-link" data-scroll-target="#sec-smoothness"><span class="header-section-number">6.1.2</span> Smoothness</a></li>
+  </ul></li>
+  <li><a href="#sec-descent-lemma" id="toc-sec-descent-lemma" class="nav-link" data-scroll-target="#sec-descent-lemma"><span class="header-section-number">6.2</span> The Descent Lemma</a>
+  <ul class="collapse">
+  <li><a href="#sec-why-smoothness" id="toc-sec-why-smoothness" class="nav-link" data-scroll-target="#sec-why-smoothness"><span class="header-section-number">6.2.1</span> GD as Quadratic Upper Bound Minimization</a></li>
+  <li><a href="#sec-descent-general" id="toc-sec-descent-general" class="nav-link" data-scroll-target="#sec-descent-general"><span class="header-section-number">6.2.2</span> The General Descent Lemma</a></li>
+  <li><a href="#sec-descent-convex" id="toc-sec-descent-convex" class="nav-link" data-scroll-target="#sec-descent-convex"><span class="header-section-number">6.2.3</span> Descent Lemma for Convex Functions</a></li>
+  <li><a href="#sec-descent-strongly-convex" id="toc-sec-descent-strongly-convex" class="nav-link" data-scroll-target="#sec-descent-strongly-convex"><span class="header-section-number">6.2.4</span> Descent Lemma for Strongly Convex Functions</a></li>
+  </ul></li>
+  <li><a href="#sec-quadratic-warmup" id="toc-sec-quadratic-warmup" class="nav-link" data-scroll-target="#sec-quadratic-warmup"><span class="header-section-number">6.3</span> Warm-Up: Quadratic Functions</a></li>
+  <li><a href="#sec-convergence-analysis" id="toc-sec-convergence-analysis" class="nav-link" data-scroll-target="#sec-convergence-analysis"><span class="header-section-number">6.4</span> Convergence Analysis</a>
+  <ul class="collapse">
+  <li><a href="#sec-case1" id="toc-sec-case1" class="nav-link" data-scroll-target="#sec-case1"><span class="header-section-number">6.4.1</span> Case 1: Nonconvex + Smooth</a></li>
+  <li><a href="#sec-case2" id="toc-sec-case2" class="nav-link" data-scroll-target="#sec-case2"><span class="header-section-number">6.4.2</span> Case 2: Convex + Smooth</a></li>
+  <li><a href="#sec-case3" id="toc-sec-case3" class="nav-link" data-scroll-target="#sec-case3"><span class="header-section-number">6.4.3</span> Case 3: Strongly Convex + Smooth</a></li>
+  <li><a href="#sec-three-cases-summary" id="toc-sec-three-cases-summary" class="nav-link" data-scroll-target="#sec-three-cases-summary"><span class="header-section-number">6.4.4</span> Summary of Three Cases</a></li>
+  </ul></li>
+  <li><a href="#sec-linear-relaxed" id="toc-sec-linear-relaxed" class="nav-link" data-scroll-target="#sec-linear-relaxed"><span class="header-section-number">6.5</span> Beyond Global Strong Convexity</a>
+  <ul class="collapse">
+  <li><a href="#sec-local-sc" id="toc-sec-local-sc" class="nav-link" data-scroll-target="#sec-local-sc"><span class="header-section-number">6.5.1</span> Local Strong Convexity</a></li>
+  <li><a href="#sec-linear-alpha-1L" id="toc-sec-linear-alpha-1L" class="nav-link" data-scroll-target="#sec-linear-alpha-1L"><span class="header-section-number">6.5.2</span> Linear Convergence with Step Size <span class="math inline">\alpha = 1/L</span></a></li>
+  <li><a href="#sec-pl-condition" id="toc-sec-pl-condition" class="nav-link" data-scroll-target="#sec-pl-condition"><span class="header-section-number">6.5.3</span> The Polyak–Łojasiewicz Condition</a></li>
+  <li><a href="#sec-composite" id="toc-sec-composite" class="nav-link" data-scroll-target="#sec-composite"><span class="header-section-number">6.5.4</span> Composite Minimization via PL: <span class="math inline">f(x) = g(Ax)</span></a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a>
+  <ul class="collapse">
+  <li><a href="#logic-flow-of-this-chapter" id="toc-logic-flow-of-this-chapter" class="nav-link" data-scroll-target="#logic-flow-of-this-chapter"><span class="header-section-number">6.5.5</span> Logic Flow of This Chapter</a></li>
+  <li><a href="#key-rates" id="toc-key-rates" class="nav-link" data-scroll-target="#key-rates"><span class="header-section-number">6.5.6</span> Key Rates</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../lectures/05-gradient-descent.html">First-Order Methods</a></li><li class="breadcrumb-item"><a href="../lectures/05-gradient-descent.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Gradient Descent</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Gradient Descent</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Gradient descent is the workhorse of modern optimization. Its simplicity—update the current iterate by stepping in the direction opposite to the gradient—belies a rich convergence theory that depends crucially on the structural properties of the objective function. In this chapter we develop that theory systematically, beginning with the key notions of strong convexity and smoothness, then analyzing gradient descent under three progressively stronger assumptions: nonconvex + smooth, convex + smooth, and strongly convex + smooth. We conclude by exploring relaxed conditions—local strong convexity and the Polyak–Łojasiewicz inequality—under which linear convergence can still be obtained.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Companion Notebook
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A <a href="../notebooks/gradient-descent.ipynb">Jupyter notebook</a> accompanies this chapter with runnable Python implementations of gradient descent convergence experiments, Polyak–Łojasiewicz functions, and comparisons of step size strategies.</p>
+</div>
+</div>
+<section id="sec-vanilla-gd" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="sec-vanilla-gd"><span class="header-section-number">6.1</span> Gradient Descent and Structural Conditions</h2>
+<p>We consider the unconstrained optimization problem</p>
+<p><span class="math display">\min_{x \in D} \; f(x), \qquad D = \operatorname{dom}(f) \subseteq \mathbb{R}^n,</span></p>
+<p>where <span class="math inline">f</span> is continuously differentiable.</p>
+<div id="def-vanilla-gd" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 6.1 (Vanilla Gradient Descent)</strong></span> <strong>Vanilla gradient descent</strong> generates iterates according to</p>
+<p><span class="math display">x^{k+1} = x^k - \alpha^k \, \nabla f(x^k), \qquad k \geq 0,</span></p>
+<p>where <span class="math inline">\alpha^k &gt; 0</span> is the step size (learning rate). The descent direction at each step is <span class="math inline">-\nabla f(x^k)</span>.</p>
+</div>
+<p>Why the negative gradient? At <span class="math inline">x^k</span>, the first-order Taylor expansion gives <span class="math inline">f(x^k + d) \approx f(x^k) + \nabla f(x^k)^\top d</span>. Among all directions <span class="math inline">d</span> with <span class="math inline">\|d\|_2 \leq 1</span>, the one that decreases this linear approximation the fastest is <span class="math inline">d = -\nabla f(x^k)/\|\nabla f(x^k)\|_2</span>. So gradient descent follows the direction of <strong>steepest decrease of the local linear model</strong>.</p>
+<p>More generally, given an arbitrary norm <span class="math inline">\|\cdot\|</span>, the <strong>steepest descent direction</strong> at <span class="math inline">x^k</span> is <span class="math inline">d^k = \arg\min_{\|d\| \leq 1} \langle \nabla f(x^k), d \rangle</span>. When the norm is Euclidean, this recovers vanilla gradient descent (up to rescaling of the step size).</p>
+<p>The algorithm is simple, but the central question remains: <strong>how fast does it converge?</strong> The answer depends entirely on the structural properties of <span class="math inline">f</span>. We now introduce the two key conditions — strong convexity and smoothness — that govern the convergence rate. Informally, strong convexity says that <span class="math inline">f</span> curves upward at least as fast as a quadratic, while smoothness says that the gradient does not change too quickly. Together, they <strong>sandwich the curvature of <span class="math inline">f</span> between two quadratics</strong>, and the ratio <span class="math inline">\kappa = L/\mu</span> of their parameters — the <strong>condition number</strong> — governs the convergence rate.</p>
+<section id="sec-strong-convexity" class="level3" data-number="6.1.1">
+<h3 data-number="6.1.1" class="anchored" data-anchor-id="sec-strong-convexity"><span class="header-section-number">6.1.1</span> Strong Convexity</h3>
+<div id="def-strong-convexity" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 6.2 (Strong Convexity)</strong></span> A function <span class="math inline">f</span> is <strong><span class="math inline">\mu</span>-strongly convex</strong> (with <span class="math inline">\mu &gt; 0</span>) if the function <span class="math inline">\{f(x) - \tfrac{\mu}{2}\|x\|_2^2\}</span> is convex.</p>
+</div>
+<section id="sec-first-order-sc" class="level4" data-number="6.1.1.1">
+<h4 data-number="6.1.1.1" class="anchored" data-anchor-id="sec-first-order-sc"><span class="header-section-number">6.1.1.1</span> First-Order Characterizations</h4>
+<p>The following equivalent conditions are often more convenient than the definition.</p>
+<div id="thm-sc-equivalences" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 6.1 (Equivalent Characterizations of Strong Convexity)</strong></span> Let <span class="math inline">f</span> be <span class="math inline">\mu</span>-strongly convex with <span class="math inline">\mu &gt; 0</span>. The following are equivalent:</p>
+<p><strong>(i)</strong> <span class="math inline">f(y) \geq f(x) + \nabla f(x)^\top (y - x) + \tfrac{\mu}{2}\|x - y\|_2^2 \quad \forall\, x, y</span>.</p>
+<p><strong>(ii)</strong> For all <span class="math inline">\lambda \in [0, 1]</span>: <span class="math display">f(\lambda x + (1 - \lambda) y) \leq \lambda \cdot f(x) + (1 - \lambda) \cdot f(y) - \tfrac{\mu}{2} \cdot \lambda(1 - \lambda) \cdot \|x - y\|_2^2.</span></p>
+<p><strong>(iii)</strong> <span class="math inline">\langle \nabla f(x) - \nabla f(y),\, x - y \rangle \geq \mu \cdot \|x - y\|_2^2</span>.</p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>We prove the equivalences by showing Definition <span class="math inline">\Rightarrow</span> (i) <span class="math inline">\Rightarrow</span> (ii) <span class="math inline">\Rightarrow</span> Definition, and (i) <span class="math inline">\Leftrightarrow</span> (iii).</p>
+<p><strong>Definition <span class="math inline">\Rightarrow</span> (i).</strong> By definition, <span class="math inline">g(x) = f(x) - \tfrac{\mu}{2}\|x\|_2^2</span> is convex. The first-order characterization of convexity gives <span class="math inline">g(y) \geq g(x) + \nabla g(x)^\top(y - x)</span>. Substituting <span class="math inline">g</span> and <span class="math inline">\nabla g(x) = \nabla f(x) - \mu x</span>:</p>
+<p><span class="math display">f(y) - \tfrac{\mu}{2}\|y\|_2^2 \geq f(x) - \tfrac{\mu}{2}\|x\|_2^2 + (\nabla f(x) - \mu x)^\top(y - x).</span></p>
+<p>Moving the <span class="math inline">\mu</span> terms to the right-hand side and using the identity</p>
+<p><span class="math display">\tfrac{\mu}{2}\|y\|_2^2 - \tfrac{\mu}{2}\|x\|_2^2 - \mu\, x^\top(y - x) = \tfrac{\mu}{2}\|y - x\|_2^2</span></p>
+<p>gives <span class="math inline">f(y) \geq f(x) + \nabla f(x)^\top(y-x) + \tfrac{\mu}{2}\|y-x\|_2^2</span>, which is (i).</p>
+<p><strong>(i) <span class="math inline">\Rightarrow</span> (ii).</strong> Set <span class="math inline">z = \lambda x + (1-\lambda)y</span> and apply (i) at the point <span class="math inline">z</span> in two directions:</p>
+<p><span class="math display">f(x) \geq f(z) + \nabla f(z)^\top(x-z) + \tfrac{\mu}{2}\|x-z\|_2^2,</span></p>
+<p><span class="math display">f(y) \geq f(z) + \nabla f(z)^\top(y-z) + \tfrac{\mu}{2}\|y-z\|_2^2.</span></p>
+<p>Multiply the first by <span class="math inline">\lambda</span> and the second by <span class="math inline">(1-\lambda)</span>, then add. The gradient terms cancel because <span class="math inline">\lambda(x-z) + (1-\lambda)(y-z) = 0</span>:</p>
+<p><span class="math display">\lambda f(x) + (1-\lambda)f(y) \geq f(z) + \tfrac{\mu}{2}\bigl[\lambda\|x-z\|_2^2 + (1-\lambda)\|y-z\|_2^2\bigr].</span></p>
+<p>Since <span class="math inline">\|x - z\|_2 = (1-\lambda)\|x-y\|_2</span> and <span class="math inline">\|y-z\|_2 = \lambda\|x-y\|_2</span>, the bracket simplifies:</p>
+<p><span class="math display">\lambda(1-\lambda)^2 + (1-\lambda)\lambda^2 = \lambda(1-\lambda)\bigl[(1-\lambda) + \lambda\bigr] = \lambda(1-\lambda).</span></p>
+<p>Rearranging gives <span class="math inline">f(z) \leq \lambda f(x) + (1-\lambda)f(y) - \tfrac{\mu}{2}\lambda(1-\lambda)\|x-y\|_2^2</span>, which is (ii).</p>
+<p><strong>(ii) <span class="math inline">\Rightarrow</span> Definition.</strong> Condition (ii) says</p>
+<p><span class="math display">\lambda f(x) + (1-\lambda)f(y) - f(\lambda x + (1-\lambda)y) \geq \tfrac{\mu}{2}\lambda(1-\lambda)\|x-y\|_2^2.</span></p>
+<p>The right-hand side can be rewritten using the identity <span class="math inline">\lambda(1-\lambda)\|x-y\|_2^2 = \lambda\|x\|_2^2 + (1-\lambda)\|y\|_2^2 - \|\lambda x + (1-\lambda)y\|_2^2</span> (expand and verify). Therefore <span class="math inline">g(x) = f(x) - \tfrac{\mu}{2}\|x\|_2^2</span> satisfies</p>
+<p><span class="math display">g(\lambda x + (1-\lambda)y) \leq \lambda\, g(x) + (1-\lambda)\,g(y),</span></p>
+<p>which is the definition of convexity of <span class="math inline">g</span>.</p>
+<p><strong>(i) <span class="math inline">\Rightarrow</span> (iii).</strong> Write (i) twice, swapping the roles of <span class="math inline">x</span> and <span class="math inline">y</span>:</p>
+<p><span class="math display">f(y) \geq f(x) + \nabla f(x)^\top(y-x) + \tfrac{\mu}{2}\|y-x\|_2^2,</span></p>
+<p><span class="math display">f(x) \geq f(y) + \nabla f(y)^\top(x-y) + \tfrac{\mu}{2}\|x-y\|_2^2.</span></p>
+<p>Adding these two inequalities, the <span class="math inline">f(x)</span> and <span class="math inline">f(y)</span> terms cancel:</p>
+<p><span class="math display">0 \geq (\nabla f(x) - \nabla f(y))^\top(y - x) + \mu\|x-y\|_2^2,</span></p>
+<p>which rearranges to <span class="math inline">\langle \nabla f(x) - \nabla f(y), x - y \rangle \geq \mu\|x-y\|_2^2</span>. This is (iii).</p>
+<p><strong>(iii) <span class="math inline">\Rightarrow</span> (i).</strong> Define the scalar function <span class="math inline">h(t) = f(x + t(y-x))</span> for <span class="math inline">t \in [0,1]</span>. Then</p>
+<p><span class="math display">h'(t) = \nabla f(x + t(y-x))^\top(y-x).</span></p>
+<p>Applying (iii) at the points <span class="math inline">x + t(y-x)</span> and <span class="math inline">x</span> with direction <span class="math inline">y - x</span>:</p>
+<p><span class="math display">h'(t) - h'(0) = \langle \nabla f(x + t(y-x)) - \nabla f(x),\, y - x \rangle \geq \mu\, t\,\|y-x\|_2^2.</span></p>
+<p>Integrating from <span class="math inline">0</span> to <span class="math inline">1</span>:</p>
+<p><span class="math display">f(y) - f(x) - \nabla f(x)^\top(y-x) = \int_0^1 \bigl(h'(t) - h'(0)\bigr)\,dt \geq \int_0^1 \mu\, t\,\|y-x\|_2^2\,dt = \tfrac{\mu}{2}\|y-x\|_2^2.</span></p>
+<p>This recovers the quadratic lower bound (i), completing the cycle of implications. <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+<section id="sec-sc-properties" class="level4" data-number="6.1.1.2">
+<h4 data-number="6.1.1.2" class="anchored" data-anchor-id="sec-sc-properties"><span class="header-section-number">6.1.1.2</span> Properties of Strong Convexity</h4>
+<p>Strong convexity endows the optimization landscape with several powerful properties that are central to convergence analysis.</p>
+<div id="thm-sc-properties" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 6.2 (Properties of Strong Convexity)</strong></span> Let <span class="math inline">f</span> be <span class="math inline">\mu</span>-strongly convex. Then:</p>
+<p><strong>(1)</strong> The minimizer <span class="math inline">x^*</span> is <strong>unique</strong>.</p>
+<p><strong>(2)</strong> (Definition) <span class="math inline">f(y) \geq f(x) + \nabla f(x)^\top (y - x) + \tfrac{\mu}{2}\|y - x\|_2^2</span>.</p>
+<p><strong>(3)</strong> (Co-coercivity) <span class="math inline">(\nabla f(x) - \nabla f(y))^\top (x - y) \geq \mu\,\|x - y\|_2^2</span> (equivalently <span class="math inline">\nabla^2 f \succeq \mu \cdot I</span>).</p>
+<p><strong>(4)</strong> (Gradient domination) <span class="math inline">\tfrac{1}{2}\|\nabla f(x)\|_2^2 \geq \mu \cdot (f(x) - f(x^*))</span>.</p>
+<p><strong>(5)</strong> (Quadratic upper bound via gradient) <span class="math inline">f(y) \leq f(x) + \nabla f(x)^\top (y - x) + \tfrac{1}{2\mu}\|\nabla f(y) - \nabla f(x)\|_2^2</span>.</p>
+</div>
+<p>Property (4)—gradient domination—is particularly important. It says that whenever the gradient is small, the function value must be close to optimal.</p>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span><strong>Proof of Property (4).</strong> In Property (2), minimize over <span class="math inline">y \in \mathbb{R}^n</span>. We have</p>
+<p><span class="math display">g(y) = f(x) + \nabla f(x)^\top (y - x) + \tfrac{\mu}{2}\|y - x\|_2^2,</span></p>
+<p>which has minimizer <span class="math inline">y^* = x - \tfrac{1}{\mu}\nabla f(x)</span>. Evaluating,</p>
+<p><span class="math display">f(x^*) \geq f(x) - \tfrac{1}{2\mu}\|\nabla f(x)\|_2^2,</span></p>
+<p>that is,</p>
+<p><span class="math display">\|\nabla f(x)\|_2^2 \geq 2\mu \cdot (f(x) - f(x^*)).</span></p>
+<p>This is the gradient domination inequality. <span class="math inline">\blacksquare</span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span><strong>Proof of Property (5).</strong> Define <span class="math inline">\varphi_x(z) = f(z) - \nabla f(x)^\top z</span>. This function differs from <span class="math inline">f</span> only by a linear term, so <span class="math inline">\varphi_x</span> is still <span class="math inline">\mu</span>-strongly convex. Moreover, <span class="math inline">\nabla \varphi_x(z) = \nabla f(z) - \nabla f(x)</span>, and the minimizer of <span class="math inline">\varphi_x</span> is <span class="math inline">x</span> itself (since <span class="math inline">\nabla \varphi_x(x) = 0</span>).</p>
+<p>Now observe that</p>
+<p><span class="math display">f(y) - f(x) - \nabla f(x)^\top (y - x) = \varphi_x(y) - \varphi_x(x).</span></p>
+<p>Applying Property (4) to the <span class="math inline">\mu</span>-strongly convex function <span class="math inline">\varphi_x</span>, the gradient domination inequality gives</p>
+<p><span class="math display">\varphi_x(y) - \varphi_x(x) \leq \tfrac{1}{2\mu}\|\nabla \varphi_x(y)\|_2^2 = \tfrac{1}{2\mu}\|\nabla f(y) - \nabla f(x)\|_2^2.</span></p>
+<p>Therefore <span class="math inline">f(y) - f(x) - \nabla f(x)^\top (y - x) \leq \tfrac{1}{2\mu}\|\nabla f(y) - \nabla f(x)\|_2^2</span>. <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+</section>
+<section id="sec-smoothness" class="level3" data-number="6.1.2">
+<h3 data-number="6.1.2" class="anchored" data-anchor-id="sec-smoothness"><span class="header-section-number">6.1.2</span> Smoothness</h3>
+<p>Smoothness bounds how fast the gradient can change.</p>
+<div id="def-smoothness" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 6.3 (Smoothness (<span class="math inline">L</span>-Smoothness))</strong></span> A function <span class="math inline">f</span> is <strong><span class="math inline">L</span>-smooth</strong> if <span class="math inline">\nabla f</span> is <span class="math inline">L</span>-Lipschitz continuous:</p>
+<p><span class="math display">\|\nabla f(x) - \nabla f(y)\|_2 \leq L \cdot \|x - y\|_2.</span></p>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Second-Order Characterization
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If <span class="math inline">f</span> is twice differentiable, then <span class="math inline">f</span> is <span class="math inline">\mu</span>-strongly convex and <span class="math inline">L</span>-smooth if and only if</p>
+<p><span class="math display">0 \preceq \mu \cdot I \preceq \nabla^2 f(x) \preceq L \cdot I \qquad \forall\, x \in D.</span></p>
+</div>
+</div>
+<section id="sec-smooth-characterizations" class="level4" data-number="6.1.2.1">
+<h4 data-number="6.1.2.1" class="anchored" data-anchor-id="sec-smooth-characterizations"><span class="header-section-number">6.1.2.1</span> Equivalent Characterizations of Smoothness</h4>
+<p>Smoothness also admits several useful reformulations. Importantly, some of these hold even without convexity.</p>
+<div id="thm-smooth-equivalences" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 6.3 (Equivalent Characterizations of Smoothness)</strong></span> For smooth (possibly nonconvex) functions, the following are equivalent:</p>
+<p><strong>(i)</strong> <span class="math inline">f(y) \leq f(x) + \nabla f(x)^\top (y - x) + \tfrac{L}{2}\|y - x\|_2^2</span>.</p>
+<p><strong>(ii)</strong> <span class="math inline">\|\nabla f(x) - \nabla f(y)\|_2 \leq L \cdot \|x - y\|_2</span>.</p>
+<p>If <span class="math inline">f</span> is additionally convex (<span class="math inline">\nabla f</span> monotone), we also have:</p>
+<p><strong>(iii)</strong> <span class="math inline">\langle \nabla f(x) - \nabla f(y),\, x - y \rangle \geq \tfrac{1}{L}\|\nabla f(x) - \nabla f(y)\|_2^2</span>.</p>
+<p><strong>(iv)</strong> <span class="math inline">f(\lambda x + (1 - \lambda) y) \geq \lambda f(x) + (1 - \lambda) f(y) - \tfrac{L}{2} \cdot \lambda(1 - \lambda) \cdot \|x - y\|_2^2</span>.</p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>We prove the equivalences in stages.</p>
+<p><strong>(ii) <span class="math inline">\Rightarrow</span> (i).</strong> By the fundamental theorem of calculus,</p>
+<p><span class="math display">f(y) - f(x) - \nabla f(x)^\top(y - x) = \int_0^1 \bigl[\nabla f(x + t(y-x)) - \nabla f(x)\bigr]^\top(y - x)\,dt.</span></p>
+<p>Applying Cauchy–Schwarz and the Lipschitz condition (ii) to the integrand:</p>
+<p><span class="math display">\leq \int_0^1 \|\nabla f(x + t(y-x)) - \nabla f(x)\|_2 \cdot \|y - x\|_2\,dt \leq \int_0^1 Lt\,\|y-x\|_2^2\,dt = \tfrac{L}{2}\|y-x\|_2^2.</span></p>
+<p>Therefore <span class="math inline">f(y) \leq f(x) + \nabla f(x)^\top(y-x) + \tfrac{L}{2}\|y-x\|_2^2</span>, which is (i).</p>
+<p><strong>(i) <span class="math inline">\Rightarrow</span> (ii)</strong> (for twice-differentiable <span class="math inline">f</span>). For any point <span class="math inline">z</span>, unit vector <span class="math inline">e</span>, and <span class="math inline">\epsilon &gt; 0</span>, apply (i) in both directions along <span class="math inline">e</span>:</p>
+<p><span class="math display">f(z + \epsilon e) \leq f(z) + \epsilon\,\nabla f(z)^\top e + \tfrac{L}{2}\epsilon^2,</span></p>
+<p><span class="math display">f(z) \leq f(z + \epsilon e) - \epsilon\,\nabla f(z + \epsilon e)^\top e + \tfrac{L}{2}\epsilon^2.</span></p>
+<p>The first inequality is (i) at <span class="math inline">z</span>; the second is (i) at <span class="math inline">z + \epsilon e</span> evaluated at <span class="math inline">z</span>. Combining:</p>
+<p><span class="math display">[\nabla f(z + \epsilon e) - \nabla f(z)]^\top e \leq L\epsilon.</span></p>
+<p>Replacing <span class="math inline">e</span> by <span class="math inline">-e</span> gives the reverse direction, so</p>
+<p><span class="math display">\bigl|[\nabla f(z + \epsilon e) - \nabla f(z)]^\top e\bigr| \leq L\epsilon \qquad \text{for every unit } e \text{ and } \epsilon &gt; 0.</span></p>
+<p>Taking <span class="math inline">\epsilon \to 0</span> yields <span class="math inline">|e^\top \nabla^2 f(z)\, e| \leq L</span> for every unit vector <span class="math inline">e</span>. Since <span class="math inline">\nabla^2 f(z)</span> is symmetric, its spectral norm equals <span class="math inline">\max_{\|e\|=1} |e^\top \nabla^2 f(z)\, e|</span>, so <span class="math inline">\|\nabla^2 f(z)\|_{\mathrm{op}} \leq L</span> everywhere. Integrating along the segment from <span class="math inline">x</span> to <span class="math inline">y</span>:</p>
+<p><span class="math display">\|\nabla f(x) - \nabla f(y)\|_2 = \left\|\int_0^1 \nabla^2 f(x + t(y-x))(y-x)\,dt\right\|_2 \leq L\|y - x\|_2.</span></p>
+<p>This establishes (ii).</p>
+<p><strong>(i) <span class="math inline">\Rightarrow</span> (iv).</strong> Set <span class="math inline">z = \lambda x + (1-\lambda)y</span> and apply (i) at <span class="math inline">z</span> evaluated at both <span class="math inline">x</span> and <span class="math inline">y</span>:</p>
+<p><span class="math display">f(x) \leq f(z) + \nabla f(z)^\top(x - z) + \tfrac{L}{2}\|x - z\|_2^2,</span></p>
+<p><span class="math display">f(y) \leq f(z) + \nabla f(z)^\top(y - z) + \tfrac{L}{2}\|y - z\|_2^2.</span></p>
+<p>Multiply the first by <span class="math inline">\lambda</span> and the second by <span class="math inline">(1-\lambda)</span>, then add. The gradient terms cancel since <span class="math inline">\lambda(x-z) + (1-\lambda)(y-z) = 0</span>. Since <span class="math inline">\|x-z\|_2 = (1-\lambda)\|x-y\|_2</span> and <span class="math inline">\|y-z\|_2 = \lambda\|x-y\|_2</span>, the quadratic terms simplify to <span class="math inline">\lambda(1-\lambda)\|x-y\|_2^2</span>:</p>
+<p><span class="math display">\lambda f(x) + (1-\lambda)f(y) \leq f(z) + \tfrac{L}{2}\lambda(1-\lambda)\|x-y\|_2^2,</span></p>
+<p>which rearranges to (iv). Note that this direction does <strong>not</strong> require convexity.</p>
+<p><strong>(iv) <span class="math inline">\Rightarrow</span> (i).</strong> Write <span class="math inline">z = x + \lambda(y - x)</span> in (iv) and rearrange:</p>
+<p><span class="math display">f(y) - f(x) \leq \frac{f(x + \lambda(y - x)) - f(x)}{\lambda} + \tfrac{L}{2}(1-\lambda)\|x-y\|_2^2.</span></p>
+<p>Taking <span class="math inline">\lambda \to 0^+</span>, the difference quotient converges to the directional derivative:</p>
+<p><span class="math display">\frac{f(x + \lambda(y-x)) - f(x)}{\lambda} \to \nabla f(x)^\top(y-x).</span></p>
+<p>Therefore <span class="math inline">f(y) \leq f(x) + \nabla f(x)^\top(y-x) + \tfrac{L}{2}\|y-x\|_2^2</span>, recovering (i).</p>
+<p><strong>Convex case: (ii) <span class="math inline">\Rightarrow</span> (iii).</strong> The convex descent lemma (<a href="#lem-descent-convex" class="quarto-xref">Lemma&nbsp;<span>6.3</span></a> below) establishes</p>
+<p><span class="math display">f(x) - f(y) \leq \nabla f(x)^\top(x - y) - \tfrac{1}{2L}\|\nabla f(x) - \nabla f(y)\|_2^2.</span></p>
+<p>Swapping <span class="math inline">x</span> and <span class="math inline">y</span>:</p>
+<p><span class="math display">f(y) - f(x) \leq \nabla f(y)^\top(y - x) - \tfrac{1}{2L}\|\nabla f(x) - \nabla f(y)\|_2^2.</span></p>
+<p>Adding these two inequalities, the function values cancel and we obtain the co-coercivity bound:</p>
+<p><span class="math display">\langle \nabla f(x) - \nabla f(y),\, x - y \rangle \geq \tfrac{1}{L}\|\nabla f(x) - \nabla f(y)\|_2^2.</span></p>
+<p><strong>Convex case: (iii) <span class="math inline">\Rightarrow</span> (ii).</strong> Apply Cauchy–Schwarz to the left-hand side of (iii):</p>
+<p><span class="math display">\|\nabla f(x) - \nabla f(y)\|_2 \cdot \|x - y\|_2 \geq \langle \nabla f(x) - \nabla f(y),\, x - y \rangle \geq \tfrac{1}{L}\|\nabla f(x) - \nabla f(y)\|_2^2.</span></p>
+<p>Dividing both sides by <span class="math inline">\|\nabla f(x) - \nabla f(y)\|_2</span> (when nonzero):</p>
+<p><span class="math display">\|\nabla f(x) - \nabla f(y)\|_2 \leq L\|x - y\|_2,</span></p>
+<p>which is (ii). This completes the proof. <span class="math inline">\blacksquare</span></p>
+</div>
+<p><strong>How to read <a href="#fig-condition-number" class="quarto-xref">Figure&nbsp;<span>6.1</span></a>.</strong> The left panel shows a well-conditioned function (<span class="math inline">\kappa \approx 1</span>): because <span class="math inline">\mu \approx L</span>, the level sets are nearly circular and gradient descent converges in a nearly straight path to <span class="math inline">x^*</span>. The right panel shows an ill-conditioned function (<span class="math inline">\kappa \gg 1</span>): because <span class="math inline">L \gg \mu</span>, the level sets are elongated ellipses and gradient descent zig-zags slowly toward the optimum. The condition number <span class="math inline">\kappa = L/\mu</span> controls the convergence rate via the contraction factor <span class="math inline">(\kappa - 1)/(\kappa + 1)</span>—when <span class="math inline">\kappa</span> is large, this factor is close to <span class="math inline">1</span> and convergence is slow.</p>
+<div id="fig-condition-number" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-condition-number-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch05-condition-number.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;6.1: Strong convexity and smoothness: bounding the curvature via the condition number \kappa = L/\mu."><img src="figures/ch05-condition-number.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-condition-number-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.1: Strong convexity and smoothness: bounding the curvature via the condition number <span class="math inline">\kappa = L/\mu</span>.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+</section>
+<section id="sec-descent-lemma" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="sec-descent-lemma"><span class="header-section-number">6.2</span> The Descent Lemma</h2>
+<p>Having established the structural conditions (<a href="#def-strong-convexity" class="quarto-xref">Definition&nbsp;<span>6.2</span></a> and <a href="#def-smoothness" class="quarto-xref">Definition&nbsp;<span>6.3</span></a>), we now derive the key tool that drives all convergence proofs for gradient descent.</p>
+<section id="sec-why-smoothness" class="level3" data-number="6.2.1">
+<h3 data-number="6.2.1" class="anchored" data-anchor-id="sec-why-smoothness"><span class="header-section-number">6.2.1</span> GD as Quadratic Upper Bound Minimization</h3>
+<p>A natural question is: <em>why do we always need smoothness in iterative methods?</em> The answer comes from two observations:</p>
+<ol type="1">
+<li><strong>GD iterates are minimizers of quadratic approximations of <span class="math inline">f</span>.</strong> Writing <span class="math inline">x^+ = x - \alpha\,\nabla f(x)</span>, we see that</li>
+</ol>
+<p><span class="math display">x^+ = \operatorname*{argmin}_y \; \phi_\alpha(y), \qquad \phi_\alpha(y) = f(x) + \langle \nabla f(x),\, y - x \rangle + \tfrac{1}{2\alpha}\|y - x\|_2^2.</span></p>
+<ol start="2" type="1">
+<li><strong>We need <span class="math inline">\phi_\alpha</span> to be an upper bound on <span class="math inline">f</span>.</strong> This is exactly what happens when <span class="math inline">f</span> has a quadratic upper bound, i.e., when <span class="math inline">f</span> is smooth. Specifically, if <span class="math inline">f</span> is <span class="math inline">L</span>-smooth and <span class="math inline">\alpha \leq 1/L</span>, then <span class="math inline">\phi_\alpha(y) \geq f(y)</span> for all <span class="math inline">y</span>.</li>
+</ol>
+<div id="lem-quadratic-upper-bound" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 6.1 (Quadratic Upper Bound of Smooth Functions)</strong></span> Let <span class="math inline">f</span> be an <span class="math inline">L</span>-smooth function. Then we have</p>
+<p><span class="math display">\bigl|f(y) - \bigl(f(x) + \nabla f(x)^\top (y - x)\bigr)\bigr| \leq \tfrac{L}{2} \cdot \|x - y\|_2^2 \qquad \forall\, x, y \in \mathbb{R}^n.</span></p>
+</div>
+<p>The fact that GD minimizes quadratic upper bounds leads to the descent lemma, which guarantees that every GD step decreases the objective—even when <span class="math inline">f</span> is nonconvex—provided the step size is small enough.</p>
+<p><strong>How to read <a href="#fig-quadratic-upper-bound" class="quarto-xref">Figure&nbsp;<span>6.2</span></a>.</strong> At the current point <span class="math inline">x_k</span>, the <span class="math inline">L</span>-smoothness condition guarantees that <span class="math inline">f</span> lies below a quadratic upper bound (the dashed parabola tangent to <span class="math inline">f</span> at <span class="math inline">x_k</span>). Gradient descent with stepsize <span class="math inline">1/L</span> moves to the minimizer of this quadratic surrogate, yielding <span class="math inline">x_{k+1}</span>. The key insight: even though we cannot minimize <span class="math inline">f</span> directly, we can minimize its quadratic upper bound — and every such step is guaranteed to decrease <span class="math inline">f</span>.</p>
+<div id="fig-quadratic-upper-bound" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-quadratic-upper-bound-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch05-quadratic-upper-bound.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;6.2: Gradient descent as quadratic upper bound minimization: the GD step minimizes a quadratic surrogate that sits above f."><img src="figures/ch05-quadratic-upper-bound.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-quadratic-upper-bound-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.2: Gradient descent as quadratic upper bound minimization: the GD step minimizes a quadratic surrogate that sits above <span class="math inline">f</span>.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-descent-general" class="level3" data-number="6.2.2">
+<h3 data-number="6.2.2" class="anchored" data-anchor-id="sec-descent-general"><span class="header-section-number">6.2.2</span> The General Descent Lemma</h3>
+<div id="lem-descent" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 6.2 (Descent Lemma)</strong></span> If <span class="math inline">f</span> is <span class="math inline">L</span>-smooth (perhaps nonconvex) and <span class="math inline">y = x - \alpha \cdot \nabla f(x)</span> with <span class="math inline">\alpha \leq 1/L</span>, then</p>
+<p><span class="math display">f(y) \leq f(x) - \tfrac{\alpha}{2}\|\nabla f(x)\|_2^2.</span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>Since <span class="math inline">f</span> is <span class="math inline">L</span>-smooth, the quadratic upper bound (<a href="#thm-smooth-equivalences" class="quarto-xref">Theorem&nbsp;<span>6.3</span></a>, property (i)) gives</p>
+<p><span class="math display">f(y) \leq f(x) + \nabla f(x)^\top (y - x) + \tfrac{L}{2}\|y - x\|_2^2.</span></p>
+<p>Since <span class="math inline">\alpha \leq 1/L</span>, we have <span class="math inline">\tfrac{L}{2} \leq \tfrac{1}{2\alpha}</span>, so the bound tightens to</p>
+<p><span class="math display">f(y) \leq f(x) + \nabla f(x)^\top (y - x) + \tfrac{1}{2\alpha}\|y - x\|_2^2.</span></p>
+<p>Now substitute the GD update <span class="math inline">y - x = -\alpha\,\nabla f(x)</span>. The inner product becomes <span class="math inline">-\alpha\|\nabla f(x)\|_2^2</span> and the quadratic term becomes <span class="math inline">\tfrac{\alpha}{2}\|\nabla f(x)\|_2^2</span>:</p>
+<p><span class="math display">f(y) \leq f(x) - \alpha\,\|\nabla f(x)\|_2^2 + \tfrac{\alpha}{2}\|\nabla f(x)\|_2^2 = f(x) - \tfrac{\alpha}{2}\|\nabla f(x)\|_2^2.</span></p>
+<p>This confirms that each gradient step decreases the objective by at least <span class="math inline">\tfrac{\alpha}{2}\|\nabla f(x)\|_2^2</span>, which is strictly positive whenever <span class="math inline">\nabla f(x) \neq 0</span>. <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+<section id="sec-descent-convex" class="level3" data-number="6.2.3">
+<h3 data-number="6.2.3" class="anchored" data-anchor-id="sec-descent-convex"><span class="header-section-number">6.2.3</span> Descent Lemma for Convex Functions</h3>
+<p>When <span class="math inline">f</span> is additionally convex, we can obtain a more powerful result that involves the optimality gap directly.</p>
+<div id="lem-descent-convex" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 6.3 (Descent Lemma (Convex + Smooth))</strong></span> Let <span class="math inline">f</span> be an <span class="math inline">L</span>-smooth and convex function. Then</p>
+<p><span class="math display">f(x) - f(y) \leq \nabla f(x)^\top (x - y) - \tfrac{1}{2L}\|\nabla f(x) - \nabla f(y)\|_2^2.</span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>The idea is to introduce an auxiliary point that lets us combine convexity at one point with smoothness at another. Define</p>
+<p><span class="math display">\bar{z} = y - \tfrac{1}{L}(\nabla f(y) - \nabla f(x)).</span></p>
+<p>We bound <span class="math inline">f(x) - f(y) = [f(x) - f(\bar{z})] + [f(\bar{z}) - f(y)]</span> by applying convexity to the first bracket and smoothness to the second:</p>
+<ul>
+<li><strong>Convexity at <span class="math inline">x</span>:</strong> <span class="math inline">f(x) - f(\bar{z}) \leq \nabla f(x)^\top(x - \bar{z})</span>.</li>
+<li><strong>Smoothness at <span class="math inline">y</span>:</strong> <span class="math inline">f(\bar{z}) - f(y) \leq \nabla f(y)^\top(\bar{z} - y) + \tfrac{L}{2}\|\bar{z} - y\|_2^2</span>.</li>
+</ul>
+<p>Adding these two bounds:</p>
+<p><span class="math display">f(x) - f(y) \leq \nabla f(x)^\top(x - \bar{z}) + \nabla f(y)^\top(\bar{z} - y) + \tfrac{L}{2}\|\bar{z} - y\|_2^2.</span></p>
+<p>Now substitute <span class="math inline">\bar{z} - y = -\tfrac{1}{L}(\nabla f(y) - \nabla f(x))</span> and expand. The key cancellations give:</p>
+<p><span class="math display">\begin{aligned}
+\nabla f(x)^\top(x - \bar{z}) &amp;= \nabla f(x)^\top(x - y) + \tfrac{1}{L}\nabla f(x)^\top(\nabla f(y) - \nabla f(x)), \\
+\nabla f(y)^\top(\bar{z} - y) &amp;= \tfrac{1}{L}\nabla f(y)^\top(\nabla f(x) - \nabla f(y)), \\
+\tfrac{L}{2}\|\bar{z} - y\|_2^2 &amp;= \tfrac{1}{2L}\|\nabla f(x) - \nabla f(y)\|_2^2.
+\end{aligned}</span></p>
+<p>Collecting the gradient-difference terms: <span class="math inline">\tfrac{1}{L}[\nabla f(x) - \nabla f(y)]^\top[\nabla f(y) - \nabla f(x)] + \tfrac{1}{2L}\|\nabla f(x) - \nabla f(y)\|_2^2 = -\tfrac{1}{2L}\|\nabla f(x) - \nabla f(y)\|_2^2</span>. Therefore</p>
+<p><span class="math display">f(x) - f(y) \leq \nabla f(x)^\top(x - y) - \tfrac{1}{2L}\|\nabla f(x) - \nabla f(y)\|_2^2.</span></p>
+<p>This establishes the convex descent lemma. <span class="math inline">\blacksquare</span></p>
+</div>
+<p>Swapping the roles of <span class="math inline">x</span> and <span class="math inline">y</span> yields a second inequality. Adding the two gives the <strong>co-coercivity</strong> of <span class="math inline">\nabla f</span>:</p>
+<p><span class="math display">\langle \nabla f(x) - \nabla f(y),\, x - y \rangle \geq \tfrac{1}{L}\|\nabla f(x) - \nabla f(y)\|_2^2.</span></p>
+<p>This is Property (iii) of smoothness (<a href="#thm-smooth-equivalences" class="quarto-xref">Theorem&nbsp;<span>6.3</span></a>). Setting <span class="math inline">y = x^*</span> (so <span class="math inline">\nabla f(x^*) = 0</span>):</p>
+<p><span class="math display">\langle \nabla f(x),\, x - x^* \rangle \geq \tfrac{1}{L}\|\nabla f(x)\|_2^2,</span></p>
+<p>which says that <span class="math inline">\nabla f(x)</span> is a descent direction toward <span class="math inline">x^*</span> and the progress is at least <span class="math inline">O(\|\nabla f(x)\|_2^2)</span>.</p>
+<p>When <span class="math inline">f</span> is both <span class="math inline">\mu</span>-strongly convex and <span class="math inline">L</span>-smooth, the co-coercivity sharpens by combining both conditions.</p>
+<div id="lem-sc-smooth-cocoercivity" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 6.4 (Co-coercivity Under Strong Convexity and Smoothness)</strong></span> If <span class="math inline">f</span> is <span class="math inline">\mu</span>-strongly convex and <span class="math inline">L</span>-smooth, then:</p>
+<p><span id="eq-sc-smooth-cocoercivity"><span class="math display">\langle \nabla f(x) - \nabla f(y),\, x - y \rangle \geq \tfrac{\mu}{2}\|x - y\|_2^2 + \tfrac{1}{2L}\|\nabla f(x) - \nabla f(y)\|_2^2. \tag{6.1}</span></span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>By strong convexity,</p>
+<p><span class="math display">\langle \nabla f(x) - \nabla f(y),\, x - y \rangle \geq \mu \cdot \|x - y\|_2^2.</span></p>
+<p>By the co-coercivity of smooth convex functions,</p>
+<p><span class="math display">\langle \nabla f(x) - \nabla f(y),\, x - y \rangle \geq \tfrac{1}{L}\|\nabla f(x) - \nabla f(y)\|_2^2.</span></p>
+<p>Adding and dividing by two gives the result. <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+<section id="sec-descent-strongly-convex" class="level3" data-number="6.2.4">
+<h3 data-number="6.2.4" class="anchored" data-anchor-id="sec-descent-strongly-convex"><span class="header-section-number">6.2.4</span> Descent Lemma for Strongly Convex Functions</h3>
+<p>When <span class="math inline">f</span> is both smooth and strongly convex, the descent lemma takes its most powerful form. This version directly connects the one-step progress to both the gradient norm and the distance to the optimum, and is designed for use with the three-point lemma introduced later.</p>
+<div id="lem-descent-sc" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 6.5 (Descent Lemma (Strongly Convex Case))</strong></span> Let <span class="math inline">x^+ = x - \alpha\,\nabla f(x)</span>. Then we have:</p>
+<p><span class="math display">f(x^+) - f(x^*) \leq \langle \nabla f(x),\, x^+ - x^* \rangle - \tfrac{\mu}{2}\|x^* - x\|_2^2 + \tfrac{\alpha}{2}\|\nabla f(x)\|_2^2.</span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>By smoothness at <span class="math inline">x</span>:</p>
+<p><span id="eq-gd-smoothness-step"><span class="math display">f(x^+) - f(x) \leq \langle \nabla f(x),\, x^+ - x \rangle + \tfrac{\alpha}{2}\|\nabla f(x)\|_2^2. \tag{6.2}</span></span></p>
+<p>By strong convexity at <span class="math inline">x</span>:</p>
+<p><span id="eq-gd-strong-convex-step"><span class="math display">f(x^*) - f(x) \geq \langle \nabla f(x),\, x^* - x \rangle + \tfrac{\mu}{2}\|x^* - x\|_2^2. \tag{6.3}</span></span></p>
+<p>Adding (<a href="#eq-gd-smoothness-step" class="quarto-xref"><span>6.2</span></a>) and (<a href="#eq-gd-strong-convex-step" class="quarto-xref"><span>6.3</span></a>):</p>
+<p><span class="math display">f(x^+) - f(x^*) \leq \langle \nabla f(x),\, x^+ - x^* \rangle - \tfrac{\mu}{2}\|x^* - x\|_2^2 + \tfrac{\alpha}{2}\|\nabla f(x)\|_2^2.</span></p>
+<p>The right-hand side combines three effects: the inner product captures progress toward the optimum, the <span class="math inline">-\tfrac{\mu}{2}\|x^* - x\|_2^2</span> term reflects the strong convexity bonus, and the <span class="math inline">\tfrac{\alpha}{2}\|\nabla f(x)\|_2^2</span> term accounts for the quadratic cost of the gradient step. <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+</section>
+<section id="sec-quadratic-warmup" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="sec-quadratic-warmup"><span class="header-section-number">6.3</span> Warm-Up: Quadratic Functions</h2>
+<p>Before diving into the general convergence analysis, it is instructive to study the simplest nontrivial case: a quadratic objective. This warm-up builds intuition for the role of the condition number.</p>
+<p>Consider the quadratic objective</p>
+<p><span class="math display">f(x) = \tfrac{1}{2}(x - x^*)^\top Q\,(x - x^*), \qquad Q \succeq 0,</span></p>
+<p>where <span class="math inline">x^* \in \operatorname*{argmin} f(x)</span>.</p>
+<p>Gradient descent gives</p>
+<p><span class="math display">x^{k+1} = x^k - \eta\,Q(x^k - x^*).</span></p>
+<p>Defining the error <span class="math inline">e^k = x^k - x^*</span>, we obtain</p>
+<p><span class="math display">e^{k+1} = (I - \eta\,Q)\,e^k.</span></p>
+<p><strong>Strongly convex + smooth setting.</strong> We have <span class="math inline">\mu \cdot I_n \preceq Q \preceq L \cdot I_n</span>, where <span class="math inline">\mu = \lambda_n(Q)</span> and <span class="math inline">L = \lambda_1(Q)</span> are the smallest and largest eigenvalues.</p>
+<p>The eigenvalues of <span class="math inline">I - \eta\,Q</span> are <span class="math inline">\{1 - \eta\,\lambda_1(Q),\, \ldots,\, 1 - \eta\,\lambda_n(Q)\}</span>.</p>
+<p>Setting <span class="math inline">\eta = \dfrac{2}{\mu + L}</span>, we get <span class="math inline">\eta \cdot \lambda_i(Q) \in \Bigl[\dfrac{2\mu}{\mu + L},\, \dfrac{2L}{\mu + L}\Bigr]</span>, so</p>
+<p><span class="math display">|1 - \lambda_i(Q) \cdot \eta| \leq \max\{|1 - \lambda_1(Q) \cdot \eta|,\, |1 - \lambda_n(Q) \cdot \eta|\} = \frac{L - \mu}{L + \mu} = \frac{\kappa - 1}{\kappa + 1},</span></p>
+<p>where <span class="math inline">\kappa = L/\mu</span> is the <strong>condition number</strong>.</p>
+<p>Thus,</p>
+<p><span class="math display">\|e^{k+1}\|_2 = \|(I - \eta Q)\,e^k\|_2 \leq \|I - \eta Q\|_{\mathrm{op}} \cdot \|e^k\|_2 \leq \frac{\kappa - 1}{\kappa + 1}\|e^k\|_2.</span></p>
+<p>Unrolling the recursion:</p>
+<p><span id="eq-quadratic-linear-rate"><span class="math display">\|e^k\|_2 \leq \left(\frac{\kappa - 1}{\kappa + 1}\right)^k \|e^0\|_2. \tag{6.4}</span></span></p>
+<p>This shows <strong>linear convergence</strong> with contraction factor <span class="math inline">(\kappa - 1)/(\kappa + 1)</span>. We will now see that this analysis generalizes to non-quadratic objectives.</p>
+</section>
+<section id="sec-convergence-analysis" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="sec-convergence-analysis"><span class="header-section-number">6.4</span> Convergence Analysis</h2>
+<p>We now present the convergence analysis of gradient descent</p>
+<p><span class="math display">x^{k+1} = x^k - \alpha \cdot \nabla f(x^k), \qquad k \geq 0</span></p>
+<p>under three settings of increasing structure. Each added structural assumption yields a strictly stronger convergence guarantee.</p>
+<section id="sec-case1" class="level3" data-number="6.4.1">
+<h3 data-number="6.4.1" class="anchored" data-anchor-id="sec-case1"><span class="header-section-number">6.4.1</span> Case 1: Nonconvex + Smooth</h3>
+<p>When <span class="math inline">f</span> is merely smooth (possibly nonconvex), we cannot hope for convergence to a global minimum. Instead, we aim to find an approximate stationary point.</p>
+<div id="thm-nonconvex-smooth" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 6.4 (Convergence of GD (Nonconvex + Smooth))</strong></span> If <span class="math inline">f</span> is <span class="math inline">L</span>-smooth and <span class="math inline">\alpha^k = 1/L</span>, then</p>
+<p><span id="eq-nonconvex-rate"><span class="math display">\frac{1}{K}\sum_{k=0}^{K-1} \|\nabla f(x^k)\|_2^2 \leq \frac{2L\bigl(f(x^0) - f(x^*)\bigr)}{K}. \tag{6.5}</span></span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>By the Descent Lemma (<a href="#lem-descent" class="quarto-xref">Lemma&nbsp;<span>6.2</span></a> with <span class="math inline">\alpha = 1/L</span>):</p>
+<p><span class="math display">f(x^{k+1}) - f(x^k) \leq -\tfrac{1}{2L}\|\nabla f(x^k)\|_2^2.</span></p>
+<p>Summing from <span class="math inline">k = 0</span> to <span class="math inline">K - 1</span>:</p>
+<p><span class="math display">\sum_{k=0}^{K-1} \tfrac{1}{2L}\|\nabla f(x^k)\|_2^2 \leq \sum_{k=0}^{K-1} \bigl[f(x^k) - f(x^{k+1})\bigr] = f(x^0) - f(x^K) \leq f(x^0) - f(x^*).</span></p>
+<p>Dividing by <span class="math inline">K</span> gives the result. <span class="math inline">\blacksquare</span></p>
+</div>
+<p>In the nonconvex case, suppose we return a random solution <span class="math inline">\widehat{x}</span> such that <span class="math inline">\mathbb{P}(\widehat{x} = x^k) = 1/K</span> for <span class="math inline">0 \leq k &lt; K</span>. Then</p>
+<p><span class="math display">\mathbb{E}\bigl[\|\nabla f(\widehat{x})\|_2^2\bigr] = \frac{1}{K}\sum_{k=0}^{K-1}\|\nabla f(x^k)\|_2^2 = O\!\left(\tfrac{1}{K}\right).</span></p>
+<p>After <span class="math inline">O(1/\varepsilon)</span> iterations, the random point <span class="math inline">\widehat{x}</span> is an <span class="math inline">\varepsilon</span>-approximate stationary point in expectation (i.e., <span class="math inline">\|\nabla f(\widehat{x})\|_2 \leq \varepsilon</span>).</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Deterministic Guarantee
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>By <a href="#eq-nonconvex-rate" class="quarto-xref"><span>6.5</span></a>, we also have <span class="math inline">\min_{0 \leq k &lt; K} \|\nabla f(x^k)\|_2 = O(1/\sqrt{K})</span>. This means there exists an approximate stationary point on the GD path, but it does not mean the path converges to a stationary point in the nonconvex setting.</p>
+<p>We can show that <span class="math inline">\|\nabla f(x^k)\|_2</span> monotonically decreases to zero when we additionally have convexity (see Case 2 below).</p>
+</div>
+</div>
+</section>
+<section id="sec-case2" class="level3" data-number="6.4.2">
+<h3 data-number="6.4.2" class="anchored" data-anchor-id="sec-case2"><span class="header-section-number">6.4.2</span> Case 2: Convex + Smooth</h3>
+<p>Dropping strong convexity, we can no longer expect linear convergence. However, convexity still allows us to establish convergence of function values to the global optimum. The proof uses an elegant identity called the <strong>three-point lemma</strong> that transforms inner products into distances—enabling a telescoping argument over the squared distance <span class="math inline">\|x^k - x^*\|_2^2</span>.</p>
+<div id="lem-three-point" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 6.6 (Three-Point Lemma)</strong></span> For all <span class="math inline">x, y, z \in \mathbb{R}^n</span>,</p>
+<p><span id="eq-three-point"><span class="math display">\langle y - x,\, y - z \rangle = \tfrac{1}{2}\|x - y\|_2^2 + \tfrac{1}{2}\|y - z\|_2^2 - \tfrac{1}{2}\|x - z\|_2^2. \tag{6.6}</span></span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>Expand <span class="math inline">\|x - z\|_2^2 = \|(x - y) + (y - z)\|_2^2 = \|x - y\|_2^2 + 2\langle x - y, y - z \rangle + \|y - z\|_2^2</span>. Rearranging: <span class="math inline">\langle x - y, y - z \rangle = \tfrac{1}{2}\|x - z\|_2^2 - \tfrac{1}{2}\|x - y\|_2^2 - \tfrac{1}{2}\|y - z\|_2^2</span>. Negating both sides gives (<a href="#eq-three-point" class="quarto-xref"><span>6.6</span></a>). <span class="math inline">\blacksquare</span></p>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>The Three-Point Lemma: A Recurring Proof Technique
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The three-point lemma is one of the most fundamental identities in first-order optimization. Its power lies in converting an <strong>inner product</strong> <span class="math inline">\langle y - x, y - z \rangle</span>—which arises naturally when combining gradient and convexity bounds—into a <strong>telescoping difference</strong> of squared distances <span class="math inline">\|x^k - x^*\|_2^2 - \|x^{k+1} - x^*\|_2^2</span>. This telescoping structure is the engine behind convergence proofs throughout this book:</p>
+<ul>
+<li><strong>Gradient descent</strong> (this section, <a href="#thm-convex-smooth" class="quarto-xref">Theorem&nbsp;<span>6.5</span></a>): the sublinear <span class="math inline">O(1/K)</span> proof below applies (<a href="#eq-three-point" class="quarto-xref"><span>6.6</span></a>) with <span class="math inline">(x, y, z) = (x^k, x^{k+1}, x^*)</span> to telescope the squared distance to the optimum.</li>
+<li><strong>Projected gradient descent</strong> (<a href="05b-projected-gradient-descent.html#sec-proj-gd-convergence" class="quarto-xref"><span>Section 7.4</span></a>): the three-point identity <span class="math inline">\langle x^{k+1} - x^k, x^{k+1} - x^* \rangle</span> combined with the projection characterization (<a href="05b-projected-gradient-descent.html#lem-projection-characterization" class="quarto-xref">Lemma&nbsp;<span>7.1</span></a>) handles constrained sets.</li>
+<li><strong>Subgradient methods</strong> (<a href="06-subgradient.html#lem-three-point-subgrad" class="quarto-xref">Lemma&nbsp;<span>8.2</span></a>): the same identity appears in the fundamental inequality <span class="math inline">\|x^{k+1} - x^*\|_2^2 \leq \|x^k - x^*\|_2^2 - 2\alpha_k(f(x^k) - f^*) + \alpha_k^2\|g^k\|_2^2</span> that drives all subgradient convergence results.</li>
+<li><strong>Proximal gradient methods</strong> (<a href="07-proximal-gradient.html#sec-proof-convergence" class="quarto-xref"><span>Section 9.8.8</span></a>): the proximal step minimizes a composite quadratic model, and the three-point lemma provides the telescoping in the <span class="math inline">O(1/K)</span> rate proof.</li>
+<li><strong>Mirror descent</strong> (<a href="08-mirror-descent.html#lem-three-point-bregman" class="quarto-xref">Lemma&nbsp;<span>10.2</span></a>): the <strong>Bregman three-point lemma</strong> <span class="math inline">\langle \nabla\varphi(z) - \nabla\varphi(y), x - y \rangle = D_\varphi(x,y) + D_\varphi(y,z) - D_\varphi(x,z)</span> generalizes (<a href="#eq-three-point" class="quarto-xref"><span>6.6</span></a>) from squared Euclidean distance to arbitrary Bregman divergences, and is the key identity behind both the Lipschitz and smooth mirror descent analyses.</li>
+</ul>
+<p>Whenever you see a convergence proof that relates <span class="math inline">f(x^{k+1}) - f(x^*)</span> to distances <span class="math inline">\|x^k - x^*\|^2</span>, the three-point lemma (or its Bregman generalization) is likely at work.</p>
+</div>
+</div>
+<p><strong>Proof of sublinear convergence.</strong> We apply the three-point lemma with <span class="math inline">x = x^k</span>, <span class="math inline">y = x^{k+1} = x^k - \alpha\,\nabla f(x^k)</span>, and <span class="math inline">z = x^*</span>. The strategy has three steps: (a) use smoothness to upper-bound <span class="math inline">f(x^{k+1})</span>, (b) use convexity to relate <span class="math inline">f(x^k)</span> and <span class="math inline">f(x^*)</span>, and (c) apply the three-point lemma to convert the inner product into a telescoping distance.</p>
+<p><strong>Step (a): smoothness.</strong> The quadratic upper bound (<a href="#thm-smooth-equivalences" class="quarto-xref">Theorem&nbsp;<span>6.3</span></a>, property (i)) gives</p>
+<p><span class="math display">f(x^{k+1}) \leq f(x^k) + \langle \nabla f(x^k),\, x^{k+1} - x^k \rangle + \tfrac{L}{2}\|x^{k+1} - x^k\|_2^2.</span></p>
+<p><strong>Step (b): convexity.</strong> The first-order characterization of convexity gives a lower bound on <span class="math inline">f(x^*)</span>:</p>
+<p><span class="math display">f(x^*) \geq f(x^k) + \langle \nabla f(x^k),\, x^* - x^k \rangle.</span></p>
+<p>Subtracting step (b) from step (a) eliminates <span class="math inline">f(x^k)</span> and yields an upper bound on the optimality gap:</p>
+<p><span id="eq-gd-convex-upper"><span class="math display">\begin{aligned}
+f(x^{k+1}) - f(x^*) &amp;\leq \langle \nabla f(x^k),\, x^{k+1} - x^* \rangle + \tfrac{L}{2}\|x^{k+1} - x^k\|_2^2 \\
+&amp;= \tfrac{1}{\alpha}\langle x^k - x^{k+1},\, x^{k+1} - x^* \rangle + \tfrac{1}{2\alpha}\|x^{k+1} - x^k\|_2^2,
+\end{aligned} \tag{6.7}</span></span></p>
+<p>where the second line uses <span class="math inline">\nabla f(x^k) = (x^k - x^{k+1})/\alpha</span>.</p>
+<p><strong>Step (c): three-point lemma.</strong> Applying (<a href="#eq-three-point" class="quarto-xref"><span>6.6</span></a>) with <span class="math inline">(x, y, z) = (x^k, x^{k+1}, x^*)</span>:</p>
+<p><span id="eq-gd-three-point"><span class="math display">\langle x^{k+1} - x^k,\, x^{k+1} - x^* \rangle = \tfrac{1}{2}\|x^{k+1} - x^k\|_2^2 + \tfrac{1}{2}\|x^{k+1} - x^*\|_2^2 - \tfrac{1}{2}\|x^k - x^*\|_2^2. \tag{6.8}</span></span></p>
+<p>Substituting (<a href="#eq-gd-three-point" class="quarto-xref"><span>6.8</span></a>) into (<a href="#eq-gd-convex-upper" class="quarto-xref"><span>6.7</span></a>), the <span class="math inline">\|x^{k+1} - x^k\|_2^2</span> terms cancel, leaving a clean telescoping bound:</p>
+<p><span class="math display">f(x^{k+1}) - f(x^*) \leq \tfrac{1}{2\alpha}\bigl[\|x^k - x^*\|_2^2 - \|x^{k+1} - x^*\|_2^2\bigr].</span></p>
+<p><strong>Telescoping.</strong> Summing over <span class="math inline">k = 0, \ldots, K-1</span>, the right-hand side telescopes:</p>
+<p><span class="math display">\sum_{k=0}^{K-1}\bigl(f(x^{k+1}) - f(x^*)\bigr) \leq \tfrac{1}{2\alpha}\bigl[\|x^0 - x^*\|_2^2 - \|x^K - x^*\|_2^2\bigr] \leq \tfrac{L}{2}\|x^0 - x^*\|_2^2.</span></p>
+<p>Since <span class="math inline">f(x^k)</span> is monotonically decreasing (by <a href="#lem-descent" class="quarto-xref">Lemma&nbsp;<span>6.2</span></a>), <span class="math inline">f(x^K) - f(x^*)</span> is the smallest term in the sum, so</p>
+<p><span class="math display">f(x^K) - f(x^*) \leq \frac{1}{K}\sum_{k=0}^{K-1}\bigl(f(x^{k+1}) - f(x^*)\bigr) \leq \frac{L\|x^0 - x^*\|_2^2}{2K}.</span></p>
+<div id="thm-convex-smooth" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 6.5 (Convergence of GD (Convex + Smooth))</strong></span> If <span class="math inline">f</span> is convex and <span class="math inline">L</span>-smooth, with <span class="math inline">\alpha^k = 1/L</span>, then GD obeys:</p>
+<ul>
+<li><p><span class="math inline">f(x^K) - f(x^*) \leq \dfrac{L \cdot \|x^0 - x^*\|_2^2}{2K}.</span></p></li>
+<li><p><span class="math inline">\varepsilon</span>-approximately optimal after <span class="math inline">O(L/\varepsilon)</span> iterations.</p></li>
+<li><p><span class="math inline">\{\|\nabla f(x^k)\|_2\}_{k \geq 0}</span> monotonically decreases to zero.</p></li>
+</ul>
+</div>
+<p>The following two lemmas establish the monotonic decrease of both the distance to the optimum and the gradient norms along the GD trajectory. These properties strengthen the convergence guarantee beyond just the function value.</p>
+<div id="lem-monotonic-error" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 6.7 (Monotonic Error Decrease)</strong></span> If <span class="math inline">f</span> is convex and <span class="math inline">L</span>-smooth, and <span class="math inline">\alpha^k = 1/L</span>, then</p>
+<p><span class="math display">\|x^{k+1} - x^*\|_2^2 \leq \|x^k - x^*\|_2^2 - \tfrac{1}{L^2}\|\nabla f(x^k)\|_2^2.</span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>By co-coercivity of smooth convex functions, setting <span class="math inline">y = x^*</span> (so <span class="math inline">\nabla f(x^*) = 0</span>):</p>
+<p><span class="math display">\langle \nabla f(x),\, x - x^* \rangle \geq \tfrac{1}{L}\|\nabla f(x)\|_2^2.</span></p>
+<p>Now compute:</p>
+<p><span class="math display">\begin{aligned}
+\|x^{k+1} - x^*\|_2^2 &amp;= \|x^k - x^* - \alpha\,\nabla f(x^k)\|_2^2 \\
+&amp;= \|x^k - x^*\|_2^2 + \alpha^2\|\nabla f(x^k)\|_2^2 - 2\alpha\langle x^k - x^*,\, \nabla f(x^k) \rangle \\
+&amp;\leq \|x^k - x^*\|_2^2 - (2\alpha/L - \alpha^2)\|\nabla f(x^k)\|_2^2 \\
+&amp;= \|x^k - x^*\|_2^2 - \tfrac{1}{L^2}\|\nabla f(x^k)\|_2^2.
+\end{aligned}</span></p>
+<p>The last step uses <span class="math inline">\alpha = 1/L</span>. <span class="math inline">\blacksquare</span></p>
+</div>
+<div id="lem-gradient-decrease" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 6.8 (Monotone Decrease of Gradient Norms)</strong></span> If <span class="math inline">f</span> is convex and <span class="math inline">L</span>-smooth, with <span class="math inline">\alpha = 1/L</span>, then</p>
+<p><span class="math display">\|\nabla f(x^{k+1})\|_2 \leq \|\nabla f(x^k)\|_2.</span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>By the mean value theorem, there exists <span class="math inline">\xi</span> such that <span class="math inline">\nabla f(x^{k+1}) = (I - \alpha\,\nabla^2 f(\xi))\,\nabla f(x^k)</span>.</p>
+<p>Define <span class="math inline">B = I - \alpha\,\nabla^2 f(\xi)</span>. When <span class="math inline">\alpha = 1/L</span>, the eigenvalues of <span class="math inline">\nabla^2 f(\xi)</span> lie in <span class="math inline">[0, L]</span>, so <span class="math inline">0 \preceq B \preceq I</span>.</p>
+<p>Therefore</p>
+<p><span class="math display">\|\nabla f(x^{k+1})\|_2^2 = \nabla f(x^k)^\top B^2\,\nabla f(x^k) \leq \nabla f(x^k)^\top \nabla f(x^k) = \|\nabla f(x^k)\|_2^2,</span></p>
+<p>since <span class="math inline">B^2 \preceq I</span> (because <span class="math inline">0 \preceq B \preceq I</span>). <span class="math inline">\blacksquare</span></p>
+</div>
+<p>When <span class="math inline">f</span> is convex and smooth, all three quantities <span class="math inline">\|x^k - x^*\|_2</span>, <span class="math inline">\|\nabla f(x^k)\|_2</span>, and <span class="math inline">f(x^k)</span> monotonically decrease.</p>
+<section id="sec-case2-alt-proof" class="level4" data-number="6.4.2.1">
+<h4 data-number="6.4.2.1" class="anchored" data-anchor-id="sec-case2-alt-proof"><span class="header-section-number">6.4.2.1</span> An Alternative Proof</h4>
+<p>We present an alternative proof of the <span class="math inline">O(1/K)</span> rate that avoids the three-point lemma and instead exploits the quadratic recursion structure of the optimality gap <span class="math inline">\delta_k = f(x^k) - f(x^*)</span>.</p>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>By the descent lemma, <span class="math inline">\delta_{k+1} \leq \delta_k - \tfrac{\alpha}{2}\|\nabla f(x^k)\|_2^2</span>, so</p>
+<p><span id="eq-gd-descent-gap"><span class="math display">\tfrac{\alpha}{2}\|\nabla f(x^k)\|_2^2 \leq \delta_k - \delta_{k+1}. \tag{6.9}</span></span></p>
+<p>By convexity, <span class="math inline">\delta_k \leq \langle \nabla f(x^k),\, x^k - x^* \rangle \leq \|\nabla f(x^k)\|_2 \cdot \|x^k - x^*\|_2</span>, so</p>
+<p><span id="eq-gd-grad-lower"><span class="math display">\frac{\delta_k^2}{\|x^k - x^*\|_2^2} \leq \|\nabla f(x^k)\|_2^2. \tag{6.10}</span></span></p>
+<p>Since <span class="math inline">\|x^k - x^*\|_2 \leq \|x^0 - x^*\|_2</span> (<a href="#lem-monotonic-error" class="quarto-xref">Lemma&nbsp;<span>6.7</span></a>), combining (<a href="#eq-gd-descent-gap" class="quarto-xref"><span>6.9</span></a>) and (<a href="#eq-gd-grad-lower" class="quarto-xref"><span>6.10</span></a>):</p>
+<p><span class="math display">\delta_{k+1} \leq \delta_k - w \cdot \delta_k^2, \qquad w = \tfrac{\alpha}{2\|x^0 - x^*\|_2^2}.</span></p>
+<p>Dividing by <span class="math inline">\delta_{k+1} \cdot \delta_k</span> and using <span class="math inline">\delta_k \geq \delta_{k+1}</span>:</p>
+<p><span class="math display">\frac{1}{\delta_{k+1}} - \frac{1}{\delta_k} \geq w.</span></p>
+<p>Summing over <span class="math inline">k = 0, \ldots, K-1</span>:</p>
+<p><span class="math display">\frac{1}{\delta_K} \geq w \cdot K \qquad \Longrightarrow \qquad f(x^K) - f(x^*) \leq \frac{2L \cdot \|x^0 - x^*\|_2^2}{K}.</span></p>
+<p>This confirms the <span class="math inline">O(1/K)</span> sublinear convergence rate via the one-dimensional recursion. <span class="math inline">\blacksquare</span></p>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The alternative proof yields a looser constant (<span class="math inline">2L/K</span> vs.&nbsp;<span class="math inline">L/(2K)</span>) but provides a different perspective: it proceeds purely through the one-dimensional recursion on <span class="math inline">\delta_k</span> without needing the three-point identity. Both proofs are <span class="math inline">O(L/K)</span>.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-case3" class="level3" data-number="6.4.3">
+<h3 data-number="6.4.3" class="anchored" data-anchor-id="sec-case3"><span class="header-section-number">6.4.3</span> Case 3: Strongly Convex + Smooth</h3>
+<p>We now assume <span class="math inline">\mu \cdot I_n \preceq \nabla^2 f \preceq L \cdot I_n</span>. This is the strongest setting, and it gives the cleanest result—linear convergence that directly mirrors the quadratic warm-up (<a href="#eq-quadratic-linear-rate" class="quarto-xref"><span>6.4</span></a>).</p>
+<p>The proof strategy is the same: we use the mean value theorem to express the error recursion as a matrix contraction, then optimize the step size to minimize the spectral radius.</p>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span><strong>Proof of linear convergence.</strong> By the mean value theorem,</p>
+<p><span class="math display">\begin{aligned}
+x^{k+1} - x^* &amp;= (x^k - x^*) - \alpha \cdot (\nabla f(x^k) - \nabla f(x^*)) \\
+&amp;= (I_n - \alpha\,\nabla^2 f(\xi))(x^k - x^*) \qquad \text{for some } \xi.
+\end{aligned}</span></p>
+<p>The eigenvalues of <span class="math inline">I_n - \alpha\,\nabla^2 f(\xi)</span> lie in <span class="math inline">[1 - \alpha L,\, 1 - \alpha\mu]</span>. Therefore</p>
+<p><span class="math display">\|I_n - \alpha \cdot \nabla^2 f(\xi)\|_{\mathrm{op}} \leq \max\{|1 - \alpha\mu|,\, |1 - \alpha L|\}.</span></p>
+<p>Setting <span class="math inline">\alpha = \dfrac{2}{\mu + L}</span>:</p>
+<p><span class="math display">\|I_n - \alpha \cdot \nabla^2 f(\xi)\|_{\mathrm{op}} \leq \frac{L - \mu}{L + \mu} = \frac{\kappa - 1}{\kappa + 1}.</span></p>
+<p>Thus,</p>
+<p><span class="math display">\|x^k - x^*\|_2 \leq \left(\frac{\kappa - 1}{\kappa + 1}\right)^k \cdot \|x^0 - x^*\|_2.</span></p>
+<p>By smoothness, <span class="math inline">f(x) - f(x^*) \leq \tfrac{L}{2}\|x - x^*\|_2^2</span>, so</p>
+<p><span class="math display">f(x^k) - f(x^*) \leq \tfrac{L}{2} \cdot \left(\frac{\kappa - 1}{\kappa + 1}\right)^{2k} \cdot \|x^0 - x^*\|_2^2.</span></p>
+<p>This establishes linear convergence: the function value gap contracts by a factor of <span class="math inline">\bigl(\frac{\kappa-1}{\kappa+1}\bigr)^2</span> per iteration, so <span class="math inline">O(\kappa \log(1/\varepsilon))</span> iterations suffice for <span class="math inline">\varepsilon</span>-accuracy. <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+<section id="sec-three-cases-summary" class="level3" data-number="6.4.4">
+<h3 data-number="6.4.4" class="anchored" data-anchor-id="sec-three-cases-summary"><span class="header-section-number">6.4.4</span> Summary of Three Cases</h3>
+<div id="thm-gd-convergence-summary" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 6.6 (Convergence of Gradient Descent: Three Cases)</strong></span> <strong>Case 1 (Nonconvex + Smooth).</strong> If <span class="math inline">f</span> is <span class="math inline">L</span>-smooth and <span class="math inline">\alpha^k = 1/L</span>:</p>
+<p><span class="math display">\frac{1}{K}\sum_{k=0}^{K-1}\|\nabla f(x^k)\|_2^2 \leq \frac{2L\bigl(f(x^0) - f(x^*)\bigr)}{K}.</span></p>
+<p>After <span class="math inline">O(1/\varepsilon)</span> iterations, the random point <span class="math inline">\widehat{x}</span> is an <span class="math inline">\varepsilon</span>-approximate stationary point.</p>
+<p><strong>Case 2 (Convex + Smooth).</strong> If <span class="math inline">f</span> is convex and <span class="math inline">L</span>-smooth, with <span class="math inline">\alpha^k = 1/L</span>:</p>
+<ul>
+<li><span class="math inline">f(x^K) - f(x^*) \leq \dfrac{L \cdot \|x^0 - x^*\|_2^2}{2K}.</span></li>
+<li><span class="math inline">\varepsilon</span>-approximately optimal after <span class="math inline">O(1/\varepsilon)</span> iterations.</li>
+<li><span class="math inline">\{\|\nabla f(x^k)\|_2\}_{k \geq 0}</span> monotonically decreases to zero.</li>
+</ul>
+<p><strong>Case 3 (Strongly Convex + Smooth).</strong> If <span class="math inline">f</span> is <span class="math inline">\mu</span>-strongly convex and <span class="math inline">L</span>-smooth, with <span class="math inline">\alpha^k = \tfrac{2}{\mu + L}</span> and <span class="math inline">\kappa = L/\mu</span>:</p>
+<ul>
+<li><span class="math inline">\|x^k - x^*\|_2 \leq \left(\tfrac{\kappa - 1}{\kappa + 1}\right)^k \cdot \|x^0 - x^*\|_2.</span></li>
+<li><span class="math inline">f(x^k) - f(x^*) \leq \tfrac{L}{2}\left(\tfrac{\kappa - 1}{\kappa + 1}\right)^{2k}\|x^0 - x^*\|_2^2.</span></li>
+<li>Linear convergence: <span class="math inline">O(\kappa\log(1/\varepsilon))</span> iterations for an <span class="math inline">\varepsilon</span>-approximate minimizer.</li>
+</ul>
+</div>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Setting</th>
+<th><span class="math inline">\alpha^k</span></th>
+<th>Error Measure</th>
+<th>Rate</th>
+<th>Iterations for <span class="math inline">\varepsilon</span>-error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Nonconvex + Smooth</td>
+<td><span class="math inline">1/L</span></td>
+<td><span class="math inline">\frac{1}{K}\sum \|\nabla f(x^k)\|_2^2</span></td>
+<td><span class="math inline">1/K</span></td>
+<td><span class="math inline">O(1/\varepsilon)</span> for <span class="math inline">\|\nabla f\| \leq \varepsilon</span></td>
+</tr>
+<tr class="even">
+<td>Convex + Smooth</td>
+<td><span class="math inline">1/L</span></td>
+<td><span class="math inline">f(x^k) - f^*</span></td>
+<td><span class="math inline">1/K</span></td>
+<td><span class="math inline">O(1/\varepsilon)</span></td>
+</tr>
+<tr class="odd">
+<td>Strongly Convex + Smooth</td>
+<td><span class="math inline">2/(\mu + L)</span></td>
+<td><span class="math inline">\|x^k - x^*\|_2</span></td>
+<td><span class="math inline">\left(\frac{\kappa-1}{\kappa+1}\right)^k</span></td>
+<td><span class="math inline">O(\kappa \cdot \log(1/\varepsilon))</span></td>
+</tr>
+</tbody>
+</table>
+<div id="fig-three-cases" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-three-cases-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch05-three-cases.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;6.3: Convergence rates of gradient descent: nonconvex (stationary point), convex (O(1/K)), and strongly convex (linear)."><img src="figures/ch05-three-cases.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-three-cases-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.3: Convergence rates of gradient descent: nonconvex (stationary point), convex (<span class="math inline">O(1/K)</span>), and strongly convex (linear).
+</figcaption>
+</figure>
+</div>
+<div id="fig-convergence-rates-comparison" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-convergence-rates-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/convergence-rates-comparison.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;6.4: Convergence rates of optimization methods on a logarithmic scale: subgradient O(1/\sqrt{k}), gradient descent O(1/k), accelerated gradient O(1/k^2), strongly convex GD (linear), and Newton (quadratic). The dashed line marks the first-order lower bound."><img src="figures/convergence-rates-comparison.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-convergence-rates-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.4: Convergence rates of optimization methods on a logarithmic scale: subgradient <span class="math inline">O(1/\sqrt{k})</span>, gradient descent <span class="math inline">O(1/k)</span>, accelerated gradient <span class="math inline">O(1/k^2)</span>, strongly convex GD (linear), and Newton (quadratic). The dashed line marks the first-order lower bound.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: General Descent Directions
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The core of every convergence proof above is the descent lemma: <span class="math inline">f(x + d) \leq f(x) + \langle \nabla f(x), d \rangle + \tfrac{L}{2}\|d\|_2^2</span>. For gradient descent, <span class="math inline">d = -\alpha \nabla f(x)</span>, which minimizes this quadratic upper bound. For other algorithms (projected GD, proximal gradient, Newton’s method), the update direction <span class="math inline">d</span> is different, but the same quadratic upper bound framework applies—only the analysis of the inner product <span class="math inline">\langle \nabla f(x), d \rangle</span> changes. This is the unifying principle behind first-order method analysis.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-linear-relaxed" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="sec-linear-relaxed"><span class="header-section-number">6.5</span> Beyond Global Strong Convexity</h2>
+<p>The convergence theory in <a href="#sec-case3" class="quarto-xref"><span>Section 6.4.3</span></a> assumed global strong convexity for the linear rate. A remarkable fact is that we do not need strong convexity to hold globally in order to achieve linear convergence. It suffices for strong convexity to hold in a neighborhood of the optimum, or even for a weaker gradient domination condition to hold.</p>
+<section id="sec-local-sc" class="level3" data-number="6.5.1">
+<h3 data-number="6.5.1" class="anchored" data-anchor-id="sec-local-sc"><span class="header-section-number">6.5.1</span> Local Strong Convexity</h3>
+<p>We do not need strong convexity to hold globally. It suffices to have it in the region</p>
+<p><span class="math display">B = \{x : \|x - x^*\|_2 \leq \|x^0 - x^*\|_2\}.</span></p>
+<p>Since convexity implies <span class="math inline">\|x^{k+1} - x^*\|_2 \leq \|x^k - x^*\|_2</span> (<a href="#lem-monotonic-error" class="quarto-xref">Lemma&nbsp;<span>6.7</span></a>), the GD trajectory remains in <span class="math inline">B</span>, so local strong convexity suffices for the full linear convergence guarantee.</p>
+<div id="thm-local-sc" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 6.7 (Linear Convergence Under Local Strong Convexity)</strong></span> If <span class="math inline">\mu I \preceq \nabla^2 f(x) \preceq L \cdot I</span> for all <span class="math inline">x \in B</span>, then we still have the same linear convergence rate as in Case 3.</p>
+</div>
+<div id="exm-logistic" class="theorem example">
+<p><span class="theorem-title"><strong>Example 6.1 (Logistic Loss)</strong></span> Consider the logistic regression objective:</p>
+<p><span class="math display">\min_{x \in \mathbb{R}^n} \; f(x) = \frac{1}{m}\sum_{i=1}^{m} \log\bigl(1 + \exp(-y_i \cdot a_i^\top x)\bigr).</span></p>
+<p>The Hessian is</p>
+<p><span class="math display">\nabla^2 f(x) = \frac{1}{m}\sum_{i=1}^{m} \frac{\exp(-y_i\,a_i^\top x)}{(1 + \exp(-y_i\,a_i^\top x))^2} \cdot a_i\,a_i^\top.</span></p>
+<p>As <span class="math inline">\|x\|_2 \to \infty</span>, the weighting factors vanish, so <span class="math inline">\nabla^2 f(x) \to 0</span>. Therefore <span class="math inline">f</span> is globally convex (not strongly convex) but <strong>locally</strong> strongly convex near any finite minimizer. GD converges linearly.</p>
+</div>
+</section>
+<section id="sec-linear-alpha-1L" class="level3" data-number="6.5.2">
+<h3 data-number="6.5.2" class="anchored" data-anchor-id="sec-linear-alpha-1L"><span class="header-section-number">6.5.2</span> Linear Convergence with Step Size <span class="math inline">\alpha = 1/L</span></h3>
+<p>The step size <span class="math inline">\alpha = 2/(\mu + L)</span> in Case 3 requires knowledge of <span class="math inline">\mu</span>. Can we show linear convergence with the simpler step size <span class="math inline">\alpha = 1/L</span>?</p>
+<p>By <a href="#eq-sc-smooth-cocoercivity" class="quarto-xref"><span>6.1</span></a> with <span class="math inline">y = x^*</span> (so <span class="math inline">\nabla f(x^*) = 0</span>):</p>
+<p><span id="eq-gd-cocoercivity-applied"><span class="math display">\langle \nabla f(x),\, x - x^* \rangle \geq \tfrac{\mu}{2}\|x - x^*\|_2^2 + \tfrac{1}{2L}\|\nabla f(x)\|_2^2. \tag{6.11}</span></span></p>
+<p>Setting <span class="math inline">\alpha = 1/L</span>:</p>
+<p><span class="math display">\begin{aligned}
+\|x^{k+1} - x^*\|_2^2 &amp;= \|x^k - x^* - \tfrac{1}{L}\nabla f(x^k)\|_2^2 \\
+&amp;= \|x^k - x^*\|_2^2 + \tfrac{1}{L^2}\|\nabla f(x^k)\|_2^2 - \tfrac{2}{L}\langle x^k - x^*,\, \nabla f(x^k) \rangle \\
+&amp;\leq \left(1 - \tfrac{\mu}{L}\right) \cdot \|x^k - x^*\|_2^2,
+\end{aligned}</span></p>
+<p>where the last inequality uses (<a href="#eq-gd-cocoercivity-applied" class="quarto-xref"><span>6.11</span></a>). Thus, all we really need is “one-point monotonicity” (<a href="#eq-gd-cocoercivity-applied" class="quarto-xref"><span>6.11</span></a>) at <span class="math inline">x^*</span>. This is a weaker condition than global strong convexity, and it still implies linear convergence with rate <span class="math inline">1 - \mu/L = 1 - 1/\kappa</span>.</p>
+</section>
+<section id="sec-pl-condition" class="level3" data-number="6.5.3">
+<h3 data-number="6.5.3" class="anchored" data-anchor-id="sec-pl-condition"><span class="header-section-number">6.5.3</span> The Polyak–Łojasiewicz Condition</h3>
+<p>A further relaxation that ensures linear convergence—without requiring convexity at all—is the Polyak–Łojasiewicz condition, also known as <strong>gradient domination</strong>.</p>
+<div id="def-pl" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 6.4 (Polyak–Łojasiewicz (PL) Condition)</strong></span> A function <span class="math inline">f</span> satisfies the <strong>PL condition</strong> with parameter <span class="math inline">\mu</span> if</p>
+<p><span class="math display">\|\nabla f(x)\|_2^2 \geq 2\mu \cdot \bigl(f(x) - f(x^*)\bigr) \qquad \forall\, x \in D,</span></p>
+<p>where <span class="math inline">x^*</span> is any minimizer.</p>
+</div>
+<p>Here <span class="math inline">f</span> is allowed to be <strong>nonconvex</strong>. The PL condition says that every stationary point is globally optimal.</p>
+<p><strong>PL + <span class="math inline">L</span>-smoothness ensures linear convergence.</strong> By <a href="#lem-descent" class="quarto-xref">Lemma&nbsp;<span>6.2</span></a> with <span class="math inline">\alpha = 1/L</span>:</p>
+<p><span class="math display">\begin{aligned}
+f(x^{k+1}) - f(x^*) &amp;\leq f(x^k) - f(x^*) - \tfrac{1}{2L}\|\nabla f(x^k)\|_2^2 \\
+&amp;\stackrel{\text{PL}}{\leq} \left(1 - \tfrac{\mu}{L}\right)\bigl(f(x^k) - f(x^*)\bigr).
+\end{aligned}</span></p>
+<p>This gives linear convergence with the same rate as the strongly convex case, but without assuming convexity. <span class="math inline">\blacksquare</span></p>
+<div id="exm-pl-nonconvex" class="theorem example">
+<p><span class="theorem-title"><strong>Example 6.2 (A Nonconvex PL Function)</strong></span> Consider <span class="math inline">f(x) = x^2 + 3\sin^2 x</span>, which has <span class="math inline">\operatorname*{argmin} f = 0</span>. This function is nonconvex, yet it satisfies the PL condition:</p>
+<p><span class="math display">f(x) - f(0) \leq \tfrac{1}{2\mu}\|\nabla f(x)\|_2^2 \qquad \text{with } \mu = \tfrac{1}{32}.</span></p>
+</div>
+<div id="fig-pl-function" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pl-function-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch05-pl-function.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;6.5: A nonconvex PL function f(x) = x^2 + 3\sin^2 x and its gradient domination bound 16 \cdot |f'(x)|^2, illustrating that f(x) \leq \frac{1}{2\mu}\|\nabla f(x)\|^2 with \mu = 1/32."><img src="figures/ch05-pl-function.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pl-function-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.5: A nonconvex PL function <span class="math inline">f(x) = x^2 + 3\sin^2 x</span> and its gradient domination bound <span class="math inline">16 \cdot |f'(x)|^2</span>, illustrating that <span class="math inline">f(x) \leq \frac{1}{2\mu}\|\nabla f(x)\|^2</span> with <span class="math inline">\mu = 1/32</span>.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-composite" class="level3" data-number="6.5.4">
+<h3 data-number="6.5.4" class="anchored" data-anchor-id="sec-composite"><span class="header-section-number">6.5.4</span> Composite Minimization via PL: <span class="math inline">f(x) = g(Ax)</span></h3>
+<p>We conclude with a setting that arises frequently in practice but does not fit neatly into the strongly convex framework: minimizing <span class="math inline">f(x) = g(Ax)</span>, where <span class="math inline">g : \mathbb{R}^m \to \mathbb{R}</span> is <span class="math inline">\mu_g</span>-strongly convex and <span class="math inline">A \in \mathbb{R}^{m \times n}</span> with <span class="math inline">m &lt; n</span>. This structure appears in least-squares problems (<span class="math inline">g(z) = \frac{1}{2}\|z - b\|_2^2</span>, <span class="math inline">A</span> is the design matrix), logistic regression (<span class="math inline">g</span> is the logistic loss), and many other statistical estimation tasks where the number of features <span class="math inline">n</span> exceeds the number of observations <span class="math inline">m</span>.</p>
+<p>The puzzle is that <span class="math inline">f</span> is <strong>not</strong> strongly convex (it has zero curvature in the null space of <span class="math inline">A</span>), yet gradient descent converges <strong>linearly</strong> in practice. The resolution comes from the <strong>Polyak–Łojasiewicz (PL) inequality</strong>: the composite structure provides enough “directional” strong convexity to guarantee fast convergence, even without global strong convexity. This section makes this observation precise.</p>
+<p>Consider:</p>
+<p><span class="math display">\nabla f(x) = A^\top \nabla g(Ax), \qquad \nabla^2 f(x) = A^\top \nabla^2 g(Ax)\, A.</span></p>
+<p>Since <span class="math inline">\operatorname{rank}(\nabla^2 f(x)) \leq \operatorname{rank}(A) \leq m &lt; n</span>, we have <span class="math inline">\lambda_{\min}(\nabla^2 f(x)) = 0</span>, so <span class="math inline">f</span> is <strong>not strongly convex</strong>. Without strong convexity, the standard analysis from earlier in this chapter gives only the <span class="math inline">O(1/K)</span> sublinear rate.</p>
+<p>However, the composite structure allows us to recover a form of gradient domination. By the strong convexity of <span class="math inline">g</span>:</p>
+<p><span class="math display">\begin{aligned}
+f(y) - f(x) - \langle \nabla f(x),\; y - x \rangle &amp;= g(Ay) - g(Ax) - \langle \nabla g(Ax),\; Ay - Ax \rangle \\
+&amp;\geq \frac{\mu_g}{2}\|Ay - Ax\|_2^2 \\
+&amp;\geq \frac{\mu_g \cdot \sigma_{\min}(A)^2}{2}\|y - x\|_2^2,
+\end{aligned}</span></p>
+<p>where <span class="math inline">\sigma_{\min}(A)</span> is the smallest singular value of <span class="math inline">A</span>. When <span class="math inline">m &lt; n</span>, we have <span class="math inline">\sigma_{\min}(A) = 0</span> (unless <span class="math inline">A</span> has full column rank, which requires <span class="math inline">m \geq n</span>). So the lower bound is trivial in general.</p>
+<p>But we can still obtain gradient domination. Let <span class="math inline">x^*</span> be any point with <span class="math inline">Ax^* \in \arg\min g</span>. Minimizing <span class="math inline">f(y)</span> over <span class="math inline">y</span> using the lower bound (in the range space of <span class="math inline">A</span>):</p>
+<p><span class="math display">f(x^*) \geq f(x) + \min_y \Bigl\{ \langle \nabla f(x),\, y - x \rangle + \frac{\mu_g}{2}\|A(y - x)\|_2^2 \Bigr\}.</span></p>
+<p>The inner minimization over directions in <span class="math inline">\operatorname{range}(A^\top)</span> gives:</p>
+<p><span class="math display">f(x) - f(x^*) \leq \frac{1}{2\mu_g}\|\nabla g(Ax)\|_2^2 = \frac{1}{2\mu_g} \cdot \|A^{\dagger \top} \nabla f(x)\|_2^2 \leq \frac{1}{2\mu_g \cdot \sigma_{\min}^+(A)^2}\|\nabla f(x)\|_2^2,</span></p>
+<p>where <span class="math inline">\sigma_{\min}^+(A)</span> denotes the smallest <strong>nonzero</strong> singular value of <span class="math inline">A</span>, and <span class="math inline">A^\dagger</span> is the pseudoinverse. This is exactly a <strong>Polyak–Łojasiewicz (PL) inequality</strong> with effective parameter <span class="math inline">\widetilde{\mu} = \mu_g \cdot \sigma_{\min}^+(A)^2</span>.</p>
+<p>By the PL convergence theory above, gradient descent on <span class="math inline">f(x) = g(Ax)</span> converges <strong>linearly</strong> with rate <span class="math inline">1 - \widetilde{\mu}/L</span>, despite <span class="math inline">f</span> not being globally strongly convex. The effective condition number is <span class="math inline">\kappa_{\mathrm{eff}} = L / (\mu_g \cdot \sigma_{\min}^+(A)^2)</span>.</p>
+</section>
+</section>
+<section id="summary" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="summary">Summary</h2>
+<section id="logic-flow-of-this-chapter" class="level3" data-number="6.5.5">
+<h3 data-number="6.5.5" class="anchored" data-anchor-id="logic-flow-of-this-chapter"><span class="header-section-number">6.5.5</span> Logic Flow of This Chapter</h3>
+<p>This chapter develops the convergence theory of gradient descent by progressively adding structural assumptions:</p>
+<ol type="1">
+<li><p><strong>The basic algorithm is simple.</strong> Gradient descent updates <span class="math inline">x_{k+1} = x_k - \alpha \nabla f(x_k)</span>. But how fast does it converge? The answer depends entirely on what we assume about <span class="math inline">f</span>.</p></li>
+<li><p><strong>Smoothness alone gives a descent lemma.</strong> If <span class="math inline">f</span> has <span class="math inline">L</span>-Lipschitz gradient, then with stepsize <span class="math inline">\alpha = 1/L</span>, each step decreases <span class="math inline">f</span> by at least <span class="math inline">\frac{1}{2L}\|\nabla f(x_k)\|^2</span>. For nonconvex <span class="math inline">f</span>, this yields <span class="math inline">\min_k \|\nabla f(x_k)\| \to 0</span> at rate <span class="math inline">O(1/\sqrt{K})</span>.</p></li>
+<li><p><strong>Adding convexity gives sublinear convergence.</strong> For convex <span class="math inline">f</span>, the same descent lemma yields <span class="math inline">f(x_K) - f^* = O(1/K)</span> — sublinear, but guaranteed to find the global minimum.</p></li>
+<li><p><strong>Adding strong convexity gives linear convergence.</strong> For <span class="math inline">\mu</span>-strongly convex <span class="math inline">f</span>, the contraction factor becomes <span class="math inline">1 - \mu/L = 1 - 1/\kappa</span>, giving exponential convergence <span class="math inline">f(x_K) - f^* = O((1-1/\kappa)^K)</span>.</p></li>
+<li><p><strong>Can we relax strong convexity?</strong> Yes — the Polyak–Lojasiewicz (PL) condition <span class="math inline">\|\nabla f(x)\|^2 \ge 2\mu(f(x) - f^*)</span> is weaker than strong convexity but still yields the same linear rate. It even applies to some nonconvex functions.</p></li>
+</ol>
+</section>
+<section id="key-rates" class="level3" data-number="6.5.6">
+<h3 data-number="6.5.6" class="anchored" data-anchor-id="key-rates"><span class="header-section-number">6.5.6</span> Key Rates</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Assumption</th>
+<th>Rate</th>
+<th>Iterations to <span class="math inline">\varepsilon</span>-accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Smooth</td>
+<td><span class="math inline">\min_k \|\nabla f(x_k)\|^2 = O(1/K)</span></td>
+<td><span class="math inline">O(1/\varepsilon)</span> (stationarity)</td>
+</tr>
+<tr class="even">
+<td>Smooth + convex</td>
+<td><span class="math inline">f(x_K) - f^* = O(1/K)</span></td>
+<td><span class="math inline">O(1/\varepsilon)</span></td>
+</tr>
+<tr class="odd">
+<td>Smooth + <span class="math inline">\mu</span>-strongly convex</td>
+<td><span class="math inline">f(x_K) - f^* = O((1-\mu/L)^K)</span></td>
+<td><span class="math inline">O(\kappa \log(1/\varepsilon))</span></td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Looking Ahead
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In the next chapters we extend gradient descent to handle constraints and nonsmoothness:</p>
+<ul>
+<li><strong>Projected gradient descent and Frank–Wolfe</strong> handle constrained problems <span class="math inline">\min_{x \in \mathcal{C}} f(x)</span> via projection or linear minimization oracles.</li>
+<li><strong>Subgradient methods</strong> extend GD to nonsmooth convex objectives by replacing gradients with subgradients.</li>
+<li><strong>Proximal gradient</strong> provides a unified framework for composite objectives <span class="math inline">f = g + h</span> with <span class="math inline">g</span> smooth and <span class="math inline">h</span> simple.</li>
+<li><strong>Accelerated gradient descent</strong> achieves the optimal <span class="math inline">O(1/k^2)</span> rate for convex smooth functions.</li>
+</ul>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../lectures/04-interior-point.html" class="pagination-link" aria-label="Interior Point Methods">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Interior Point Methods</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../lectures/05b-projected-gradient-descent.html" class="pagination-link" aria-label="Projected Gradient Descent and Frank--Wolfe">
+        <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Projected Gradient Descent and Frank–Wolfe</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<script>
+// Plotly Warmtone theming helpers — shared across all lectures
+// Reads CSS custom properties set by _warmtone.scss (light/dark aware)
+const plotlyConfig = {responsive: true, displayModeBar: false};
+const figFont = '"Source Serif 4", Georgia, "Times New Roman", serif';
+const figFontHeading = '"Crimson Pro", Georgia, serif';
+
+function css(v) {
+  return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+}
+
+function legendStyle() {
+  return {
+    font: {family: figFont, size: 13, color: css('--fig-text')},
+    bgcolor: css('--fig-bg') + 'dd',
+    bordercolor: css('--fig-grid'),
+    borderwidth: 1,
+  };
+}
+
+function themeLayout(extra) {
+  return Object.assign({
+    paper_bgcolor: css('--fig-bg'),
+    plot_bgcolor: css('--fig-plot-bg'),
+    font: {family: figFont, color: css('--fig-text'), size: 14},
+  }, extra || {});
+}
+
+function themeAxis(title, extra) {
+  return Object.assign({
+    title: {text: title, font: {family: figFont, size: 14}},
+    gridcolor: css('--fig-grid'),
+    zerolinecolor: css('--fig-grid'),
+    linecolor: css('--fig-axis'),
+    tickfont: {family: figFont, size: 12, color: css('--fig-axis')},
+  }, extra || {});
+}
+
+// Plotly color sequences matching the Warmtone palette
+const warmtonePalette = [
+  '#7b97ad', '#b8995e', '#ad8480', '#7a9a7e', '#907ea0',
+  '#6f9996', '#8a6e5e', '#b56b6b', '#8fa3b8', '#a09488'
+];
+</script>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>

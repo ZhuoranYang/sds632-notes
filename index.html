@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Zhuoran Yang">
+
+<title>S&amp;DS 432/632 — Advanced Optimization Techniques</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./lectures/01-review.html" rel="next">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-1db14e1c4cc35bfe1d9badc9e4551eed.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-434abab37f7d394f280d9c89d7fbc13f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    skipStartupTypeset: true,
+    messageStyle: "none",
+    tex2jax: { inlineMath: [], displayMath: [], processEnvironments: false }
+  });
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_SVG"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.0.min.js" charset="utf-8"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Welcome</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">S&amp;DS 432/632 — Advanced Optimization Techniques</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Welcome</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Preliminaries</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lectures/01-review.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Review of Convex Optimization</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Duality</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lectures/02-lagrange-duality.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lagrange Duality</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lectures/02b-dual-conjugacy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Dual Conjugacy</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Second-Order Methods</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lectures/03-newton-methods.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Newton Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lectures/04-interior-point.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Interior Point Methods</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">First-Order Methods</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lectures/05-gradient-descent.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Gradient Descent</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lectures/05b-projected-gradient-descent.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Projected Gradient Descent and Frank–Wolfe</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lectures/06-subgradient.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Subgradient Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lectures/07-proximal-gradient.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Proximal Gradient Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lectures/08-mirror-descent.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Mirror Descent</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lectures/09-accelerated-gradient.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Accelerated Gradient Methods</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Applications in Deep Learning</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lectures/11-implicit-layer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Implicit Layers</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lectures/summary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Course Summary</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#welcome" id="toc-welcome" class="nav-link active" data-scroll-target="#welcome">Welcome</a></li>
+  <li><a href="#motivation" id="toc-motivation" class="nav-link" data-scroll-target="#motivation">Motivation</a>
+  <ul class="collapse">
+  <li><a href="#gradient-descent-review" id="toc-gradient-descent-review" class="nav-link" data-scroll-target="#gradient-descent-review">Gradient Descent Review</a></li>
+  <li><a href="#key-questions" id="toc-key-questions" class="nav-link" data-scroll-target="#key-questions">Key Questions</a></li>
+  </ul></li>
+  <li><a href="#course-flow" id="toc-course-flow" class="nav-link" data-scroll-target="#course-flow">Course Flow</a></li>
+  <li><a href="#course-overview" id="toc-course-overview" class="nav-link" data-scroll-target="#course-overview">Course Overview</a>
+  <ul class="collapse">
+  <li><a href="#part-i-preliminaries" id="toc-part-i-preliminaries" class="nav-link" data-scroll-target="#part-i-preliminaries">Part I: Preliminaries</a></li>
+  <li><a href="#part-ii-duality" id="toc-part-ii-duality" class="nav-link" data-scroll-target="#part-ii-duality">Part II: Duality</a></li>
+  <li><a href="#part-iii-second-order-methods" id="toc-part-iii-second-order-methods" class="nav-link" data-scroll-target="#part-iii-second-order-methods">Part III: Second-Order Methods</a></li>
+  <li><a href="#part-iv-first-order-methods" id="toc-part-iv-first-order-methods" class="nav-link" data-scroll-target="#part-iv-first-order-methods">Part IV: First-Order Methods</a></li>
+  <li><a href="#part-v-applications-in-deep-learning" id="toc-part-v-applications-in-deep-learning" class="nav-link" data-scroll-target="#part-v-applications-in-deep-learning">Part V: Applications in Deep Learning</a></li>
+  </ul></li>
+  <li><a href="#textbooks" id="toc-textbooks" class="nav-link" data-scroll-target="#textbooks">Textbooks</a></li>
+  <li><a href="#acknowledgments" id="toc-acknowledgments" class="nav-link" data-scroll-target="#acknowledgments">Acknowledgments</a></li>
+  <li><a href="#prerequisites" id="toc-prerequisites" class="nav-link" data-scroll-target="#prerequisites">Prerequisites</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">S&amp;DS 432/632 — Advanced Optimization Techniques</h1>
+<p class="subtitle lead">Lecture notes for S&amp;DS 432/632, covering duality, Newton and interior point methods, first-order algorithms, and deep learning applications</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Instructor</div>
+    <div class="quarto-title-meta-contents">
+             <p><a href="https://zhuoranyang.github.io/">Zhuoran Yang</a> </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="welcome" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="welcome">Welcome</h2>
+<p>Optimization is the mathematical backbone of modern machine learning, statistics, and engineering. Building on the foundations laid in <a href="https://zhuoranyang.github.io/sds431-notes/">S&amp;DS 431/631</a> — convex sets, convex functions, gradient descent, and linear programming — this course goes deeper: we develop duality theory, second-order methods with polynomial-time guarantees, and the full suite of modern first-order algorithms — proximal gradient, mirror descent, and Nesterov acceleration — each analyzed with tight convergence rates.</p>
+<p>These interactive lecture notes build a rigorous and unified treatment of advanced optimization, connecting classical theory (KKT conditions, interior point methods) to contemporary applications (implicit differentiation through fixed points, differentiable optimization layers). Each chapter includes formal theorems with complete proofs, interactive visualizations for geometric intuition, and companion Jupyter notebooks for hands-on experimentation.</p>
+</section>
+<section id="motivation" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="motivation">Motivation</h2>
+<section id="gradient-descent-review" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="gradient-descent-review">Gradient Descent Review</h3>
+<p>The simplest optimization algorithm for <span class="math inline">\min_x f(x)</span> is <strong>gradient descent</strong>:</p>
+<p><span class="math display">
+x^{t+1} = x^t - \alpha^t \cdot \nabla f(x^t).
+</span></p>
+<p>What we showed in S&amp;DS 431/631 when <span class="math inline">f</span> is smooth (<span class="math inline">\nabla f</span> is Lipschitz):</p>
+<div id="thm-convergence-gd" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 1 (Convergence Rates of Gradient Descent (S&amp;DS 431/631))</strong></span> For <span class="math inline">L</span>-smooth functions with step size <span class="math inline">\alpha = 1/L</span>, gradient descent achieves the following rates depending on the curvature of <span class="math inline">f</span>:</p>
+<ul>
+<li><strong><span class="math inline">f</span> nonconvex:</strong> <span class="math display">
+\frac{1}{T} \sum_{t=1}^{T} \|\nabla f(x^t)\|^2 = O\!\left(\frac{1}{T}\right).
+</span></li>
+<li><strong><span class="math inline">f</span> convex:</strong> <span class="math display">
+f(x^T) - \min_x f(x) = O\!\left(\frac{1}{T}\right).
+</span></li>
+<li><strong><span class="math inline">f</span> strongly convex:</strong> <span class="math display">
+\begin{aligned}
+\|x^T - x^*\|_2 &amp;= O\!\left(\exp(-T/\kappa)\right), \\
+f(x^T) - f(x^*) &amp;= O\!\left(\exp(-T/\kappa)\right),
+\end{aligned}
+</span> where <span class="math inline">x^* = \arg\min_x f(x)</span> and <span class="math inline">\kappa</span> is the condition number of <span class="math inline">f</span>.</li>
+</ul>
+</div>
+<p>These results are powerful, but they assume the objective is smooth and unconstrained. The motivating questions below highlight the gaps that this course will fill.</p>
+</section>
+<section id="key-questions" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="key-questions">Key Questions</h3>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Question 1 — How do we optimize functions that are not differentiable?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Gradient descent relies on <span class="math inline">\nabla f</span>, but many important objectives are not smooth. The Lasso penalty <span class="math inline">\|x\|_1</span>, the hinge loss in SVMs, and total-variation regularizers all introduce points where the gradient does not exist. How should we proceed when the basic tool — the gradient — is unavailable?</p>
+<p>We develop three complementary strategies. <strong>Subgradient methods</strong> (<a href="./lectures/06-subgradient.html">Chapter 6</a>) replace the gradient with a generalized notion of slope that exists for any convex function. <strong>Proximal gradient methods</strong> (<a href="./lectures/07-proximal-gradient.html">Chapter 7</a>) exploit separable structure — when <span class="math inline">f = g + h</span> with <span class="math inline">g</span> smooth and <span class="math inline">h</span> nonsmooth but “simple” — to handle each part with the right tool. <strong>Smoothing techniques</strong> approximate a nonsmooth objective by a smooth surrogate and apply standard gradient methods.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Question 2 — How do we handle constraints on the decision variable?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In many applications the variable must lie in a feasible set <span class="math inline">\Omega</span>: we solve <span class="math inline">\min_{x \in \Omega} f(x)</span>. An unconstrained gradient step may leave the feasible region, so we need algorithms that respect the geometry of <span class="math inline">\Omega</span>.</p>
+<p><strong>Projected gradient descent</strong> (<a href="./lectures/05b-projected-gradient-descent.html">Chapter 5b</a>) takes a gradient step and then projects back onto <span class="math inline">\Omega</span>. This is simple and effective when the projection is cheap (e.g., onto a box or a ball). <strong>Mirror descent</strong> (<a href="./lectures/08-mirror-descent.html">Chapter 8</a>) goes further by replacing the Euclidean distance with a Bregman divergence tailored to <span class="math inline">\Omega</span>, yielding dramatically better rates on structured sets like the simplex.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Question 3 — How do we scale optimization across multiple machines?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Modern datasets are often distributed across <span class="math inline">N</span> machines, each holding its own local function <span class="math inline">f_i</span>. The global objective is <span class="math inline">f(x) = \frac{1}{N}\sum_{i=1}^N f_i(x)</span>, but no single machine has access to all the data. How can we solve this problem without centralizing the dataset?</p>
+<p>A natural reformulation gives each machine its own copy of the variable and enforces consensus via equality constraints: <span class="math display">
+\min_{x_1,\ldots,x_N} \frac{1}{N}\sum_{i=1}^N f_i(x_i) \quad \text{s.t.} \quad x_1 = x_2 = \cdots = x_N.
+</span> The equality constraints couple the machines, and <strong>Lagrangian duality</strong> (<a href="./lectures/02-lagrange-duality.html">Chapter 2</a>) provides the framework — via ADMM and dual decomposition — for solving such problems in a decentralized fashion.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Question 4 — What if evaluating the full gradient is too expensive?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>When the objective sums over a large dataset of <span class="math inline">n</span> examples, <span class="math display">
+f(\theta) = \sum_{i=1}^n \ell\!\left(f_\theta(x_i),\, y_i\right),
+</span> computing the full gradient <span class="math inline">\nabla f(\theta)</span> requires a pass over all <span class="math inline">n</span> data points — prohibitive when <span class="math inline">n</span> is in the millions or billions. Can we make progress with only partial gradient information?</p>
+<p><strong>(Mini-batch) stochastic gradient descent</strong> replaces the full gradient with an unbiased estimate computed from a small random subset. Each step is much cheaper, and the noise averages out over iterations, giving convergence guarantees that scale gracefully with dataset size.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="course-flow" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="course-flow">Course Flow</h2>
+<p>The course develops four main themes, each addressing one or more of the questions above:</p>
+<ol type="1">
+<li><strong>Duality theory</strong> (Chapters 2–3) — Lagrangian relaxation, KKT conditions, conjugate functions, and the duality between smoothness and strong convexity. Provides the theoretical backbone for Question 3 and the convergence analysis throughout.</li>
+<li><strong>Second-order methods</strong> (Chapters 4–5) — Newton’s method with quadratic convergence, and interior point methods with polynomial-time guarantees for LP, SOCP, and SDP.</li>
+<li><strong>Advanced first-order methods</strong> (Chapters 6–10) — Gradient descent, subgradient methods, proximal gradient (ISTA/FISTA), mirror descent with Bregman divergences, and Nesterov’s accelerated gradient with matching lower bounds. Directly addresses Questions 1, 2, and 4.</li>
+<li><strong>Deep learning connections</strong> (Chapter 11) — Implicit differentiation through fixed points and KKT conditions, differentiable optimization layers, and deep equilibrium models.</li>
+</ol>
+<div id="fig-course-flow" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-course-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="lectures/figures/ch01-course-roadmap.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: Course roadmap showing the dependency structure across all four parts of the course. Click to zoom."><img src="lectures/figures/ch01-course-roadmap.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-course-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Course roadmap showing the dependency structure across all four parts of the course. Click to zoom.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="course-overview" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="course-overview">Course Overview</h2>
+<section id="part-i-preliminaries" class="level3">
+<h3 class="anchored" data-anchor-id="part-i-preliminaries">Part I: Preliminaries</h3>
+<ul>
+<li><strong><a href="./lectures/01-review.html">Review of Convex Optimization</a></strong> — We consolidate the prerequisite material from S&amp;DS 431/631: convex sets, convex functions, separation theorems, operations preserving convexity, and the standard form of convex optimization.</li>
+</ul>
+</section>
+<section id="part-ii-duality" class="level3">
+<h3 class="anchored" data-anchor-id="part-ii-duality">Part II: Duality</h3>
+<ul>
+<li><p><strong><a href="./lectures/02-lagrange-duality.html">Lagrange Duality</a></strong> — The Lagrangian framework constructs lower bounds on the optimal value via dual variables. We develop weak and strong duality, Slater’s condition, the geometric interpretation via supporting hyperplanes, and the KKT conditions that characterize optimal primal–dual pairs.</p></li>
+<li><p><strong><a href="./lectures/02b-dual-conjugacy.html">Dual Conjugacy</a></strong> — The convex conjugate <span class="math inline">f^*(y) = \sup_x \{y^\top x - f(x)\}</span> provides a dual representation of any function. We use conjugates to re-derive Lagrange duality, establish the beautiful duality between smoothness and strong convexity, and prove strong duality under Slater’s condition.</p></li>
+</ul>
+</section>
+<section id="part-iii-second-order-methods" class="level3">
+<h3 class="anchored" data-anchor-id="part-iii-second-order-methods">Part III: Second-Order Methods</h3>
+<ul>
+<li><p><strong><a href="./lectures/03-newton-methods.html">Newton Methods</a></strong> — What happens when we use curvature, not just the gradient? Newton’s method achieves quadratic convergence near the optimum by solving a linear system at each step. We study the affine-invariant Newton decrement, backtracking line search, and the damped-to-pure transition.</p></li>
+<li><p><strong><a href="./lectures/04-interior-point.html">Interior Point Methods</a></strong> — The method that proved LP is solvable in polynomial time <em>and</em> is practical. Log barrier functions, the central path, and Newton-based path-following give <span class="math inline">O(\sqrt{m}\log(1/\varepsilon))</span> iteration complexity for LP, SOCP, and SDP.</p></li>
+</ul>
+</section>
+<section id="part-iv-first-order-methods" class="level3">
+<h3 class="anchored" data-anchor-id="part-iv-first-order-methods">Part IV: First-Order Methods</h3>
+<ul>
+<li><p><strong><a href="./lectures/05-gradient-descent.html">Gradient Descent</a></strong> — The foundational algorithm: convergence rates for smooth convex (<span class="math inline">O(1/k)</span>) and strongly convex (<span class="math inline">O((1-\mu/L)^k)</span>) functions, the Polyak–Lojasiewicz condition, and the gap between first-order and second-order methods.</p></li>
+<li><p><strong><a href="./lectures/05b-projected-gradient-descent.html">Projected Gradient Descent</a></strong> — Extending gradient descent to constrained problems <span class="math inline">\min_{x \in \Omega} f(x)</span>. We study the projection operator, convergence guarantees under smoothness and strong convexity, and practical considerations for sets where projection is efficient.</p></li>
+<li><p><strong><a href="./lectures/06-subgradient.html">Subgradient Methods</a></strong> — What if the function is not differentiable? Subgradients generalize gradients to non-smooth functions. We prove <span class="math inline">O(1/\sqrt{k})</span> convergence for Lipschitz objectives and show why non-smoothness fundamentally limits the rate.</p></li>
+<li><p><strong><a href="./lectures/07-proximal-gradient.html">Proximal Gradient</a></strong> — Many problems have the form “smooth + non-smooth” (e.g., least squares + <span class="math inline">\ell_1</span> penalty). The proximal gradient method exploits this structure: a gradient step on the smooth part, then a proximal step on the non-smooth part. ISTA, soft-thresholding for Lasso, and Moreau decomposition.</p></li>
+<li><p><strong><a href="./lectures/08-mirror-descent.html">Mirror Descent</a></strong> — Beyond Euclidean geometry. When the constraint set has special structure (like the probability simplex), Euclidean projections are wasteful. Mirror descent uses Bregman divergences to achieve dimension-free rates: <span class="math inline">O(\sqrt{\log n / k})</span> versus <span class="math inline">O(\sqrt{n / k})</span>.</p></li>
+<li><p><strong><a href="./lectures/09-accelerated-gradient.html">Accelerated Gradient</a></strong> — Can first-order methods do better than <span class="math inline">O(1/k)</span>? Nesterov’s accelerated gradient achieves <span class="math inline">O(1/k^2)</span>, and we prove this is <em>optimal</em> among all first-order methods via information-theoretic lower bounds. We also cover FISTA and adaptive restart strategies.</p></li>
+</ul>
+</section>
+<section id="part-v-applications-in-deep-learning" class="level3">
+<h3 class="anchored" data-anchor-id="part-v-applications-in-deep-learning">Part V: Applications in Deep Learning</h3>
+<ul>
+<li><strong><a href="./lectures/11-implicit-layer.html">Implicit Layers</a></strong> — What if a neural network layer is defined not by a formula but by a fixed-point or optimization problem? We develop implicit differentiation through KKT conditions, deep equilibrium models, and differentiable optimization layers — connecting optimization theory directly to neural network design.</li>
+</ul>
+</section>
+</section>
+<section id="textbooks" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="textbooks">Textbooks</h2>
+<p>These lecture notes are self-contained, but draw heavily on two excellent textbooks. We refer to them throughout as <strong>[BV]</strong> and <strong>[Beck]</strong>:</p>
+<ul>
+<li><p><strong>[BV]</strong> — S. Boyd and L. Vandenberghe, <a href="https://web.stanford.edu/~boyd/cvxbook/bv_cvxbook.pdf"><em>Convex Optimization</em></a>, Cambridge University Press, 2004. The standard reference for convex optimization theory: convex sets, duality, KKT conditions, Newton’s method, and interior point methods. Chapters 2–5 cover the foundations; Chapters 9–11 cover the algorithms.</p></li>
+<li><p><strong>[Beck]</strong> — A. Beck, <a href="https://doi.org/10.1137/1.9781611974997"><em>First-Order Methods in Optimization</em></a>, SIAM, 2017. A comprehensive and rigorous treatment of proximal operators, subgradient methods, proximal gradient (ISTA/FISTA), mirror descent, and accelerated methods. Our Chapters 6–10 follow the development in Beck closely.</p></li>
+</ul>
+<p>Additional references are cited in individual chapters where relevant.</p>
+</section>
+<section id="acknowledgments" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="acknowledgments">Acknowledgments</h2>
+<p>These lecture notes were developed for S&amp;DS 432/632 at Yale University. The presentation draws heavily on two outstanding courses whose publicly available materials shaped much of the treatment here:</p>
+<ul>
+<li><strong>Yuxin Chen</strong>, <a href="https://yuxinchen2020.github.io/large_scale_optimization/index.html"><em>Large-Scale Optimization for Data Science</em></a>, University of Pennsylvania.</li>
+<li><strong>Lieven Vandenberghe</strong>, <a href="https://www.seas.ucla.edu/~vandenbe/ee236c.html"><em>EE 236C: Optimization Methods for Large-Scale Systems</em></a>, UCLA.</li>
+</ul>
+<p>I am grateful to both for making their course materials publicly available; a significant portion of these lecture notes was informed by studying their presentations.</p>
+</section>
+<section id="prerequisites" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="prerequisites">Prerequisites</h2>
+<p>This course assumes familiarity with:</p>
+<ul>
+<li>Linear algebra (vector spaces, eigenvalues, matrix norms)</li>
+<li>Multivariable calculus (gradients, Hessians, Taylor expansions)</li>
+<li>Basic optimization (convex sets, convex functions, gradient descent fundamentals)</li>
+<li>Probability and statistics (for stochastic methods)</li>
+</ul>
+<p>Students who have completed S&amp;DS 431/631 or an equivalent course will have the necessary background.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./lectures/01-review.html" class="pagination-link" aria-label="Review of Convex Optimization">
+        <span class="nav-page-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Review of Convex Optimization</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<script>
+// Plotly Warmtone theming helpers — shared across all lectures
+// Reads CSS custom properties set by _warmtone.scss (light/dark aware)
+const plotlyConfig = {responsive: true, displayModeBar: false};
+const figFont = '"Source Serif 4", Georgia, "Times New Roman", serif';
+const figFontHeading = '"Crimson Pro", Georgia, serif';
+
+function css(v) {
+  return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+}
+
+function legendStyle() {
+  return {
+    font: {family: figFont, size: 13, color: css('--fig-text')},
+    bgcolor: css('--fig-bg') + 'dd',
+    bordercolor: css('--fig-grid'),
+    borderwidth: 1,
+  };
+}
+
+function themeLayout(extra) {
+  return Object.assign({
+    paper_bgcolor: css('--fig-bg'),
+    plot_bgcolor: css('--fig-plot-bg'),
+    font: {family: figFont, color: css('--fig-text'), size: 14},
+  }, extra || {});
+}
+
+function themeAxis(title, extra) {
+  return Object.assign({
+    title: {text: title, font: {family: figFont, size: 14}},
+    gridcolor: css('--fig-grid'),
+    zerolinecolor: css('--fig-grid'),
+    linecolor: css('--fig-axis'),
+    tickfont: {family: figFont, size: 12, color: css('--fig-axis')},
+  }, extra || {});
+}
+
+// Plotly color sequences matching the Warmtone palette
+const warmtonePalette = [
+  '#7b97ad', '#b8995e', '#ad8480', '#7a9a7e', '#907ea0',
+  '#6f9996', '#8a6e5e', '#b56b6b', '#8fa3b8', '#a09488'
+];
+</script>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>

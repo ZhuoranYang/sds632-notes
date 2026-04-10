@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>10&nbsp; Mirror Descent – S&amp;DS 432/632 — Advanced Optimization Techniques</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../lectures/09-accelerated-gradient.html" rel="next">
+<link href="../lectures/07-proximal-gradient.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-1db14e1c4cc35bfe1d9badc9e4551eed.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-434abab37f7d394f280d9c89d7fbc13f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    skipStartupTypeset: true,
+    messageStyle: "none",
+    tex2jax: { inlineMath: [], displayMath: [], processEnvironments: false }
+  });
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_SVG"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.0.min.js" charset="utf-8"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../lectures/05-gradient-descent.html">First-Order Methods</a></li><li class="breadcrumb-item"><a href="../lectures/08-mirror-descent.html"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Mirror Descent</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">S&amp;DS 432/632 — Advanced Optimization Techniques</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Welcome</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Preliminaries</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/01-review.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Review of Convex Optimization</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Duality</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/02-lagrange-duality.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lagrange Duality</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/02b-dual-conjugacy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Dual Conjugacy</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Second-Order Methods</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/03-newton-methods.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Newton Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/04-interior-point.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Interior Point Methods</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">First-Order Methods</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/05-gradient-descent.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Gradient Descent</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/05b-projected-gradient-descent.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Projected Gradient Descent and Frank–Wolfe</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/06-subgradient.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Subgradient Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/07-proximal-gradient.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Proximal Gradient Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/08-mirror-descent.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Mirror Descent</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/09-accelerated-gradient.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Accelerated Gradient Methods</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Applications in Deep Learning</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/11-implicit-layer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Implicit Layers</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/summary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Course Summary</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-overview" id="toc-sec-overview" class="nav-link active" data-scroll-target="#sec-overview"><span class="header-section-number">10.1</span> What Will Be Covered</a></li>
+  <li><a href="#sec-recall-pgd" id="toc-sec-recall-pgd" class="nav-link" data-scroll-target="#sec-recall-pgd"><span class="header-section-number">10.2</span> Recall: Proximal Gradient Descent</a></li>
+  <li><a href="#sec-bregman-divergence" id="toc-sec-bregman-divergence" class="nav-link" data-scroll-target="#sec-bregman-divergence"><span class="header-section-number">10.3</span> Bregman Divergence</a></li>
+  <li><a href="#sec-mirror-descent" id="toc-sec-mirror-descent" class="nav-link" data-scroll-target="#sec-mirror-descent"><span class="header-section-number">10.4</span> Mirror Descent (MD)</a></li>
+  <li><a href="#sec-examples" id="toc-sec-examples" class="nav-link" data-scroll-target="#sec-examples"><span class="header-section-number">10.5</span> Examples</a>
+  <ul class="collapse">
+  <li><a href="#sec-md-kl-update" id="toc-sec-md-kl-update" class="nav-link" data-scroll-target="#sec-md-kl-update"><span class="header-section-number">10.5.1</span> MD Update for KL: Exponentiated Gradient</a></li>
+  <li><a href="#sec-pinsker" id="toc-sec-pinsker" class="nav-link" data-scroll-target="#sec-pinsker"><span class="header-section-number">10.5.2</span> Pinsker’s Lemma</a></li>
+  </ul></li>
+  <li><a href="#sec-properties" id="toc-sec-properties" class="nav-link" data-scroll-target="#sec-properties"><span class="header-section-number">10.6</span> Properties of Bregman Divergence</a>
+  <ul class="collapse">
+  <li><a href="#sec-three-point" id="toc-sec-three-point" class="nav-link" data-scroll-target="#sec-three-point"><span class="header-section-number">10.6.1</span> Three-Point Lemma</a></li>
+  </ul></li>
+  <li><a href="#sec-bregman-projection" id="toc-sec-bregman-projection" class="nav-link" data-scroll-target="#sec-bregman-projection"><span class="header-section-number">10.7</span> Bregman Projection</a></li>
+  <li><a href="#sec-alternative-md" id="toc-sec-alternative-md" class="nav-link" data-scroll-target="#sec-alternative-md"><span class="header-section-number">10.8</span> Alternative Form of MD: The Mirror Map</a>
+  <ul class="collapse">
+  <li><a href="#sec-unconstrained-md" id="toc-sec-unconstrained-md" class="nav-link" data-scroll-target="#sec-unconstrained-md"><span class="header-section-number">10.8.1</span> Unconstrained Case</a></li>
+  </ul></li>
+  <li><a href="#sec-convergence-lipschitz" id="toc-sec-convergence-lipschitz" class="nav-link" data-scroll-target="#sec-convergence-lipschitz"><span class="header-section-number">10.9</span> Convergence Analysis of MD (Lipschitz Case)</a></li>
+  <li><a href="#sec-online-md" id="toc-sec-online-md" class="nav-link" data-scroll-target="#sec-online-md"><span class="header-section-number">10.10</span> Online Mirror Descent</a></li>
+  <li><a href="#sec-simplex" id="toc-sec-simplex" class="nav-link" data-scroll-target="#sec-simplex"><span class="header-section-number">10.11</span> Optimization over the Probability Simplex</a>
+  <ul class="collapse">
+  <li><a href="#sec-simplex-proj-subgrad" id="toc-sec-simplex-proj-subgrad" class="nav-link" data-scroll-target="#sec-simplex-proj-subgrad"><span class="header-section-number">10.11.1</span> Approach 1: Projected Subgradient (Euclidean)</a></li>
+  <li><a href="#sec-simplex-md-kl" id="toc-sec-simplex-md-kl" class="nav-link" data-scroll-target="#sec-simplex-md-kl"><span class="header-section-number">10.11.2</span> Approach 2: Mirror Descent with KL</a></li>
+  <li><a href="#sec-simplex-comparison" id="toc-sec-simplex-comparison" class="nav-link" data-scroll-target="#sec-simplex-comparison"><span class="header-section-number">10.11.3</span> Comparison: Euclidean vs.&nbsp;KL</a></li>
+  </ul></li>
+  <li><a href="#sec-improved-rates" id="toc-sec-improved-rates" class="nav-link" data-scroll-target="#sec-improved-rates"><span class="header-section-number">10.12</span> Improved Convergence Rates (Smooth Case)</a>
+  <ul class="collapse">
+  <li><a href="#sec-descent-lemma-md" id="toc-sec-descent-lemma-md" class="nav-link" data-scroll-target="#sec-descent-lemma-md"><span class="header-section-number">10.12.1</span> Descent Lemma for MD</a></li>
+  <li><a href="#sec-convergence-smooth" id="toc-sec-convergence-smooth" class="nav-link" data-scroll-target="#sec-convergence-smooth"><span class="header-section-number">10.12.2</span> Convergence Analysis (Smooth Case)</a></li>
+  </ul></li>
+  <li><a href="#sec-proximal-md" id="toc-sec-proximal-md" class="nav-link" data-scroll-target="#sec-proximal-md"><span class="header-section-number">10.13</span> Proximal Mirror Descent</a>
+  <ul class="collapse">
+  <li><a href="#sec-proximal-md-algorithm" id="toc-sec-proximal-md-algorithm" class="nav-link" data-scroll-target="#sec-proximal-md-algorithm"><span class="header-section-number">10.13.1</span> The Algorithm</a></li>
+  <li><a href="#sec-prox-md-fb" id="toc-sec-prox-md-fb" class="nav-link" data-scroll-target="#sec-prox-md-fb"><span class="header-section-number">10.13.2</span> Forward-Backward Splitting Interpretation</a></li>
+  <li><a href="#sec-prox-md-convergence" id="toc-sec-prox-md-convergence" class="nav-link" data-scroll-target="#sec-prox-md-convergence"><span class="header-section-number">10.13.3</span> Convergence Rates</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a>
+  <ul class="collapse">
+  <li><a href="#logic-flow-of-this-chapter" id="toc-logic-flow-of-this-chapter" class="nav-link" data-scroll-target="#logic-flow-of-this-chapter"><span class="header-section-number">10.13.4</span> Logic Flow of This Chapter</a></li>
+  <li><a href="#convergence-rate-summary" id="toc-convergence-rate-summary" class="nav-link" data-scroll-target="#convergence-rate-summary"><span class="header-section-number">10.13.5</span> Convergence Rate Summary</a></li>
+  <li><a href="#key-takeaways" id="toc-key-takeaways" class="nav-link" data-scroll-target="#key-takeaways"><span class="header-section-number">10.13.6</span> Key Takeaways</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../lectures/05-gradient-descent.html">First-Order Methods</a></li><li class="breadcrumb-item"><a href="../lectures/08-mirror-descent.html"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Mirror Descent</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Mirror Descent</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>All the first-order methods we have studied so far—gradient descent, projected gradient descent, proximal gradient—share a common feature: they measure distances using the Euclidean norm <span class="math inline">\|\cdot\|_2</span>. But is the Euclidean norm always the right choice? When optimizing over the probability simplex <span class="math inline">\Delta_n</span>, for instance, the natural measure of distance between distributions is the Kullback–Leibler (KL) divergence, not the squared Euclidean distance. When the Hessian of the objective has special structure, a weighted norm aligned with the curvature can dramatically improve convergence.</p>
+<p><strong>Mirror descent</strong> is a principled way to incorporate non-Euclidean geometry into first-order optimization. The key idea is to replace the squared Euclidean distance <span class="math inline">\frac{1}{2}\|y - x\|_2^2</span> in the gradient descent update with a <strong>Bregman divergence</strong> <span class="math inline">D_\varphi(y, x)</span> induced by a strictly convex function <span class="math inline">\varphi</span>. By choosing <span class="math inline">\varphi</span> to match the geometry of the constraint set, mirror descent can achieve convergence rates with much better dependence on the ambient dimension. For optimization over <span class="math inline">\Delta_n</span>, using the negative entropy as <span class="math inline">\varphi</span> leads to convergence bounds that scale as <span class="math inline">O(\sqrt{\log n})</span> rather than <span class="math inline">O(\sqrt{n})</span>—an exponential improvement in the dimension dependence.</p>
+<p>In this lecture we develop the theory of Bregman divergences, derive the mirror descent algorithm and its “mirror map” interpretation, and prove convergence rates for both Lipschitz and smooth objectives. We also show how proximal mirror descent extends the framework to composite objectives.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Companion Notebook
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A <a href="../notebooks/mirror-descent.ipynb">Jupyter notebook</a> accompanies this chapter with runnable Python implementations of Bregman divergence visualization, mirror descent on the simplex with multiplicative weights, dimension-free rate comparisons, and the online experts problem.</p>
+</div>
+</div>
+<section id="sec-overview" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="sec-overview"><span class="header-section-number">10.1</span> What Will Be Covered</h2>
+<ol type="1">
+<li>Bregman divergence and mirror descent</li>
+<li>Properties of Bregman divergence and the three-point lemma</li>
+<li>Interpretations of mirror descent (primal and mirror spaces)</li>
+<li>Convergence rates for the Lipschitz case and the smooth case</li>
+<li>Online mirror descent and regret bounds</li>
+<li>Optimization over the probability simplex: Euclidean vs.&nbsp;KL</li>
+<li>Proximal mirror descent</li>
+</ol>
+</section>
+<section id="sec-recall-pgd" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="sec-recall-pgd"><span class="header-section-number">10.2</span> Recall: Proximal Gradient Descent</h2>
+<p>Recall that (proximal) gradient descent updates the iterate by minimizing a local model:</p>
+<p><span class="math display">
+x^+ = \operatorname*{argmin}_{y} \Big\{ f(x) + \langle \nabla f(x), y - x \rangle + \frac{1}{2\alpha} \|y - x\|_2^2 + h(y) \Big\}.
+</span></p>
+<p>The quadratic term <span class="math inline">\frac{1}{2\alpha}\|y - x\|_2^2</span> penalizes deviation from the current iterate, correcting the approximation error of the first-order Taylor expansion. But this penalty uses the <strong>squared Euclidean distance</strong>—is this always the right choice?</p>
+<p><strong>Two motivating examples</strong> suggest that Euclidean geometry can be suboptimal:</p>
+<p><strong>Example 1 (Probability simplex).</strong> Suppose <span class="math inline">h(x) = I_{\Delta_n}(x)</span>, the indicator function of the probability simplex. Then <span class="math inline">x</span> represents a probability distribution, and it is more natural to measure proximity between distributions using the Kullback–Leibler divergence rather than the Euclidean distance.</p>
+<p><strong>Example 2 (Quadratic with known curvature).</strong> Consider <span class="math inline">f(x) = \frac{1}{2}(x - x^*)^\top Q(x - x^*)</span> for some positive definite matrix <span class="math inline">Q</span>. Standard gradient descent requires <span class="math inline">O(\kappa \cdot \log(1/\varepsilon))</span> iterations, where <span class="math inline">\kappa</span> is the condition number of <span class="math inline">Q</span>. However, if we replace the Euclidean penalty with a <span class="math inline">Q</span>-weighted norm,</p>
+<p><span class="math display">
+x^+ = \operatorname*{argmin}_{y} \Big\{ f(x) + \langle \nabla f(x), y - x \rangle + \frac{1}{2\alpha}(y - x)^\top Q(y - x) \Big\},
+</span></p>
+<p>then the first-order optimality condition gives <span class="math inline">\alpha \nabla f(x) + Q(x^+ - x) = 0</span>, which yields</p>
+<p><span class="math display">
+x^+ = x - \alpha \cdot Q^{-1} \nabla f(x) = x - \alpha \cdot (x - x^*).
+</span></p>
+<p>This converges in <span class="math inline">O(\log(1/\varepsilon))</span> iterations—the condition number has been completely eliminated by aligning the geometry with the Hessian.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Goal
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Modify proximal GD to adapt to non-Euclidean geometry by replacing the squared Euclidean distance with a more general “distance-like” measure.</p>
+</div>
+</div>
+</section>
+<section id="sec-bregman-divergence" class="level2" data-number="10.3">
+<h2 data-number="10.3" class="anchored" data-anchor-id="sec-bregman-divergence"><span class="header-section-number">10.3</span> Bregman Divergence</h2>
+<p>The Bregman divergence generalizes the squared Euclidean distance by measuring the gap between a strictly convex function and its linear approximation. This provides a flexible family of “distance-like” measures that can be tailored to the geometry of the problem.</p>
+<div id="def-bregman-divergence" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 10.1 (Bregman Divergence)</strong></span> Let <span class="math inline">\varphi : \mathbb{D} \to \mathbb{R}</span> be a strictly convex and differentiable function with <span class="math inline">\mathbb{D} = \operatorname{dom}(\varphi)</span>.</p>
+<p>We define the <strong>Bregman divergence</strong> induced by <span class="math inline">\varphi</span> as</p>
+<p><span class="math display">
+D_\varphi(x, y) = \varphi(x) - \varphi(y) - \langle \nabla \varphi(y), x - y \rangle.
+</span></p>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Bregman Divergence as a “Distance”
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><span class="math inline">D_\varphi(x, z)</span> can be viewed as a “distance,” but it is <strong>not symmetric</strong>: <span class="math inline">D_\varphi(x, y) \neq D_\varphi(y, x)</span> in general.</p>
+</div>
+</div>
+<p>The simplest example is the squared Euclidean distance: when <span class="math inline">\varphi(x) = \|x\|_2^2</span>, we have <span class="math inline">D_\varphi(x, y) = \|x - y\|_2^2</span>. But different choices of <span class="math inline">\varphi</span> yield different geometries, as we will see in the examples below.</p>
+<p><strong>How to read <a href="#fig-bregman-divergence" class="quarto-xref">Figure&nbsp;<span>10.1</span></a>.</strong> The curve is the strictly convex function <span class="math inline">\varphi(x)</span>, and the dashed line is its tangent at <span class="math inline">y</span>. The Bregman divergence <span class="math inline">D_\varphi(x, y)</span> is the vertical gap between <span class="math inline">\varphi(x)</span> and the tangent approximation at <span class="math inline">y</span>—always nonnegative by convexity. Unlike Euclidean distance, <span class="math inline">D_\varphi</span> is generally <strong>asymmetric</strong>: the gap from <span class="math inline">x</span> looking at <span class="math inline">y</span>’s tangent differs from the gap at <span class="math inline">y</span> looking at <span class="math inline">x</span>’s tangent. The choice of <span class="math inline">\varphi</span> determines the geometry: <span class="math inline">\varphi(x) = \|x\|_2^2</span> recovers squared Euclidean distance, while <span class="math inline">\varphi(x) = \sum x_i \log x_i</span> gives KL divergence.</p>
+<div id="fig-bregman-divergence" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bregman-divergence-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch08-bregman-divergence.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;10.1: Bregman divergence: the gap between \varphi(x) and its linear approximation at y, which is nonnegative by convexity."><img src="figures/ch08-bregman-divergence.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bregman-divergence-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.1: Bregman divergence: the gap between <span class="math inline">\varphi(x)</span> and its linear approximation at <span class="math inline">y</span>, which is nonnegative by convexity.
+</figcaption>
+</figure>
+</div>
+<div id="fig-mirror-descent-geometry" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-mirror-descent-geometry-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/mirror-descent-geometry.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;10.2: Euclidean projection versus Bregman projection onto the simplex: Euclidean projection finds the nearest point in \ell_2 distance (left), while KL-divergence projection follows the natural geometry of the probability simplex (right)."><img src="figures/mirror-descent-geometry.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mirror-descent-geometry-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.2: Euclidean projection versus Bregman projection onto the simplex: Euclidean projection finds the nearest point in <span class="math inline">\ell_2</span> distance (left), while KL-divergence projection follows the natural geometry of the probability simplex (right).
+</figcaption>
+</figure>
+</div>
+<p><strong>Intuition via Taylor expansion.</strong> By the mean value theorem, there exists <span class="math inline">\xi</span> on the segment between <span class="math inline">x</span> and <span class="math inline">y</span> such that</p>
+<p><span class="math display">
+D_\varphi(x, y) = \frac{1}{2}(x - y)^\top \nabla^2 \varphi(\xi)(x - y).
+</span></p>
+<p>This shows that the Bregman divergence is a <strong>local quadratic form</strong> weighted by the Hessian of <span class="math inline">\varphi</span>. The function <span class="math inline">\varphi</span> acts as a “lens” through which distances are measured: regions where <span class="math inline">\nabla^2\varphi</span> is large correspond to high curvature, making nearby points appear farther apart.</p>
+<p>Since <span class="math inline">\varphi</span> is strictly convex, <span class="math inline">\nabla^2\varphi(\xi) \succ 0</span> everywhere, which immediately yields two fundamental properties:</p>
+<p><strong>(a)</strong> <span class="math inline">D_\varphi(x, y) \geq 0</span> for all <span class="math inline">x, y \in \mathbb{D}</span>, and</p>
+<p><strong>(b)</strong> <span class="math inline">D_\varphi(x, y) = 0</span> if and only if <span class="math inline">x = y</span>.</p>
+</section>
+<section id="sec-mirror-descent" class="level2" data-number="10.4">
+<h2 data-number="10.4" class="anchored" data-anchor-id="sec-mirror-descent"><span class="header-section-number">10.4</span> Mirror Descent (MD)</h2>
+<p>With the Bregman divergence as our distance measure, we can now define mirror descent. The idea is simple: at each iteration, minimize a first-order approximation of <span class="math inline">f</span> penalized by the Bregman divergence from the current iterate. For <span class="math inline">k = 0, 1, 2, \ldots</span>,</p>
+<p><span class="math display">
+x^{k+1} = \operatorname*{argmin}_{x \in \mathcal{C}} \Big\{ f(x^k) + \langle \nabla f(x^k), x - x^k \rangle + \frac{1}{\alpha^k} D_\varphi(x, x^k) \Big\}.
+</span></p>
+<p>Since <span class="math inline">f(x^k)</span> is a constant with respect to the optimization variable <span class="math inline">x</span>, we can simplify this to</p>
+<p><span id="eq-md-update"><span class="math display">
+x^{k+1} = \operatorname*{argmin}_{x \in \mathcal{C}} \Big\{ \langle \nabla f(x^k), x - x^k \rangle + \frac{1}{\alpha^k} D_\varphi(x, x^k) \Big\}.
+\tag{10.1}</span></span></p>
+<p>Comparing with the proximal gradient update, the only change is the replacement of <span class="math inline">\frac{1}{2\alpha}\|x - x^k\|_2^2</span> by <span class="math inline">\frac{1}{\alpha^k} D_\varphi(x, x^k)</span>.</p>
+<p><strong>Assumptions on the mirror map.</strong> The constraint set <span class="math inline">\mathcal{C} \subseteq \mathbb{R}^n</span> is chosen so that <span class="math inline">\varphi</span> is <strong><span class="math inline">\mu</span>-strongly convex</strong> on <span class="math inline">\mathcal{C}</span> with respect to a norm <span class="math inline">\|\cdot\|</span>:</p>
+<p><span class="math display">
+D_\varphi(x, y) = \varphi(x) - \varphi(y) - \langle \nabla \varphi(y), x - y \rangle \geq \frac{\mu}{2} \|x - y\|^2 \quad \forall\, x, y \in \mathcal{C}.
+</span></p>
+<p>Crucially, this norm <span class="math inline">\|\cdot\|</span> need not be the Euclidean norm <span class="math inline">\|\cdot\|_2</span>. This flexibility is what allows mirror descent to adapt to the geometry of the problem: choosing <span class="math inline">\varphi</span> whose curvature aligns with the constraint set can dramatically improve convergence.</p>
+<p>When <span class="math inline">f</span> is not differentiable, we replace <span class="math inline">\nabla f(x^k)</span> with a subgradient <span class="math inline">g^k \in \partial f(x^k)</span>.</p>
+</section>
+<section id="sec-examples" class="level2" data-number="10.5">
+<h2 data-number="10.5" class="anchored" data-anchor-id="sec-examples"><span class="header-section-number">10.5</span> Examples</h2>
+<p>We now examine two fundamental examples that illustrate the power of choosing the mirror map <span class="math inline">\varphi</span> to match the problem geometry.</p>
+<div id="exm-weighted-l2" class="theorem example">
+<p><span class="theorem-title"><strong>Example 10.1 (Weighted <span class="math inline">\ell_2</span>-Norm)</strong></span> Let <span class="math inline">Q \succ 0</span> with <span class="math inline">Q \succeq \mu I</span>, and set <span class="math inline">\varphi(x) = \frac{1}{2} x^\top Q\, x</span>. Since <span class="math inline">\nabla \varphi(x) = Qx</span>, the induced Bregman divergence is</p>
+<p><span class="math display">
+D_\varphi(x, y) = \frac{1}{2}x^\top Qx - \frac{1}{2}y^\top Qy - \langle Qy, x - y \rangle = \frac{1}{2}(x - y)^\top Q(x - y).
+</span></p>
+<p>This is the squared Mahalanobis distance with respect to <span class="math inline">Q</span>. Applying the mirror descent update (<a href="#eq-md-update" class="quarto-xref"><span>10.1</span></a>) with <span class="math inline">\mathcal{C} = \mathbb{R}^n</span>,</p>
+<p><span class="math display">
+x^{k+1} = \operatorname*{argmin}_{x} \Big\{ \alpha^k \langle \nabla f(x^k), x - x^k \rangle + \frac{1}{2}(x - x^k)^\top Q(x - x^k) \Big\}.
+</span></p>
+<p>Setting the gradient to zero gives the first-order optimality condition <span class="math inline">\alpha^k \nabla f(x^k) + Q(x^{k+1} - x^k) = 0</span>, which yields</p>
+<p><span class="math display">
+\boxed{x^{k+1} = x^k - \alpha^k \cdot Q^{-1} \nabla f(x^k).}
+</span></p>
+<p>This is exactly the <strong>preconditioned gradient descent</strong> update from the motivating example in <a href="#sec-recall-pgd" class="quarto-xref"><span>Section 10.2</span></a>. When <span class="math inline">Q</span> is chosen to approximate the Hessian <span class="math inline">\nabla^2 f</span>, the method adapts to the curvature of <span class="math inline">f</span>, eliminating the condition number from the convergence rate.</p>
+</div>
+<div id="exm-kl-divergence" class="theorem example">
+<p><span class="theorem-title"><strong>Example 10.2 (KL-Divergence (Negative Entropy))</strong></span> The most important non-Euclidean example arises from the <strong>negative entropy</strong> on the probability simplex. Let</p>
+<p><span class="math display">
+\varphi(x) = \sum_{i=1}^{n} x_i \log x_i, \qquad \mathcal{C} = \Delta_n = \Big\{ x \in \mathbb{R}^n : x \geq 0,\; \sum_{i=1}^n x_i = 1 \Big\}.
+</span></p>
+<p>Then the induced Bregman divergence is the <strong>Kullback–Leibler (KL) divergence</strong>:</p>
+<p><span class="math display">
+D_\varphi(x, y) = \mathrm{KL}(x \,\|\, y) = \sum_{i=1}^{n} x_i \log\!\Big(\frac{x_i}{y_i}\Big).
+</span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>The gradient of <span class="math inline">\varphi</span> is <span class="math inline">\nabla \varphi(x) = \big(\log x_i + 1\big)_{i=1}^n</span>. Expanding the definition of Bregman divergence and using the constraint <span class="math inline">\sum x_i = \sum y_i = 1</span>,</p>
+<p><span class="math display">
+\begin{aligned}
+D_\varphi(x, y) &amp;= \sum_{i=1}^n x_i \log x_i - \sum_{i=1}^n y_i \log y_i - \sum_{i=1}^{n} (\log y_i + 1)(x_i - y_i) \\
+&amp;= \sum_{i=1}^n x_i \log x_i - \sum_{i=1}^n y_i \log y_i - \sum_{i=1}^n x_i \log y_i + \sum_{i=1}^n y_i \log y_i - \underbrace{\sum_{i=1}^n (x_i - y_i)}_{=\,0} \\
+&amp;= \sum_{i=1}^{n} x_i(\log x_i - \log y_i) = \sum_{i=1}^n x_i \log\!\Big(\frac{x_i}{y_i}\Big) = \mathrm{KL}(x \,\|\, y).
+\end{aligned}
+</span></p>
+<p>This confirms that the Bregman divergence induced by the negative entropy is the KL divergence. <span class="math inline">\blacksquare</span></p>
+</div>
+<section id="sec-md-kl-update" class="level3" data-number="10.5.1">
+<h3 data-number="10.5.1" class="anchored" data-anchor-id="sec-md-kl-update"><span class="header-section-number">10.5.1</span> MD Update for KL: Exponentiated Gradient</h3>
+<p>When we apply mirror descent with KL divergence on the simplex, the update (<a href="#eq-md-update" class="quarto-xref"><span>10.1</span></a>) becomes</p>
+<p><span class="math display">
+x^{k+1} \leftarrow \operatorname*{argmin}_{y \in \Delta_n} \Big\{ \alpha^k \langle \nabla f(x^k), y \rangle + \mathrm{KL}(y \,\|\, x^k) \Big\}.
+</span></p>
+<p>The solution has a remarkably elegant closed form—the <strong>exponentiated gradient update</strong> (also known as <strong>multiplicative weights</strong>):</p>
+<p><span id="eq-exponentiated-update"><span class="math display">
+x_i^{k+1} = \frac{x_i^k \cdot \exp\!\big(-\alpha^k \cdot \partial_i f(x^k)\big)}{\displaystyle\sum_{j=1}^{n} x_j^k \cdot \exp\!\big(-\alpha^k \cdot \partial_j f(x^k)\big)}, \quad i \in [n].
+\tag{10.2}</span></span></p>
+<p>Each coordinate is scaled multiplicatively by <span class="math inline">\exp(-\alpha^k \partial_i f)</span>, then renormalized to stay on the simplex. Coordinates with large partial derivatives (high cost) are down-weighted, while low-cost coordinates are up-weighted. This is a natural update rule for probability distributions.</p>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>We derive (<a href="#eq-exponentiated-update" class="quarto-xref"><span>10.2</span></a>) via the KKT conditions. Consider the problem</p>
+<p><span class="math display">
+\min_{y \in \Delta_n} \; F(y), \qquad F(y) = \langle p, y \rangle + \mathrm{KL}(y \,\|\, x),
+</span></p>
+<p>where <span class="math inline">p = \alpha^k \nabla f(x^k)</span> and <span class="math inline">x \in \Delta_n</span> with <span class="math inline">x &gt; 0</span>. The simplex constraint gives the Lagrangian</p>
+<p><span class="math display">
+\mathcal{L}(y, \lambda, \nu) = F(y) - \lambda^\top y + \nu(\mathbf{1}^\top y - 1), \quad \lambda \geq 0,\; \nu \in \mathbb{R}.
+</span></p>
+<p><strong>Step 1 (Stationarity).</strong> The gradient of <span class="math inline">F</span> is <span class="math inline">\nabla_y F(y) = (p_i + \log(y_i/x_i) + 1)_{i=1}^n</span>. Setting <span class="math inline">\nabla_y \mathcal{L} = 0</span> gives</p>
+<p><span class="math display">
+p_i + \log\frac{y_i}{x_i} + 1 - \lambda_i + \nu = 0 \quad \Longrightarrow \quad y_i = x_i \cdot \exp(-p_i + \lambda_i - \nu - 1).
+</span></p>
+<p><strong>Step 2 (Complementary slackness).</strong> Since <span class="math inline">y_i = x_i \exp(\cdots) &gt; 0</span> for all <span class="math inline">i</span> (because <span class="math inline">x_i &gt; 0</span>), the complementary slackness condition <span class="math inline">\lambda_i y_i = 0</span> forces <span class="math inline">\lambda_i = 0</span> for every <span class="math inline">i</span>.</p>
+<p><strong>Step 3 (Normalization).</strong> Substituting <span class="math inline">\lambda_i = 0</span> gives <span class="math inline">y_i = x_i \exp(-p_i) \cdot e^{-\nu - 1}</span>. The constraint <span class="math inline">\sum_i y_i = 1</span> determines <span class="math inline">e^{-\nu-1} = 1/\sum_j x_j \exp(-p_j)</span>, yielding</p>
+<p><span class="math display">
+y_i = \frac{x_i \cdot \exp(-p_i)}{\sum_{j=1}^n x_j \cdot \exp(-p_j)}.
+</span></p>
+<p>Substituting <span class="math inline">p = \alpha^k \nabla f(x^k)</span> gives the exponentiated gradient update (<a href="#eq-exponentiated-update" class="quarto-xref"><span>10.2</span></a>). <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+<section id="sec-pinsker" class="level3" data-number="10.5.2">
+<h3 data-number="10.5.2" class="anchored" data-anchor-id="sec-pinsker"><span class="header-section-number">10.5.2</span> Pinsker’s Lemma</h3>
+<p>A natural question arises: is the negative entropy <span class="math inline">\varphi(x) = \sum x_i \log x_i</span> strongly convex on <span class="math inline">\Delta_n</span>? If so, with respect to which norm? The answer is central to the theory of mirror descent on the simplex.</p>
+<p>The negative entropy is <strong>not</strong> strongly convex with respect to <span class="math inline">\|\cdot\|_2</span>: near the boundary of the simplex, <span class="math inline">\nabla^2\varphi = \operatorname{diag}(1/x_i)</span> has unbounded eigenvalues, but in the interior with <span class="math inline">x_i \approx 1/n</span>, the minimum eigenvalue is only <span class="math inline">n</span>, which is dimension-dependent and unhelpful. However, it is <span class="math inline">1</span>-strongly convex with respect to the <span class="math inline">\ell_1</span>-norm—a much stronger statement that leads to dimension-free convergence bounds.</p>
+<div id="lem-pinsker" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 10.1 (Pinsker’s Lemma)</strong></span> For any <span class="math inline">p, q \in \Delta_n</span>,</p>
+<p><span class="math display">
+\mathrm{KL}(p \,\|\, q) \geq \frac{1}{2} \|p - q\|_1^2.
+</span></p>
+<p>Equivalently, <span class="math inline">\varphi(x) = \sum x_i \log x_i</span> is <span class="math inline">1</span>-strongly convex on <span class="math inline">\Delta_n</span> with respect to <span class="math inline">\|\cdot\|_1</span>.</p>
+</div>
+<p>The proof uses a one-dimensional reduction and the inequality <span class="math inline">\log t \geq 1 - 1/t</span>; we omit it here and refer to standard references in information theory. The key consequence is that on the simplex, the Bregman divergence <span class="math inline">D_\varphi = \mathrm{KL}</span> controls the <span class="math inline">\ell_1</span>-distance, and the dual norm of <span class="math inline">\|\cdot\|_1</span> is <span class="math inline">\|\cdot\|_\infty</span>. This is precisely why the convergence rate of mirror descent with KL involves <span class="math inline">\|g\|_\infty</span> rather than <span class="math inline">\|g\|_2</span>.</p>
+</section>
+</section>
+<section id="sec-properties" class="level2" data-number="10.6">
+<h2 data-number="10.6" class="anchored" data-anchor-id="sec-properties"><span class="header-section-number">10.6</span> Properties of Bregman Divergence</h2>
+<p>Bregman divergences share some properties with true metrics but lack others. Understanding these properties is essential for the convergence analysis that follows.</p>
+<p><strong>(P1) Non-negativity.</strong> By strict convexity of <span class="math inline">\varphi</span>, the function lies above every tangent line, so</p>
+<p><span class="math display">
+D_\varphi(x, y) \geq 0 \quad \text{for all } x, y \in \mathcal{C}, \qquad D_\varphi(x, y) = 0 \iff x = y.
+</span></p>
+<p><strong>(P2) Convexity in the first argument.</strong> Since <span class="math inline">D_\varphi(x, y) = \varphi(x) - \varphi(y) - \langle \nabla\varphi(y), x - y \rangle</span> and <span class="math inline">\varphi</span> is convex, the map <span class="math inline">x \mapsto D_\varphi(x, y)</span> is convex for every fixed <span class="math inline">y</span>. However, <span class="math inline">y \mapsto D_\varphi(x, y)</span> is <strong>not</strong> convex in general—this asymmetry is a key difference from squared norms.</p>
+<p><strong>(P3) Lack of symmetry.</strong> Unlike a metric, <span class="math inline">D_\varphi(x, y) \neq D_\varphi(y, x)</span> in general. This is visible even for KL divergence: <span class="math inline">\mathrm{KL}(p \,\|\, q) \neq \mathrm{KL}(q \,\|\, p)</span>.</p>
+<p><strong>(P4) Linearity in <span class="math inline">\varphi</span>.</strong> If <span class="math inline">\varphi = \varphi_1 + \lambda\varphi_2</span>, then</p>
+<p><span class="math display">
+D_\varphi(x, y) = D_{\varphi_1}(x, y) + \lambda \cdot D_{\varphi_2}(x, y).
+</span></p>
+<p>This allows us to decompose complex Bregman divergences into simpler components.</p>
+<p><strong>(P5) Invariance under affine shifts.</strong> Adding an affine function to <span class="math inline">\varphi</span> does not change the divergence: if <span class="math inline">\varphi_2(x) = \varphi_1(x) + a^\top x + b</span>, then <span class="math inline">D_{\varphi_2} = D_{\varphi_1}</span>, since the linear terms cancel in the definition.</p>
+<p><strong>(P6) Gradient formula.</strong> Differentiating with respect to the first argument gives</p>
+<p><span class="math display">
+\nabla_x D_\varphi(x, y) = \nabla \varphi(x) - \nabla \varphi(y).
+</span></p>
+<p>This identity will be used repeatedly: the gradient of the Bregman divergence is the difference of the mirror maps evaluated at <span class="math inline">x</span> and <span class="math inline">y</span>.</p>
+<section id="sec-three-point" class="level3" data-number="10.6.1">
+<h3 data-number="10.6.1" class="anchored" data-anchor-id="sec-three-point"><span class="header-section-number">10.6.1</span> Three-Point Lemma</h3>
+<p>The most important algebraic identity for Bregman divergences is the <strong>three-point lemma</strong>, which plays the same role that the law of cosines plays in Euclidean geometry. It is the workhorse behind every convergence proof in this chapter.</p>
+<div id="lem-three-point-bregman" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 10.2 (Three-Point Lemma (Bregman))</strong></span> For any <span class="math inline">x, y, z \in \operatorname{dom}(\varphi)</span>,</p>
+<p><span id="eq-three-point-bregman"><span class="math display">
+\langle \nabla \varphi(z) - \nabla \varphi(y),\; x - y \rangle = D_\varphi(x, y) + D_\varphi(y, z) - D_\varphi(x, z).
+\tag{10.3}</span></span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>Expand each Bregman divergence on the right-hand side using the definition <span class="math inline">D_\varphi(a, b) = \varphi(a) - \varphi(b) - \langle \nabla\varphi(b), a - b \rangle</span>:</p>
+<p><span class="math display">
+\begin{aligned}
+&amp;D_\varphi(x, y) + D_\varphi(y, z) - D_\varphi(x, z) \\
+&amp;= \big[\varphi(x) - \varphi(y) - \langle \nabla\varphi(y), x - y \rangle\big] + \big[\varphi(y) - \varphi(z) - \langle \nabla\varphi(z), y - z \rangle\big] \\
+&amp;\qquad - \big[\varphi(x) - \varphi(z) - \langle \nabla\varphi(z), x - z \rangle\big].
+\end{aligned}
+</span></p>
+<p>The <span class="math inline">\varphi</span> terms cancel: <span class="math inline">\varphi(x) - \varphi(y) + \varphi(y) - \varphi(z) - \varphi(x) + \varphi(z) = 0</span>. The remaining inner product terms give</p>
+<p><span class="math display">
+-\langle \nabla\varphi(y), x - y \rangle - \langle \nabla\varphi(z), y - z \rangle + \langle \nabla\varphi(z), x - z \rangle.
+</span></p>
+<p>Since <span class="math inline">x - z = (x - y) + (y - z)</span>, the last term expands as <span class="math inline">\langle \nabla\varphi(z), x - y \rangle + \langle \nabla\varphi(z), y - z \rangle</span>. The <span class="math inline">\langle \nabla\varphi(z), y - z \rangle</span> terms cancel, leaving</p>
+<p><span class="math display">
+\langle \nabla\varphi(z) - \nabla\varphi(y),\; x - y \rangle. \qquad \blacksquare
+</span></p>
+</div>
+<p><strong>Euclidean special case.</strong> When <span class="math inline">\varphi(x) = \frac{1}{2}\|x\|_2^2</span>, the three-point lemma reduces to</p>
+<p><span class="math display">
+\langle z - y,\; x - y \rangle = \frac{1}{2}\|x - y\|_2^2 + \frac{1}{2}\|z - y\|_2^2 - \frac{1}{2}\|x - z\|_2^2,
+</span></p>
+<p>which is the <strong>law of cosines</strong>: the left-hand side equals <span class="math inline">\|z - y\| \cdot \|x - y\| \cdot \cos\angle_{xyz}</span>.</p>
+<div id="fig-three-point" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-three-point-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch08-three-point.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;10.3: Three-Point Lemma (Euclidean analogy): the identity \langle \nabla\varphi(z) - \nabla\varphi(y), x - y \rangle = D_\varphi(x,y) + D_\varphi(y,z) - D_\varphi(x,z) generalizes the law of cosines."><img src="figures/ch08-three-point.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-three-point-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.3: Three-Point Lemma (Euclidean analogy): the identity <span class="math inline">\langle \nabla\varphi(z) - \nabla\varphi(y), x - y \rangle = D_\varphi(x,y) + D_\varphi(y,z) - D_\varphi(x,z)</span> generalizes the law of cosines.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="sec-bregman-projection" class="level2" data-number="10.7">
+<h2 data-number="10.7" class="anchored" data-anchor-id="sec-bregman-projection"><span class="header-section-number">10.7</span> Bregman Projection</h2>
+<p>Just as Euclidean projection finds the closest point in <span class="math inline">\|\cdot\|_2</span>, <strong>Bregman projection</strong> finds the closest point in Bregman divergence. The resulting “obtuse angle” characterization generalizes the classical projection theorem and underlies the convergence analysis of mirror descent.</p>
+<p>Let <span class="math inline">\Omega</span> be a compact and convex set. For any <span class="math inline">x \in \operatorname{dom}(\varphi)</span>, the <strong>Bregman projection</strong> of <span class="math inline">x</span> onto <span class="math inline">\Omega</span> is</p>
+<p><span class="math display">
+x_{\Omega, \varphi} = \operatorname*{argmin}_{z \in \Omega} D_\varphi(z, x).
+</span></p>
+<p>Note the order of arguments: we minimize over the <strong>first</strong> argument of <span class="math inline">D_\varphi</span>, which is the convex argument.</p>
+<div id="lem-bregman-proj-characterization" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 10.3 (Bregman Projection Characterization)</strong></span> <span class="math inline">z = x_{\Omega, \varphi}</span> if and only if</p>
+<p><span class="math display">
+\langle \nabla \varphi(x) - \nabla \varphi(z),\; y - z \rangle \leq 0 \quad \forall\, y \in \mathcal{C}.
+</span></p>
+<p>Equivalently,</p>
+<p><span class="math display">
+D_\varphi(y, z) + D_\varphi(z, x) - D_\varphi(y, x) \leq 0 \quad \forall\, y \in \mathcal{C}.
+</span></p>
+<p>The second form follows from the first by applying the three-point identity (<a href="#eq-three-point-bregman" class="quarto-xref"><span>10.3</span></a>).</p>
+</div>
+<div id="fig-bregman-proj" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bregman-proj-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch08-bregman-proj.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;10.4: Bregman projection onto convex set \mathcal{C}: the point x_{\mathcal{C},\varphi} minimizes D_\varphi(\cdot, x) over \mathcal{C}, satisfying the obtuse-angle condition \langle \nabla\varphi(x) - \nabla\varphi(z), y - z \rangle \leq 0 for all y \in \mathcal{C}."><img src="figures/ch08-bregman-proj.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bregman-proj-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.4: Bregman projection onto convex set <span class="math inline">\mathcal{C}</span>: the point <span class="math inline">x_{\mathcal{C},\varphi}</span> minimizes <span class="math inline">D_\varphi(\cdot, x)</span> over <span class="math inline">\mathcal{C}</span>, satisfying the obtuse-angle condition <span class="math inline">\langle \nabla\varphi(x) - \nabla\varphi(z), y - z \rangle \leq 0</span> for all <span class="math inline">y \in \mathcal{C}</span>.
+</figcaption>
+</figure>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>Let <span class="math inline">z^* = x_{\mathcal{C}, \varphi} = \operatorname*{argmin}_{z \in \mathcal{C}} D_\varphi(z, x)</span>.</p>
+<p>We have <span class="math inline">\nabla_z D_\varphi(z, x) = \nabla \varphi(z) - \nabla \varphi(x)</span>.</p>
+<p>Using the first-order optimality condition, we have:</p>
+<p><span class="math display">
+\langle \nabla \varphi(z^*) - \nabla \varphi(x),\; y - z^* \rangle \geq 0.
+</span></p>
+<p><span class="math display">
+\Rightarrow \quad \langle \nabla \varphi(x) - \nabla \varphi(z^*),\; y - z^* \rangle \leq 0 \quad \forall\, y \in \mathcal{C}.
+</span></p>
+<p>This completes the proof of <a href="#lem-bregman-proj-characterization" class="quarto-xref">Lemma&nbsp;<span>10.3</span></a>. <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+<section id="sec-alternative-md" class="level2" data-number="10.8">
+<h2 data-number="10.8" class="anchored" data-anchor-id="sec-alternative-md"><span class="header-section-number">10.8</span> Alternative Form of MD: The Mirror Map</h2>
+<p>We now explain why the algorithm is called “<strong>mirror</strong> descent.” The key insight is that the update can be decomposed into three steps that pass through a <strong>dual (mirror) space</strong> where the gradient step is simple.</p>
+<p>Starting from the mirror descent update (<a href="#eq-md-update" class="quarto-xref"><span>10.1</span></a>),</p>
+<p><span class="math display">
+x^{k+1} = \operatorname*{argmin}_{x \in \mathcal{C}} \Big\{ \alpha^k \langle g^k, x - x^k \rangle + D_\varphi(x, x^k) \Big\}, \quad g^k \in \partial f(x^k),
+</span></p>
+<p>the first-order optimality condition gives</p>
+<p><span id="eq-md-foc"><span class="math display">
+\langle \alpha^k g^k + \nabla \varphi(x^{k+1}) - \nabla \varphi(x^k),\; y - x^{k+1} \rangle \geq 0 \quad \forall\, y \in \mathcal{C}.
+\tag{10.4}</span></span></p>
+<p>Now define an intermediate point <span class="math inline">y^{k+1}</span> by performing the gradient step in the <strong>dual space</strong>:</p>
+<p><span class="math display">
+\nabla \varphi(y^{k+1}) = \nabla \varphi(x^k) - \alpha^k g^k.
+</span></p>
+<p>Substituting into (<a href="#eq-md-foc" class="quarto-xref"><span>10.4</span></a>) gives</p>
+<p><span class="math display">
+\langle \nabla \varphi(x^{k+1}) - \nabla \varphi(y^{k+1}),\; y - x^{k+1} \rangle \geq 0 \quad \forall\, y \in \mathcal{C}.
+</span></p>
+<p>By <a href="#lem-bregman-proj-characterization" class="quarto-xref">Lemma&nbsp;<span>10.3</span></a>, this is precisely the optimality condition for the Bregman projection of <span class="math inline">y^{k+1}</span> onto <span class="math inline">\mathcal{C}</span>:</p>
+<p><span class="math display">
+x^{k+1} = \operatorname*{argmin}_{z \in \mathcal{C}} D_\varphi(z, y^{k+1}).
+</span></p>
+<p>This reveals the <strong>mirror structure</strong> of the algorithm:</p>
+<p><strong>How to read <a href="#fig-mirror-map" class="quarto-xref">Figure&nbsp;<span>10.5</span></a>.</strong> The figure shows two spaces connected by the mirror map. <strong>Left (primal space):</strong> the constraint set <span class="math inline">\mathcal{C}</span> contains the iterates <span class="math inline">x^k</span>. <strong>Right (mirror/dual space):</strong> the gradient step happens here. The algorithm proceeds in three steps: (1) the <strong>forward map</strong> <span class="math inline">\nabla\varphi</span> sends <span class="math inline">x^k</span> from primal to mirror space; (2) a <strong>gradient step</strong> in mirror space produces <span class="math inline">w^{k+1/2}</span>; (3) the <strong>backward map</strong> <span class="math inline">(\nabla\varphi)^{-1}</span> followed by projection onto <span class="math inline">\mathcal{C}</span> yields the next primal iterate <span class="math inline">x^{k+1}</span>. The key insight is that the gradient step is linear and simple in mirror space, while the geometry of <span class="math inline">\mathcal{C}</span> is handled by the mirror map.</p>
+<div id="fig-mirror-map" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-mirror-map-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch08-mirror-map.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;10.5: Mirror descent: primal and mirror spaces. The forward map \nabla\varphi sends x^k to the mirror space, a gradient step produces w^{k+1/2}, and the backward map (\nabla\varphi)^{-1} plus projection yields x^{k+1}."><img src="figures/ch08-mirror-map.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mirror-map-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.5: Mirror descent: primal and mirror spaces. The forward map <span class="math inline">\nabla\varphi</span> sends <span class="math inline">x^k</span> to the mirror space, a gradient step produces <span class="math inline">w^{k+1/2}</span>, and the backward map <span class="math inline">(\nabla\varphi)^{-1}</span> plus projection yields <span class="math inline">x^{k+1}</span>.
+</figcaption>
+</figure>
+</div>
+<p>The mirror descent algorithm proceeds in three steps:</p>
+<ol type="1">
+<li><strong>Forward map:</strong> <span class="math inline">w^k = \nabla \varphi(x^k)</span>.</li>
+<li><strong>Gradient step in mirror space:</strong> <span class="math inline">w^{k+\frac{1}{2}} = w^k - \alpha^k \nabla f(x^k)</span>.</li>
+<li><strong>Backward map + projection:</strong> <span class="math inline">x^{k+1} = \operatorname*{argmin}_{z \in \mathcal{C}} D_\varphi(z, y^{k+1})</span>, where <span class="math inline">\nabla \varphi(y^{k+1}) = w^{k+\frac{1}{2}}</span>.</li>
+</ol>
+<section id="sec-unconstrained-md" class="level3" data-number="10.8.1">
+<h3 data-number="10.8.1" class="anchored" data-anchor-id="sec-unconstrained-md"><span class="header-section-number">10.8.1</span> Unconstrained Case</h3>
+<p>When <span class="math inline">\mathcal{C} = \mathbb{R}^n</span>, the projection step is trivial (<span class="math inline">y^{k+1} = x^{k+1}</span>), and the entire update reduces to a gradient step in the dual space followed by the inverse mirror map:</p>
+<p><span class="math display">
+\nabla \varphi(x^{k+1}) = \nabla \varphi(x^k) - \alpha^k \nabla f(x^k).
+</span></p>
+<p>Applying <span class="math inline">(\nabla\varphi)^{-1}</span> to both sides gives</p>
+<p><span class="math display">
+x^{k+1} = (\nabla \varphi)^{-1}\!\big(\nabla \varphi(x^k) - \alpha^k \nabla f(x^k)\big) = \nabla \varphi^*\!\big(\nabla \varphi(x^k) - \alpha^k \nabla f(x^k)\big),
+</span></p>
+<p>where <span class="math inline">\varphi^*</span> is the convex conjugate of <span class="math inline">\varphi</span>. When <span class="math inline">\varphi(x) = \frac{1}{2}\|x\|_2^2</span>, we have <span class="math inline">\nabla\varphi = I</span> and this reduces to the standard gradient descent update <span class="math inline">x^{k+1} = x^k - \alpha^k \nabla f(x^k)</span>.</p>
+</section>
+</section>
+<section id="sec-convergence-lipschitz" class="level2" data-number="10.9">
+<h2 data-number="10.9" class="anchored" data-anchor-id="sec-convergence-lipschitz"><span class="header-section-number">10.9</span> Convergence Analysis of MD (Lipschitz Case)</h2>
+<p>We now analyze the convergence of mirror descent for the Lipschitz (non-smooth) setting. The proof structure parallels that of projected subgradient descent, but with Bregman divergences replacing squared Euclidean distances throughout. The key tools are: <strong>(1)</strong> the optimality condition of the mirror descent step, <strong>(2)</strong> the three-point lemma (<a href="#lem-three-point-bregman" class="quarto-xref">Lemma&nbsp;<span>10.2</span></a>), and <strong>(3)</strong> Hölder’s inequality with respect to the primal/dual norm pair.</p>
+<p><strong>Setting.</strong> Consider the constrained optimization problem <span class="math inline">\min_{x \in \mathcal{C}} f(x)</span> under the following assumptions:</p>
+<p><strong>(A1)</strong> The mirror map <span class="math inline">\varphi</span> is <span class="math inline">\mu</span>-strongly convex on <span class="math inline">\mathcal{C}</span> with respect to a norm <span class="math inline">\|\cdot\|</span>:</p>
+<p><span class="math display">
+D_\varphi(x, y) \geq \frac{\mu}{2} \|x - y\|^2 \quad \forall\, x, y \in \mathcal{C}.
+</span></p>
+<p><strong>(A2)</strong> The function <span class="math inline">f</span> is convex, and its subgradients are bounded in the <strong>dual norm</strong> <span class="math inline">\|\cdot\|_*</span>:</p>
+<p><span class="math display">
+\|g\|_* \leq L \quad \text{for all } g \in \partial f(x),\; \text{for all } x \in \mathcal{C}.
+</span></p>
+<p>The pairing of the primal norm (measuring distances in <span class="math inline">\mathcal{C}</span>) with the dual norm (measuring subgradient size) is the mechanism through which mirror descent adapts to geometry.</p>
+<div id="thm-md-lipschitz" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 10.1 (Convergence of MD (Lipschitz Case))</strong></span> Under assumptions <strong>(A1)</strong>–<strong>(A2)</strong>, let <span class="math inline">\{x^k\}</span> be the iterates of mirror descent (<a href="#eq-md-update" class="quarto-xref"><span>10.1</span></a>) with step sizes <span class="math inline">\{\alpha^k\}</span>. Define the Bregman diameter <span class="math inline">R = \sup_{x \in \mathcal{C}} D_\varphi(x, x^0)</span>. Then the best iterate satisfies</p>
+<p><span id="eq-md-lipschitz-bound"><span class="math display">
+\min_{0 \leq k \leq K} \big\{f(x^k) - f^*\big\} \leq \frac{R + \dfrac{L^2}{2\mu}\displaystyle\sum_{k=0}^{K} (\alpha^k)^2}{\displaystyle\sum_{k=0}^{K} \alpha^k}.
+\tag{10.5}</span></span></p>
+<p>In particular, with constant step size <span class="math inline">\alpha = \frac{\sqrt{2\mu R}}{L\sqrt{K+1}}</span>,</p>
+<p><span class="math display">
+\min_{0 \leq k \leq K} \big\{f(x^k) - f^*\big\} \leq \frac{L\sqrt{2R}}{\sqrt{\mu(K+1)}} = O\!\left(\frac{L\sqrt{R/\mu}}{\sqrt{K}}\right).
+</span></p>
+</div>
+<p>This <span class="math inline">O(1/\sqrt{K})</span> rate matches the rate of projected subgradient descent. The advantage of mirror descent lies not in the rate itself, but in the <strong>constants</strong>: by choosing <span class="math inline">\varphi</span> to match the geometry, the quantities <span class="math inline">R</span> and <span class="math inline">L</span> (measured in the adapted norm) can be much smaller than their Euclidean counterparts. We will see a striking example of this in <a href="#sec-simplex" class="quarto-xref"><span>Section 10.11</span></a>.</p>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>The proof combines three ingredients: the optimality of <span class="math inline">x^{k+1}</span>, the three-point lemma (<a href="#lem-three-point-bregman" class="quarto-xref">Lemma&nbsp;<span>10.2</span></a>), and Hölder’s inequality with respect to the primal/dual norm pair.</p>
+<p><strong>Step 1 (Optimality condition).</strong> Since <span class="math inline">x^{k+1}</span> minimizes <span class="math inline">\alpha^k \langle g^k, x \rangle + D_\varphi(x, x^k)</span> over <span class="math inline">\mathcal{C}</span>, the first-order optimality condition gives</p>
+<p><span id="eq-lip-optimality"><span class="math display">
+\langle \alpha^k g^k + \nabla \varphi(x^{k+1}) - \nabla \varphi(x^k),\; \bar{x} - x^{k+1} \rangle \geq 0 \quad \forall\, \bar{x} \in \mathcal{C}.
+\tag{10.6}</span></span></p>
+<p><strong>Step 2 (Three-point identity).</strong> Applying the three-point lemma (<a href="#eq-three-point-bregman" class="quarto-xref"><span>10.3</span></a>) with the substitution <span class="math inline">(x, y, z) \to (\bar{x},\, x^{k+1},\, x^k)</span> gives</p>
+<p><span id="eq-lip-three-point"><span class="math display">
+\langle \nabla \varphi(x^k) - \nabla \varphi(x^{k+1}),\; \bar{x} - x^{k+1} \rangle = D_\varphi(\bar{x}, x^{k+1}) + D_\varphi(x^{k+1}, x^k) - D_\varphi(\bar{x}, x^k).
+\tag{10.7}</span></span></p>
+<p><strong>Step 3 (Combine Steps 1 and 2).</strong> Rearranging (<a href="#eq-lip-optimality" class="quarto-xref"><span>10.6</span></a>) and substituting (<a href="#eq-lip-three-point" class="quarto-xref"><span>10.7</span></a>), we obtain</p>
+<p><span class="math display">
+\alpha^k \langle g^k,\; x^{k+1} - \bar{x} \rangle \leq D_\varphi(\bar{x}, x^k) - D_\varphi(\bar{x}, x^{k+1}) - D_\varphi(x^{k+1}, x^k).
+</span></p>
+<p>Using the strong convexity assumption <strong>(A1)</strong>, <span class="math inline">D_\varphi(x^{k+1}, x^k) \geq \frac{\mu}{2}\|x^{k+1} - x^k\|^2</span>, so</p>
+<p><span id="eq-lip-combined"><span class="math display">
+\alpha^k \langle g^k,\; x^{k+1} - \bar{x} \rangle \leq D_\varphi(\bar{x}, x^k) - D_\varphi(\bar{x}, x^{k+1}) - \frac{\mu}{2}\|x^{k+1} - x^k\|^2.
+\tag{10.8}</span></span></p>
+<p><strong>Step 4 (Convert to per-iteration progress).</strong> We need to bound <span class="math inline">\langle g^k, x^k - \bar{x} \rangle</span> (with <span class="math inline">x^k</span>, not <span class="math inline">x^{k+1}</span>). Splitting the inner product,</p>
+<p><span id="eq-lip-split"><span class="math display">
+\alpha^k \langle g^k, x^k - \bar{x} \rangle = \alpha^k \langle g^k, x^{k+1} - \bar{x} \rangle + \alpha^k \langle g^k, x^k - x^{k+1} \rangle.
+\tag{10.9}</span></span></p>
+<p>By Hölder’s inequality, <span class="math inline">\langle g^k, x^k - x^{k+1} \rangle \leq \|g^k\|_* \cdot \|x^k - x^{k+1}\|</span>. Applying Young’s inequality <span class="math inline">ab \leq \frac{a^2}{2\mu} + \frac{\mu b^2}{2}</span> with <span class="math inline">a = \alpha^k\|g^k\|_*</span> and <span class="math inline">b = \|x^k - x^{k+1}\|</span>,</p>
+<p><span class="math display">
+\alpha^k \|g^k\|_* \cdot \|x^k - x^{k+1}\| \leq \frac{(\alpha^k)^2 \|g^k\|_*^2}{2\mu} + \frac{\mu}{2}\|x^k - x^{k+1}\|^2.
+</span></p>
+<p><strong>Step 5 (Per-iteration bound).</strong> Substituting the Young’s inequality bound into (<a href="#eq-lip-split" class="quarto-xref"><span>10.9</span></a>) and combining with (<a href="#eq-lip-combined" class="quarto-xref"><span>10.8</span></a>), the <span class="math inline">\frac{\mu}{2}\|x^{k+1} - x^k\|^2</span> terms cancel, yielding</p>
+<p><span class="math display">
+\alpha^k \langle g^k, x^k - \bar{x} \rangle \leq D_\varphi(\bar{x}, x^k) - D_\varphi(\bar{x}, x^{k+1}) + \frac{(\alpha^k)^2 L^2}{2\mu},
+</span></p>
+<p>where we used <span class="math inline">\|g^k\|_* \leq L</span> from assumption <strong>(A2)</strong>.</p>
+<p><strong>Step 6 (Telescope and conclude).</strong> Summing over <span class="math inline">k = 0, 1, \ldots, K</span> and using convexity (<span class="math inline">\langle g^k, x^k - \bar{x} \rangle \geq f(x^k) - f(\bar{x})</span>),</p>
+<p><span class="math display">
+\sum_{k=0}^{K} \alpha^k \big(f(x^k) - f(\bar{x})\big) \leq \underbrace{D_\varphi(\bar{x}, x^0) - D_\varphi(\bar{x}, x^{K+1})}_{\text{telescoping sum}} + \frac{L^2}{2\mu} \sum_{k=0}^{K} (\alpha^k)^2.
+</span></p>
+<p>Dropping the non-positive term <span class="math inline">-D_\varphi(\bar{x}, x^{K+1})</span>, setting <span class="math inline">\bar{x} = x^*</span>, and dividing by <span class="math inline">\sum_{k=0}^{K} \alpha^k</span> yields (<a href="#eq-md-lipschitz-bound" class="quarto-xref"><span>10.5</span></a>). Hence we conclude the proof. <span class="math inline">\blacksquare</span></p>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Generality of the Proof
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The proof actually does not use the fact that <span class="math inline">x^*</span> is the optimal solution. We only need <span class="math inline">x^*</span> to be a <strong>fixed point</strong>. Moreover, <span class="math inline">\{g^k\}</span> don’t need to be subgradients of the same function.</p>
+</div>
+</div>
+</section>
+<section id="sec-online-md" class="level2" data-number="10.10">
+<h2 data-number="10.10" class="anchored" data-anchor-id="sec-online-md"><span class="header-section-number">10.10</span> Online Mirror Descent</h2>
+<p>A remarkable feature of the convergence proof for <a href="#thm-md-lipschitz" class="quarto-xref">Theorem&nbsp;<span>10.1</span></a> is that it does not require <span class="math inline">\{g^k\}</span> to be subgradients of the <strong>same</strong> function—the bound holds for any sequence of bounded vectors. This observation leads naturally to the <strong>online optimization</strong> setting, where the loss function changes adversarially at each step.</p>
+<p><strong>The online learning protocol.</strong> Let <span class="math inline">\{f_t\}_{t=1}^T</span> be a sequence of convex, <span class="math inline">L</span>-Lipschitz functions revealed one at a time. At each round <span class="math inline">t</span>:</p>
+<p><strong>(a)</strong> The learner selects an action <span class="math inline">x^t \in \mathcal{C}</span>.</p>
+<p><strong>(b)</strong> The adversary reveals the loss function <span class="math inline">f_t</span>.</p>
+<p><strong>(c)</strong> The learner incurs cost <span class="math inline">f_t(x^t)</span>.</p>
+<p>The learner’s goal is to minimize the <strong>regret</strong>—the gap between the total cost and the cost of the best fixed action in hindsight:</p>
+<p><span class="math display">
+\mathrm{Regret}_T = \sum_{t=1}^{T} f_t(x^t) - \min_{x \in \mathcal{C}} \sum_{t=1}^{T} f_t(x).
+</span></p>
+<p><strong>Algorithm (Online Mirror Descent).</strong> Initialize <span class="math inline">x^1 \in \mathcal{C}</span>. For <span class="math inline">t = 1, 2, \ldots, T</span>:</p>
+<p><strong>(a)</strong> Observe <span class="math inline">f_t</span> and compute <span class="math inline">g^t \in \partial f_t(x^t)</span>.</p>
+<p><strong>(b)</strong> Update: <span class="math inline">x^{t+1} \leftarrow \operatorname*{argmin}_{x \in \mathcal{C}} \big\{ \langle \alpha^t g^t, x - x^t \rangle + D_\varphi(x, x^t) \big\}</span>.</p>
+<div id="thm-online-md" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 10.2 (Online Mirror Descent Regret Bound)</strong></span> Under assumptions <strong>(A1)</strong>–<strong>(A2)</strong> with <span class="math inline">R = \sup_{x \in \mathcal{C}} D_\varphi(x, x^1)</span>, setting <span class="math inline">\alpha^t = \frac{\sqrt{2\mu R}}{L\sqrt{T}}</span> gives</p>
+<p><span class="math display">
+\mathrm{Regret}_T \leq L\sqrt{\frac{2R}{\mu}} \cdot \sqrt{T} = O\!\big(\sqrt{T}\big).
+</span></p>
+</div>
+<p>The proof follows directly from the per-iteration bound in Step 5 of the proof of <a href="#thm-md-lipschitz" class="quarto-xref">Theorem&nbsp;<span>10.1</span></a>, applied with <span class="math inline">g^k = g^t \in \partial f_t(x^t)</span> at each step and using convexity of each <span class="math inline">f_t</span> separately. The sublinear <span class="math inline">O(\sqrt{T})</span> regret implies that the <strong>average regret</strong> <span class="math inline">\mathrm{Regret}_T / T \to 0</span>, meaning the online algorithm eventually performs as well as the best fixed strategy.</p>
+</section>
+<section id="sec-simplex" class="level2" data-number="10.11">
+<h2 data-number="10.11" class="anchored" data-anchor-id="sec-simplex"><span class="header-section-number">10.11</span> Optimization over the Probability Simplex</h2>
+<p>We now demonstrate the power of mirror descent through its most celebrated application: optimization over the probability simplex <span class="math inline">\mathcal{C} = \Delta_n</span>. We initialize at the uniform distribution <span class="math inline">x^0 = \frac{1}{n}\mathbf{1}</span> and compare two approaches that differ only in the choice of mirror map <span class="math inline">\varphi</span>.</p>
+<section id="sec-simplex-proj-subgrad" class="level3" data-number="10.11.1">
+<h3 data-number="10.11.1" class="anchored" data-anchor-id="sec-simplex-proj-subgrad"><span class="header-section-number">10.11.1</span> Approach 1: Projected Subgradient (Euclidean)</h3>
+<p>The Euclidean choice <span class="math inline">\varphi(x) = \frac{1}{2}\|x\|_2^2</span> gives <span class="math inline">D_\varphi(x, y) = \frac{1}{2}\|x - y\|_2^2</span>, with <span class="math inline">\mu = 1</span> (strong convexity with respect to <span class="math inline">\|\cdot\|_2</span>). To apply <a href="#thm-md-lipschitz" class="quarto-xref">Theorem&nbsp;<span>10.1</span></a>, we need to compute the “radius” <span class="math inline">R = \sup_{x \in \Delta_n} D_\varphi(x, x^0)</span>:</p>
+<p><span class="math display">
+R = \sup_{x \in \Delta_n} \frac{1}{2}\Big\|x - \tfrac{1}{n}\mathbf{1}\Big\|_2^2 = \sup_{x \in \Delta_n} \frac{1}{2} \sum_{i=1}^{n} \Big(x_i - \frac{1}{n}\Big)^2.
+</span></p>
+<p>The supremum is attained at a vertex <span class="math inline">e_j</span>, giving <span class="math inline">R = \frac{1}{2}(1 - 1/n)^2 + \frac{n-1}{2n^2} \leq \frac{1}{2}</span>. By <a href="#thm-md-lipschitz" class="quarto-xref">Theorem&nbsp;<span>10.1</span></a>, the convergence rate is</p>
+<p><span class="math display">
+\mathrm{Err}_{\mathrm{best}} = O\!\Big(\frac{L_{f,2}}{\sqrt{K}}\Big),
+</span></p>
+<p>where <span class="math inline">L_{f,2}</span> bounds <span class="math inline">\|g\|_2</span> for <span class="math inline">g \in \partial f(x)</span>. The dependence on <span class="math inline">n</span> is <strong>hidden in <span class="math inline">L_{f,2}</span></strong>, which can be as large as <span class="math inline">\sqrt{n} \cdot L_{f,\infty}</span>.</p>
+</section>
+<section id="sec-simplex-md-kl" class="level3" data-number="10.11.2">
+<h3 data-number="10.11.2" class="anchored" data-anchor-id="sec-simplex-md-kl"><span class="header-section-number">10.11.2</span> Approach 2: Mirror Descent with KL</h3>
+<p>Now choose <span class="math inline">\varphi(x) = \sum x_i \log x_i</span> (negative entropy), so that <span class="math inline">D_\varphi = \mathrm{KL}</span>. By Pinsker’s lemma (<a href="#lem-pinsker" class="quarto-xref">Lemma&nbsp;<span>10.1</span></a>), <span class="math inline">\varphi</span> is <span class="math inline">1</span>-strongly convex with respect to <span class="math inline">\|\cdot\|_1</span>, and the dual norm is <span class="math inline">\|\cdot\|_\infty</span>. The radius is</p>
+<p><span class="math display">
+R = \sup_{x \in \Delta_n} \mathrm{KL}(x \,\|\, x^0) = \sup_{x \in \Delta_n} \sum_{i=1}^n x_i \log(nx_i) = \log n + \sup_{x \in \Delta_n} \underbrace{\sum_{i=1}^n x_i \log x_i}_{\leq\, 0} \leq \log n.
+</span></p>
+<p>By <a href="#thm-md-lipschitz" class="quarto-xref">Theorem&nbsp;<span>10.1</span></a> with <span class="math inline">\mu = 1</span> and <span class="math inline">R = \log n</span>, the convergence rate is</p>
+<p><span class="math display">
+\mathrm{Err}_{\mathrm{best}} = O\!\Big(\frac{L_{f,\infty} \cdot \sqrt{\log n}}{\sqrt{K}}\Big),
+</span></p>
+<p>where <span class="math inline">L_{f,\infty}</span> bounds <span class="math inline">\|g\|_\infty</span> for <span class="math inline">g \in \partial f(x)</span>.</p>
+<div id="fig-euclidean-vs-kl" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-euclidean-vs-kl-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch08-euclidean-vs-kl.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;10.6: Euclidean vs.&nbsp;KL geometry on the simplex: projected subgradient has \sqrt{n} dependence, while mirror descent with negative entropy achieves \sqrt{\log n}."><img src="figures/ch08-euclidean-vs-kl.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-euclidean-vs-kl-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.6: Euclidean vs.&nbsp;KL geometry on the simplex: projected subgradient has <span class="math inline">\sqrt{n}</span> dependence, while mirror descent with negative entropy achieves <span class="math inline">\sqrt{\log n}</span>.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-simplex-comparison" class="level3" data-number="10.11.3">
+<h3 data-number="10.11.3" class="anchored" data-anchor-id="sec-simplex-comparison"><span class="header-section-number">10.11.3</span> Comparison: Euclidean vs.&nbsp;KL</h3>
+<p>The two rates are</p>
+<p><span class="math display">
+\underbrace{O\!\Big(\frac{L_{f,2}}{\sqrt{K}}\Big)}_{\text{Euclidean}} \quad \text{vs.} \quad \underbrace{O\!\Big(\frac{L_{f,\infty} \sqrt{\log n}}{\sqrt{K}}\Big)}_{\text{KL}}.
+</span></p>
+<p>To compare, we use the norm equivalence <span class="math inline">\|g\|_\infty \leq \|g\|_2 \leq \sqrt{n} \cdot \|g\|_\infty</span>, which gives</p>
+<p><span class="math display">
+\frac{1}{\sqrt{n}} \leq \frac{L_{f,\infty}}{L_{f,2}} \leq 1.
+</span></p>
+<p>In the worst case (<span class="math inline">L_{f,\infty} \approx L_{f,2}</span>), the KL rate has an extra <span class="math inline">\sqrt{\log n}</span> factor but a much smaller radius. In the best case (<span class="math inline">L_{f,2} \approx \sqrt{n} \cdot L_{f,\infty}</span>), the KL rate improves on the Euclidean rate by a factor of <span class="math inline">\sqrt{n/\log n}</span>.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Dimension Dependence
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The KL version has <strong>better dependence on the dimension</strong>: <span class="math inline">\sqrt{\log n}</span> vs.&nbsp;<span class="math inline">\sqrt{n}</span>—an <strong>exponential improvement</strong>. This is the central message of mirror descent: by choosing <span class="math inline">\varphi</span> to match the geometry of the constraint set, we can dramatically reduce the effective dimension of the problem. For high-dimensional problems on the simplex (e.g., online learning with <span class="math inline">n</span> experts), this improvement is decisive.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-improved-rates" class="level2" data-number="10.12">
+<h2 data-number="10.12" class="anchored" data-anchor-id="sec-improved-rates"><span class="header-section-number">10.12</span> Improved Convergence Rates (Smooth Case)</h2>
+<p>The <span class="math inline">O(1/\sqrt{K})</span> rate from <a href="#thm-md-lipschitz" class="quarto-xref">Theorem&nbsp;<span>10.1</span></a> matches the optimal rate for Lipschitz convex optimization. When <span class="math inline">f</span> is additionally <strong>smooth</strong>, we can obtain faster rates by exploiting the quadratic upper bound, just as we did for gradient descent. The key challenge is that smoothness and strong convexity must now be stated relative to the Bregman divergence rather than the Euclidean distance.</p>
+<p><strong>Assumptions.</strong> We work under three conditions:</p>
+<p><strong>(B1) Strong convexity relative to <span class="math inline">D_\varphi</span>.</strong> The function <span class="math inline">f</span> is differentiable and <span class="math inline">\mu</span>-strongly convex with respect to the Bregman divergence:</p>
+<p><span class="math display">
+f(y) \geq f(x) + \langle \nabla f(x), y - x \rangle + \mu \cdot D_\varphi(y, x) \quad \forall\, x, y \in \mathcal{C}.
+</span></p>
+<p>When <span class="math inline">\mu = 0</span>, this reduces to ordinary convexity.</p>
+<p><strong>(B2) Smoothness in the generalized sense.</strong> The gradient <span class="math inline">\nabla f</span> is <span class="math inline">L</span>-Lipschitz with respect to the primal/dual norm pair:</p>
+<p><span class="math display">
+\|\nabla f(x) - \nabla f(y)\|_* \leq L \cdot \|x - y\| \quad \forall\, x, y \in \mathcal{C}.
+</span></p>
+<p><strong>(B3) Strong convexity of <span class="math inline">\varphi</span>.</strong> The mirror map <span class="math inline">\varphi</span> is <span class="math inline">\sigma</span>-strongly convex with respect to the <strong>same norm</strong> <span class="math inline">\|\cdot\|</span> used in <strong>(B2)</strong>:</p>
+<p><span class="math display">
+D_\varphi(x, y) \geq \frac{\sigma}{2}\|x - y\|^2 \quad \forall\, x, y \in \mathcal{C}.
+</span></p>
+<p>Crucially, <span class="math inline">\|\cdot\|</span> need not be the Euclidean norm. The only requirement is that <strong>(B2)</strong> and <strong>(B3)</strong> use a <strong>matched primal/dual norm pair</strong>: <span class="math inline">\varphi</span> is strongly convex in <span class="math inline">\|\cdot\|</span>, and <span class="math inline">\nabla f</span> is Lipschitz in the dual norm <span class="math inline">\|\cdot\|_*</span>. For the Euclidean choice <span class="math inline">\varphi = \frac{1}{2}\|x\|_2^2</span>, we have <span class="math inline">\|\cdot\| = \|\cdot\|_* = \|\cdot\|_2</span> and <span class="math inline">\sigma = 1</span>. For the negative entropy <span class="math inline">\varphi(x) = \sum x_i \log x_i</span> on the simplex, Pinsker’s lemma (<a href="#lem-pinsker" class="quarto-xref">Lemma&nbsp;<span>10.1</span></a>) gives <span class="math inline">\sigma = 1</span> with <span class="math inline">\|\cdot\| = \|\cdot\|_1</span> and <span class="math inline">\|\cdot\|_* = \|\cdot\|_\infty</span>.</p>
+<p>Recall that the convergence proofs for (proximal) gradient descent in the smooth setting required two ingredients: a <strong>descent lemma</strong> and a <strong>monotonicity/convexity</strong> bound. Since we no longer have Euclidean geometry, we must rederive both in the Bregman setting.</p>
+<div id="lem-smooth-descent" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 10.4 (Smoothness Lemma (Generalized))</strong></span> When <span class="math inline">f</span> is <span class="math inline">L</span>-smooth in the sense that</p>
+<p><span class="math display">
+\|\nabla f(x) - \nabla f(y)\|_* \leq L \cdot \|x - y\|,
+</span></p>
+<p>we have</p>
+<p><span class="math display">
+f(y) \leq f(x) + \langle \nabla f(x), y - x \rangle + \frac{L}{2}\|x - y\|^2.
+</span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>By the fundamental theorem of calculus,</p>
+<p><span class="math display">
+f(y) - f(x) - \langle \nabla f(x), y - x \rangle = \int_0^1 \langle \nabla f(x + t(y-x)) - \nabla f(x),\; y - x \rangle\, dt.
+</span></p>
+<p>Applying Hölder’s inequality (pairing <span class="math inline">\|\cdot\|</span> and <span class="math inline">\|\cdot\|_*</span>) and then the Lipschitz condition <strong>(B2)</strong>,</p>
+<p><span class="math display">
+\begin{aligned}
+\big|f(y) - f(x) - \langle \nabla f(x), y - x \rangle\big| &amp;\leq \|y - x\| \cdot \int_0^1 \big\|\nabla f(x + t(y-x)) - \nabla f(x)\big\|_*\, dt \\
+&amp;\leq L\|y - x\|^2 \cdot \int_0^1 t\, dt = \frac{L}{2}\|y - x\|^2.
+\end{aligned}
+</span></p>
+<p>This gives the desired quadratic upper bound, completing the proof. <span class="math inline">\blacksquare</span></p>
+</div>
+<p><strong>Mirror descent as majorization-minimization.</strong> The mirror descent update in the smooth setting is</p>
+<p><span class="math display">
+x^+ = \operatorname*{argmin}_{y \in \mathcal{C}} \Big\{ \langle \nabla f(x), y - x \rangle + \frac{1}{\alpha} D_\varphi(y, x) \Big\}.
+</span></p>
+<p>A natural question is: when does this step actually minimize an <strong>upper bound</strong> of <span class="math inline">f</span>? By assumption <strong>(B3)</strong>, <span class="math inline">D_\varphi(y, x) \geq \frac{\sigma}{2}\|y - x\|^2</span>. Combining with <a href="#lem-smooth-descent" class="quarto-xref">Lemma&nbsp;<span>10.4</span></a>, if <span class="math inline">\alpha \leq \sigma/L</span>, then</p>
+<p><span class="math display">
+\frac{L}{2}\|y - x\|^2 \leq \frac{L}{\sigma} D_\varphi(y, x) \leq \frac{1}{\alpha} D_\varphi(y, x).
+</span></p>
+<p>This yields the following key observation:</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Majorization Property
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>When <span class="math inline">f</span> is <span class="math inline">L</span>-smooth (in the sense of <strong>(B2)</strong>) and the step size satisfies <span class="math inline">\alpha \leq \sigma/L</span>, we have the upper bound</p>
+<p><span class="math display">
+f(y) \leq \underbrace{f(x) + \langle \nabla f(x), y - x \rangle + \frac{1}{\alpha} D_\varphi(y, x)}_{\widehat{f}_x(y)} \quad \forall\, y \in \mathcal{C}.
+</span></p>
+<p>Thus mirror descent minimizes a <strong>majorizer</strong> <span class="math inline">\widehat{f}_x</span> of <span class="math inline">f</span>, ensuring <span class="math inline">f(x^+) \leq \widehat{f}_x(x^+) \leq \widehat{f}_x(x) = f(x)</span>. This is the Bregman analogue of the majorization-minimization interpretation of gradient descent.</p>
+</div>
+</div>
+<section id="sec-descent-lemma-md" class="level3" data-number="10.12.1">
+<h3 data-number="10.12.1" class="anchored" data-anchor-id="sec-descent-lemma-md"><span class="header-section-number">10.12.1</span> Descent Lemma for MD</h3>
+<p>The following lemma is the Bregman analogue of the descent lemma from gradient descent. The proof combines the optimality of the mirror descent step with the three-point identity (<a href="#eq-three-point-bregman" class="quarto-xref"><span>10.3</span></a>).</p>
+<div id="lem-descent-md" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 10.5 (Descent Lemma (Mirror Descent))</strong></span> Let <span class="math inline">x^+ = \operatorname*{argmin}_{y \in \mathcal{C}} \widehat{f}_x(y)</span> with step size <span class="math inline">\alpha = \sigma/L</span>. Then:</p>
+<p><strong>(a)</strong> (Sufficient decrease)</p>
+<p><span class="math display">
+f(x^+) \leq f(x) - \frac{1}{\alpha} D_\varphi(x, x^+) \leq f(x) - \frac{\sigma}{2\alpha}\|x^+ - x\|^2.
+</span></p>
+<p>The first inequality is the natural Bregman bound, obtained from the optimality of <span class="math inline">x^+</span> and the three-point lemma. The second follows from the strong convexity of <span class="math inline">\varphi</span> (assumption <strong>(B3)</strong>: <span class="math inline">D_\varphi(x, x^+) \geq \frac{\sigma}{2}\|x - x^+\|^2</span>). In the Euclidean case (<span class="math inline">\varphi = \frac{1}{2}\|\cdot\|_2^2</span>, <span class="math inline">\sigma = 1</span>), the two inequalities coincide and reduce to the standard descent lemma <span class="math inline">f(x^+) \leq f(x) - \frac{1}{2\alpha}\|x^+ - x\|_2^2</span>.</p>
+<p><strong>(b)</strong> (Progress toward optimum)</p>
+<p><span class="math display">
+f(x^+) - f(x^*) \leq \frac{1}{\alpha}\big(D_\varphi(x^*, x) - D_\varphi(x^*, x^+)\big) - \mu \cdot D_\varphi(x^*, x).
+</span></p>
+<p>The first term is a telescoping Bregman divergence that controls the cumulative progress over multiple iterations. The second term <span class="math inline">-\mu D_\varphi(x^*, x)</span> provides additional contraction in the strongly convex case (<span class="math inline">\mu &gt; 0</span>); when <span class="math inline">\mu = 0</span> (plain convexity), it vanishes and the bound reduces to a pure telescoping sum. Comparing with the Euclidean version (<a href="05-gradient-descent.html#lem-descent-sc" class="quarto-xref">Lemma&nbsp;<span>6.5</span></a>), every <span class="math inline">\frac{1}{2}\|x - y\|_2^2</span> is replaced by <span class="math inline">D_\varphi(x, y)</span>.</p>
+</div>
+<p>Compare with the Euclidean counterparts from the gradient descent chapter:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">GD (<a href="05-gradient-descent.html#lem-descent" class="quarto-xref">Lemma&nbsp;<span>6.2</span></a>)</th>
+<th style="text-align: left;">Mirror Descent (<a href="#lem-descent-md" class="quarto-xref">Lemma&nbsp;<span>10.5</span></a>)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>(a)</strong> Sufficient decrease</td>
+<td style="text-align: left;"><span class="math inline">f(x^+) \leq f(x) - \frac{1}{2\alpha}\|x^+ - x\|_2^2</span></td>
+<td style="text-align: left;"><span class="math inline">f(x^+) \leq f(x) - \frac{1}{\alpha}D_\varphi(x, x^+)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>(b)</strong> Progress to <span class="math inline">x^*</span></td>
+<td style="text-align: left;"><span class="math inline">f(x^+) - f^* \leq \frac{1}{2\alpha}\big(\|x - x^*\|_2^2 - \|x^+ - x^*\|_2^2\big) - \frac{\mu}{2}\|x - x^*\|_2^2</span></td>
+<td style="text-align: left;"><span class="math inline">f(x^+) - f^* \leq \frac{1}{\alpha}\big(D_\varphi(x^*, x) - D_\varphi(x^*, x^+)\big) - \mu D_\varphi(x^*, x)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The structure is identical: part <strong>(a)</strong> guarantees monotone decrease, part <strong>(b)</strong> provides a telescoping bound. The only change is the systematic replacement of <span class="math inline">\frac{1}{2}\|x - y\|_2^2</span> by <span class="math inline">D_\varphi(x, y)</span>. In part <strong>(a)</strong>, the squared norm bound is a further consequence of applying the strong convexity of <span class="math inline">\varphi</span>.</p>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>The proof proceeds by first deriving a general inequality from the optimality of <span class="math inline">x^+</span> and the three-point lemma, then specializing to obtain parts <strong>(a)</strong> and <strong>(b)</strong>.</p>
+<p><strong>Step 1 (Optimality condition).</strong> Since <span class="math inline">x^+</span> minimizes <span class="math inline">\widehat{f}_x</span> over <span class="math inline">\mathcal{C}</span>, the first-order optimality condition gives</p>
+<p><span id="eq-smooth-optimality"><span class="math display">
+\langle \alpha \nabla f(x) + \nabla \varphi(x^+) - \nabla \varphi(x),\; \bar{x} - x^+ \rangle \geq 0 \quad \forall\, \bar{x} \in \mathcal{C}.
+\tag{10.10}</span></span></p>
+<p><strong>Step 2 (Three-point identity).</strong> Applying the three-point lemma (<a href="#eq-three-point-bregman" class="quarto-xref"><span>10.3</span></a>) with <span class="math inline">(x, y, z) \to (\bar{x}, x^+, x)</span>,</p>
+<p><span id="eq-smooth-three-point"><span class="math display">
+\langle \nabla \varphi(x) - \nabla \varphi(x^+),\; \bar{x} - x^+ \rangle = D_\varphi(\bar{x}, x^+) + D_\varphi(x^+, x) - D_\varphi(\bar{x}, x).
+\tag{10.11}</span></span></p>
+<p><strong>Step 3 (Master inequality).</strong> Combining (<a href="#eq-smooth-optimality" class="quarto-xref"><span>10.10</span></a>) and (<a href="#eq-smooth-three-point" class="quarto-xref"><span>10.11</span></a>) yields the <strong>master inequality</strong> that holds for all <span class="math inline">\bar{x} \in \mathcal{C}</span>:</p>
+<p><span class="math display">
+\alpha \langle \nabla f(x),\; x^+ - \bar{x} \rangle \leq D_\varphi(\bar{x}, x) - D_\varphi(\bar{x}, x^+) - D_\varphi(x^+, x).
+</span></p>
+<p>Two specializations of <span class="math inline">\bar{x}</span> will give us the two parts of the lemma.</p>
+<p><strong>Setting <span class="math inline">\bar{x} = x^*</span></strong> (the minimizer):</p>
+<p><span id="eq-smooth-star"><span class="math display">
+\alpha \langle \nabla f(x),\; x^+ - x^* \rangle \leq D_\varphi(x^*, x) - D_\varphi(x^*, x^+) - D_\varphi(x^+, x).
+\tag{10.12}</span></span></p>
+<p><strong>Setting <span class="math inline">\bar{x} = x</span></strong> (the current iterate):</p>
+<p><span id="eq-smooth-self"><span class="math display">
+\alpha \langle \nabla f(x),\; x^+ - x \rangle \leq -D_\varphi(x, x^+) - D_\varphi(x^+, x).
+\tag{10.13}</span></span></p>
+<p>Note that Steps 1–3 use only the optimality of <span class="math inline">x^+</span> and the three-point lemma—no smoothness or convexity of <span class="math inline">f</span> is required yet.</p>
+<hr>
+<p><strong>Proof of part (a): Nonconvex + Smooth.</strong></p>
+<p>By the majorization property (since <span class="math inline">\alpha \leq \sigma/L</span>), we have</p>
+<p><span id="eq-smooth-upper"><span class="math display">
+f(x^+) \leq \widehat{f}_x(x^+) = f(x) + \langle \nabla f(x), x^+ - x \rangle + \frac{1}{\alpha} D_\varphi(x^+, x).
+\tag{10.14}</span></span></p>
+<p>Substituting the bound from (<a href="#eq-smooth-self" class="quarto-xref"><span>10.13</span></a>) on <span class="math inline">\langle \nabla f(x), x^+ - x \rangle</span> into (<a href="#eq-smooth-upper" class="quarto-xref"><span>10.14</span></a>),</p>
+<p><span id="eq-smooth-descent-a"><span class="math display">
+f(x^+) \leq f(x) - \frac{1}{\alpha} D_\varphi(x, x^+) \leq f(x) - \frac{\sigma}{2\alpha}\|x^+ - x\|^2,
+\tag{10.15}</span></span></p>
+<p>where the last step uses <span class="math inline">D_\varphi(x, x^+) \geq \frac{\sigma}{2}\|x - x^+\|^2</span>. This proves part <strong>(a)</strong>.</p>
+<hr>
+<p><strong>Proof of part (b): (Strongly) Convex + Smooth.</strong></p>
+<p>By the <span class="math inline">\mu</span>-strong convexity of <span class="math inline">f</span> (assumption <strong>(B1)</strong>),</p>
+<p><span class="math display">
+f(x^*) \geq f(x) + \langle \nabla f(x), x^* - x \rangle + \mu \cdot D_\varphi(x^*, x).
+</span></p>
+<p>Rearranging gives an upper bound on <span class="math inline">f(x)</span>:</p>
+<p><span id="eq-smooth-convex"><span class="math display">
+f(x) \leq f(x^*) + \langle \nabla f(x), x - x^* \rangle - \mu \cdot D_\varphi(x^*, x).
+\tag{10.16}</span></span></p>
+<p>Substituting (<a href="#eq-smooth-convex" class="quarto-xref"><span>10.16</span></a>) into the majorization bound (<a href="#eq-smooth-upper" class="quarto-xref"><span>10.14</span></a>),</p>
+<p><span class="math display">
+f(x^+) \leq f(x^*) + \langle \nabla f(x), x^+ - x^* \rangle - \mu \cdot D_\varphi(x^*, x) + \frac{1}{\alpha} D_\varphi(x^+, x).
+</span></p>
+<p>Now applying (<a href="#eq-smooth-star" class="quarto-xref"><span>10.12</span></a>) to bound <span class="math inline">\alpha\langle \nabla f(x), x^+ - x^* \rangle</span>, the <span class="math inline">D_\varphi(x^+, x)</span> terms cancel (since <span class="math inline">\alpha = \sigma/L</span>), yielding</p>
+<p><span class="math display">
+f(x^+) - f(x^*) \leq \frac{1}{\alpha}\big(D_\varphi(x^*, x) - D_\varphi(x^*, x^+)\big) - \mu \cdot D_\varphi(x^*, x).
+</span></p>
+<p>This proves part <strong>(b)</strong> and completes the proof of <a href="#lem-descent-md" class="quarto-xref">Lemma&nbsp;<span>10.5</span></a>. <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+<section id="sec-convergence-smooth" class="level3" data-number="10.12.2">
+<h3 data-number="10.12.2" class="anchored" data-anchor-id="sec-convergence-smooth"><span class="header-section-number">10.12.2</span> Convergence Analysis (Smooth Case)</h3>
+<p>With the descent lemma in hand, we can now derive convergence rates for all three standard settings. The structure exactly parallels the Euclidean analysis—the only difference is that Bregman divergences replace squared norms.</p>
+<p><strong>Case 1: Nonconvex + Smooth.</strong> Part <strong>(a)</strong> of <a href="#lem-descent-md" class="quarto-xref">Lemma&nbsp;<span>10.5</span></a> gives sufficient decrease at each step. Telescoping yields a bound on the average squared step size:</p>
+<p><span id="eq-md-nonconvex-rate"><span class="math display">
+\frac{1}{K}\sum_{k=0}^{K-1} \|x^{k+1} - x^k\|^2 \leq \frac{2\alpha\big(f(x^0) - f^*\big)}{\sigma \cdot K}.
+\tag{10.17}</span></span></p>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>By <a href="#lem-descent-md" class="quarto-xref">Lemma&nbsp;<span>10.5</span></a>(a), <span class="math inline">f(x^{k+1}) \leq f(x^k) - \frac{\sigma}{2\alpha}\|x^k - x^{k+1}\|^2</span>. Rearranging and summing over <span class="math inline">k = 0, \ldots, K-1</span>,</p>
+<p><span class="math display">
+\frac{\sigma}{2\alpha}\sum_{k=0}^{K-1}\|x^{k+1} - x^k\|^2 \leq f(x^0) - f(x^K) \leq f(x^0) - f^*.
+</span></p>
+<p>Dividing both sides by <span class="math inline">K</span> yields (<a href="#eq-md-nonconvex-rate" class="quarto-xref"><span>10.17</span></a>). Hence we conclude the proof. <span class="math inline">\blacksquare</span></p>
+</div>
+<hr>
+<p><strong>Case 2: Convex + Smooth (<span class="math inline">\mu = 0</span>).</strong> Part <strong>(b)</strong> of <a href="#lem-descent-md" class="quarto-xref">Lemma&nbsp;<span>10.5</span></a> with <span class="math inline">\mu = 0</span> provides a telescoping bound. Combined with the monotone decrease from part <strong>(a)</strong>, we obtain an <span class="math inline">O(1/K)</span> rate:</p>
+<p><span class="math display">
+f(x^K) - f(x^*) \leq \frac{D_\varphi(x^*, x^0)}{\alpha K}.
+</span></p>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>By <a href="#lem-descent-md" class="quarto-xref">Lemma&nbsp;<span>10.5</span></a>(b) with <span class="math inline">\mu = 0</span>,</p>
+<p><span class="math display">
+f(x^{k+1}) - f(x^*) \leq \frac{1}{\alpha}\big(D_\varphi(x^*, x^k) - D_\varphi(x^*, x^{k+1})\big).
+</span></p>
+<p>Summing over <span class="math inline">k = 0, \ldots, K-1</span> and telescoping,</p>
+<p><span class="math display">
+\sum_{k=0}^{K-1}\big(f(x^{k+1}) - f(x^*)\big) \leq \frac{1}{\alpha}\big(D_\varphi(x^*, x^0) - D_\varphi(x^*, x^K)\big) \leq \frac{1}{\alpha} D_\varphi(x^*, x^0).
+</span></p>
+<p>Since the descent lemma part <strong>(a)</strong> guarantees <span class="math inline">f(x^0) \geq f(x^1) \geq \cdots \geq f(x^K)</span>, the left-hand side is at least <span class="math inline">K(f(x^K) - f^*)</span>, which gives the <span class="math inline">O(1/K)</span> rate. <span class="math inline">\blacksquare</span></p>
+</div>
+<hr>
+<p><strong>Case 3: Strongly Convex + Smooth (<span class="math inline">\mu &gt; 0</span>).</strong> The extra <span class="math inline">\mu D_\varphi(x^*, x^k)</span> term in <a href="#lem-descent-md" class="quarto-xref">Lemma&nbsp;<span>10.5</span></a>(b) drives <strong>linear convergence</strong> of the Bregman divergence to the optimum:</p>
+<p><span id="eq-strongly-convex-smooth-rate"><span class="math display">
+D_\varphi(x^*, x^K) \leq \Big(1 - \frac{\mu}{\kappa}\Big)^K \cdot D_\varphi(x^*, x^0), \qquad \kappa = \frac{L}{\mu\sigma}.
+\tag{10.18}</span></span></p>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>By <a href="#lem-descent-md" class="quarto-xref">Lemma&nbsp;<span>10.5</span></a>(b), since <span class="math inline">f(x^{k+1}) \geq f(x^*)</span>, we can drop the left-hand side to obtain</p>
+<p><span class="math display">
+0 \leq \frac{1}{\alpha}\big(D_\varphi(x^*, x^k) - D_\varphi(x^*, x^{k+1})\big) - \mu \cdot D_\varphi(x^*, x^k).
+</span></p>
+<p>Rearranging,</p>
+<p><span class="math display">
+D_\varphi(x^*, x^{k+1}) \leq (1 - \alpha\mu) \cdot D_\varphi(x^*, x^k).
+</span></p>
+<p>With <span class="math inline">\alpha = \sigma/L</span>, the contraction factor is <span class="math inline">1 - \mu\sigma/L = 1 - 1/\kappa</span>. Iterating this recurrence <span class="math inline">K</span> times yields (<a href="#eq-strongly-convex-smooth-rate" class="quarto-xref"><span>10.18</span></a>). Hence we conclude the proof. <span class="math inline">\blacksquare</span></p>
+</div>
+<p><strong>Comparison with Euclidean GD (<a href="05-gradient-descent.html#thm-gd-convergence-summary" class="quarto-xref">Theorem&nbsp;<span>6.6</span></a>).</strong> The following table places the mirror descent rates side-by-side with their Euclidean counterparts. The rates are structurally identical—every <span class="math inline">\frac{1}{2}\|x - y\|_2^2</span> is replaced by <span class="math inline">D_\varphi(x, y)</span>:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Setting</th>
+<th style="text-align: left;">GD (Euclidean)</th>
+<th style="text-align: left;">MD (Bregman)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Nonconvex + smooth</td>
+<td style="text-align: left;"><span class="math inline">\frac{1}{K}\sum\|\nabla f(x^k)\|_2^2 \leq \frac{2L(f(x^0) - f^*)}{K}</span></td>
+<td style="text-align: left;"><span class="math inline">\frac{1}{K}\sum\|x^{k+1} - x^k\|^2 \leq \frac{2\alpha(f(x^0) - f^*)}{\sigma K}</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Convex + smooth</td>
+<td style="text-align: left;"><span class="math inline">f(x^K) - f^* \leq \frac{L\|x^0 - x^*\|_2^2}{2K}</span></td>
+<td style="text-align: left;"><span class="math inline">f(x^K) - f^* \leq \frac{D_\varphi(x^*, x^0)}{\alpha K}</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Strongly convex + smooth</td>
+<td style="text-align: left;"><span class="math inline">\|x^K - x^*\|_2^2 \leq \big(\frac{\kappa-1}{\kappa+1}\big)^{2K}\|x^0 - x^*\|_2^2</span></td>
+<td style="text-align: left;"><span class="math inline">D_\varphi(x^*, x^K) \leq (1 - 1/\kappa)^K D_\varphi(x^*, x^0)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The GD condition number is <span class="math inline">\kappa_{\mathrm{GD}} = L/\mu</span> (both w.r.t. <span class="math inline">\|\cdot\|_2</span>), while the MD condition number is <span class="math inline">\kappa_{\mathrm{MD}} = L/(\mu\sigma)</span> (w.r.t. the matched primal/dual norm pair). The advantage of mirror descent lies entirely in how well the geometry of <span class="math inline">\varphi</span> aligns with the problem, which determines whether <span class="math inline">\kappa_{\mathrm{MD}} \ll \kappa_{\mathrm{GD}}</span>.</p>
+<div id="fig-md-convergence-summary" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-md-convergence-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch08-md-convergence-summary.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Figure&nbsp;10.7: Mirror descent convergence rate summary: matching GD rates across all four settings (Lipschitz, nonconvex+smooth, convex+smooth, strongly convex+smooth)."><img src="figures/ch08-md-convergence-summary.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-md-convergence-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.7: Mirror descent convergence rate summary: matching GD rates across all four settings (Lipschitz, nonconvex+smooth, convex+smooth, strongly convex+smooth).
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="sec-proximal-md" class="level2" data-number="10.13">
+<h2 data-number="10.13" class="anchored" data-anchor-id="sec-proximal-md"><span class="header-section-number">10.13</span> Proximal Mirror Descent</h2>
+<p>Just as proximal gradient descent extended gradient descent to composite objectives <span class="math inline">F = f + h</span>, we can extend mirror descent to handle a nonsmooth regularizer in the Bregman setting.</p>
+<section id="sec-proximal-md-algorithm" class="level3" data-number="10.13.1">
+<h3 data-number="10.13.1" class="anchored" data-anchor-id="sec-proximal-md-algorithm"><span class="header-section-number">10.13.1</span> The Algorithm</h3>
+<p>Consider the composite minimization problem</p>
+<p><span class="math display">
+\min_{x \in \mathcal{C}} \; F(x) = f(x) + h(x),
+</span></p>
+<p>where <span class="math inline">f</span> is smooth and <span class="math inline">h</span> is convex but possibly nonsmooth (e.g., an <span class="math inline">\ell_1</span>-penalty or an indicator function). The <strong>proximal mirror descent</strong> update is</p>
+<p><span id="eq-prox-md-update"><span class="math display">
+x^{k+1} = \operatorname*{argmin}_{y \in \mathcal{C}} \Big\{ \langle \nabla f(x^k), y - x^k \rangle + h(y) + \frac{1}{\alpha} D_\varphi(y, x^k) \Big\}.
+\tag{10.19}</span></span></p>
+<p>This replaces the linearization <span class="math inline">f(x^k) + \langle \nabla f(x^k), y - x^k \rangle + \frac{1}{\alpha}D_\varphi(y, x^k)</span> of the smooth part with a Bregman proximal term, while keeping <span class="math inline">h(y)</span> intact. The method is practical when the <strong>Bregman proximal map</strong></p>
+<p><span class="math display">
+\operatorname{prox}_{\alpha h}^{\varphi}(z) = \operatorname*{argmin}_{y} \Big\{ h(y) + \frac{1}{\alpha} D_\varphi(y, z) \Big\}
+</span></p>
+<p>admits a closed-form solution or can be computed efficiently.</p>
+</section>
+<section id="sec-prox-md-fb" class="level3" data-number="10.13.2">
+<h3 data-number="10.13.2" class="anchored" data-anchor-id="sec-prox-md-fb"><span class="header-section-number">10.13.2</span> Forward-Backward Splitting Interpretation</h3>
+<p>The optimality condition of (<a href="#eq-prox-md-update" class="quarto-xref"><span>10.19</span></a>) is</p>
+<p><span class="math display">
+0 \in \alpha \big(\nabla f(x^k) + \partial h(x^{k+1})\big) + \nabla \varphi(x^{k+1}) - \nabla \varphi(x^k).
+</span></p>
+<p>This couples the mirror map <span class="math inline">\nabla\varphi</span> with the subdifferential <span class="math inline">\partial h</span>. To <strong>decouple</strong> them, define the intermediate point</p>
+<p><span id="eq-fb-mirror-map"><span class="math display">
+P_\alpha(x^k) = (\nabla \varphi)^{-1}\big(\nabla \varphi(x^k) - \alpha \nabla f(x^k)\big),
+\tag{10.20}</span></span></p>
+<p>which performs the gradient step in the dual space (the <strong>forward</strong> step). The optimality condition then simplifies to</p>
+<p><span id="eq-fb-backward-opt"><span class="math display">
+0 \in \alpha \cdot \partial h(x^{k+1}) + \nabla \varphi(x^{k+1}) - \nabla \varphi\big(P_\alpha(x^k)\big),
+\tag{10.21}</span></span></p>
+<p>which is the first-order condition of the <strong>backward</strong> (proximal) step:</p>
+<p><span class="math display">
+x^{k+1} = \operatorname*{argmin}_{y} \Big\{ h(y) + \frac{1}{\alpha} D_\varphi\big(y,\, P_\alpha(x^k)\big) \Big\}.
+</span></p>
+<p>Thus, proximal mirror descent decomposes into:</p>
+<p><strong>(a) Forward step</strong> (mirror gradient): <span class="math inline">P_\alpha(x^k) = \operatorname*{argmin}_{z} \big\{ \langle \nabla f(x^k), z \rangle + \frac{1}{\alpha} D_\varphi(z, x^k) \big\}</span>.</p>
+<p><strong>(b) Backward step</strong> (Bregman proximal): <span class="math inline">x^{k+1} = \operatorname{prox}_{\alpha h}^{\varphi}\big(P_\alpha(x^k)\big)</span>.</p>
+<p>This is the <strong>Bregman forward-backward splitting</strong>—the non-Euclidean generalization of the proximal gradient method from the previous chapter.</p>
+</section>
+<section id="sec-prox-md-convergence" class="level3" data-number="10.13.3">
+<h3 data-number="10.13.3" class="anchored" data-anchor-id="sec-prox-md-convergence"><span class="header-section-number">10.13.3</span> Convergence Rates</h3>
+<p>The convergence analysis of proximal mirror descent parallels that of mirror descent in <a href="#sec-convergence-smooth" class="quarto-xref"><span>Section 10.12.2</span></a>, with the composite structure handled exactly as in the Euclidean proximal gradient case. We state the results under the same assumptions <strong>(B1)</strong>–<strong>(B3)</strong> from <a href="#sec-improved-rates" class="quarto-xref"><span>Section 10.12</span></a>, with <span class="math inline">f</span> being the smooth component and <span class="math inline">h</span> the nonsmooth component.</p>
+<div id="lem-descent-prox-md" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 10.6 (Descent Lemma (Proximal Mirror Descent))</strong></span> Let <span class="math inline">x^{k+1}</span> be the proximal mirror descent iterate (<a href="#eq-prox-md-update" class="quarto-xref"><span>10.19</span></a>) with step size <span class="math inline">\alpha \leq \sigma/L</span>. Then:</p>
+<p><strong>(a)</strong> <span class="math inline">F(x^{k+1}) \leq F(x^k) - \frac{\sigma}{2\alpha}\|x^{k+1} - x^k\|^2</span>.</p>
+<p><strong>(b)</strong> <span class="math inline">F(x^{k+1}) - F(x^*) \leq \frac{1}{\alpha}\big(D_\varphi(x^*, x^k) - D_\varphi(x^*, x^{k+1})\big) - \mu \cdot D_\varphi(x^*, x^k)</span>.</p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>The proof follows the same structure as <a href="#lem-descent-md" class="quarto-xref">Lemma&nbsp;<span>10.5</span></a>. Since <span class="math inline">x^{k+1}</span> minimizes <span class="math inline">\langle \nabla f(x^k), y \rangle + h(y) + \frac{1}{\alpha}D_\varphi(y, x^k)</span> over <span class="math inline">\mathcal{C}</span>, the first-order optimality condition gives</p>
+<p><span class="math display">
+\langle \alpha \nabla f(x^k) + \nabla\varphi(x^{k+1}) - \nabla\varphi(x^k),\; \bar{x} - x^{k+1} \rangle + \alpha\big(h(x^{k+1}) - h(\bar{x})\big) \leq 0 \quad \forall\, \bar{x} \in \mathcal{C},
+</span></p>
+<p>where the <span class="math inline">h</span> terms arise because <span class="math inline">h</span> is not linearized. Applying the three-point lemma (<a href="#eq-three-point-bregman" class="quarto-xref"><span>10.3</span></a>) exactly as in Steps 2–3 of <a href="#lem-descent-md" class="quarto-xref">Lemma&nbsp;<span>10.5</span></a>, we obtain the master inequality</p>
+<p><span class="math display">
+\alpha\big(\langle \nabla f(x^k), x^{k+1} - \bar{x} \rangle + h(x^{k+1}) - h(\bar{x})\big) \leq D_\varphi(\bar{x}, x^k) - D_\varphi(\bar{x}, x^{k+1}) - D_\varphi(x^{k+1}, x^k).
+</span></p>
+<p><strong>Part (a).</strong> Setting <span class="math inline">\bar{x} = x^k</span> and using the majorization bound <span class="math inline">f(x^{k+1}) \leq f(x^k) + \langle \nabla f(x^k), x^{k+1} - x^k \rangle + \frac{1}{\alpha}D_\varphi(x^{k+1}, x^k)</span>,</p>
+<p><span class="math display">
+F(x^{k+1}) \leq F(x^k) - \frac{1}{\alpha}D_\varphi(x^k, x^{k+1}) \leq F(x^k) - \frac{\sigma}{2\alpha}\|x^{k+1} - x^k\|^2.
+</span></p>
+<p><strong>Part (b).</strong> Setting <span class="math inline">\bar{x} = x^*</span> and using <span class="math inline">\mu</span>-strong convexity of <span class="math inline">f</span>: <span class="math inline">f(x^k) \leq f(x^*) + \langle \nabla f(x^k), x^k - x^* \rangle - \mu D_\varphi(x^*, x^k)</span>, one obtains</p>
+<p><span class="math display">
+F(x^{k+1}) - F(x^*) \leq \frac{1}{\alpha}\big(D_\varphi(x^*, x^k) - D_\varphi(x^*, x^{k+1})\big) - \mu D_\varphi(x^*, x^k),
+</span></p>
+<p>exactly as in the proof of <a href="#lem-descent-md" class="quarto-xref">Lemma&nbsp;<span>10.5</span></a>(b). <span class="math inline">\blacksquare</span></p>
+</div>
+<p>With the descent lemma established, the convergence rates follow immediately by the same telescoping arguments as in <a href="#sec-convergence-smooth" class="quarto-xref"><span>Section 10.12.2</span></a>:</p>
+<div id="thm-prox-md-rates" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 10.3 (Convergence of Proximal Mirror Descent)</strong></span> Under assumptions <strong>(B1)</strong>–<strong>(B3)</strong> with step size <span class="math inline">\alpha = \sigma/L</span>:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Setting</th>
+<th style="text-align: left;">Rate</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Convex + smooth (<span class="math inline">\mu = 0</span>)</td>
+<td style="text-align: left;"><span class="math inline">F(x^K) - F^* \leq \dfrac{L \cdot D_\varphi(x^*, x^0)}{\sigma K} = O(1/K)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Strongly convex + smooth (<span class="math inline">\mu &gt; 0</span>)</td>
+<td style="text-align: left;"><span class="math inline">D_\varphi(x^*, x^K) \leq \Big(1 - \dfrac{\mu\sigma}{L}\Big)^K D_\varphi(x^*, x^0)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Comparison with Euclidean proximal gradient (<a href="07-proximal-gradient.html#lem-descent-prox" class="quarto-xref">Lemma&nbsp;<span>9.5</span></a>).</strong> Every result above is a direct generalization of its Euclidean counterpart:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Proximal GD</th>
+<th style="text-align: left;">Proximal MD</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Descent lemma (a)</td>
+<td style="text-align: left;"><span class="math inline">F(x^+) \leq F(x) - \frac{\alpha}{2}\|g_h(x)\|_2^2</span></td>
+<td style="text-align: left;"><span class="math inline">F(x^+) \leq F(x) - \frac{\sigma}{2\alpha}\|x^+ - x\|^2</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Convex rate</td>
+<td style="text-align: left;"><span class="math inline">F(x^K) - F^* \leq \frac{L\|x^0 - x^*\|_2^2}{2K}</span></td>
+<td style="text-align: left;"><span class="math inline">F(x^K) - F^* \leq \frac{L \cdot D_\varphi(x^*, x^0)}{\sigma K}</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Strongly convex rate</td>
+<td style="text-align: left;"><span class="math inline">(1 - \mu/L)^K \cdot \|x^0 - x^*\|_2^2</span></td>
+<td style="text-align: left;"><span class="math inline">(1 - \mu\sigma/L)^K \cdot D_\varphi(x^*, x^0)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The pattern is consistent: <span class="math inline">\frac{1}{2}\|x - y\|_2^2 \to D_\varphi(x, y)</span> and <span class="math inline">1/L \to \sigma/L</span>. The Bregman geometry affects convergence only through the constants <span class="math inline">R = D_\varphi(x^*, x^0)</span>, <span class="math inline">\sigma</span>, and <span class="math inline">L</span> (in the adapted norm)—precisely the quantities that improve when <span class="math inline">\varphi</span> matches the problem structure.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Reference
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>H. H. Bauschke, J. Bolte, and M. Teboulle, “A descent lemma beyond Lipschitz gradient continuity: first-order methods revisited and applications,” <em>Mathematics of Operations Research</em>, 2017. This paper develops the theory of Bregman proximal gradient methods and introduces the notion of <span class="math inline">L</span>-smoothness relative to a reference function.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="summary" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="summary">Summary</h2>
+<section id="logic-flow-of-this-chapter" class="level3" data-number="10.13.4">
+<h3 data-number="10.13.4" class="anchored" data-anchor-id="logic-flow-of-this-chapter"><span class="header-section-number">10.13.4</span> Logic Flow of This Chapter</h3>
+<p>This chapter challenges the implicit assumption that Euclidean geometry is always the right choice for optimization:</p>
+<ol type="1">
+<li><p><strong>Why isn’t Euclidean distance always best?</strong> Proximal gradient descent uses <span class="math inline">\|x - y\|_2^2</span> to stay close to the previous iterate. But on the probability simplex, KL divergence is far more natural—it respects the geometry of probability distributions and yields dimension-free convergence bounds. Similarly, when the Hessian has known structure, a weighted norm can eliminate the condition number entirely.</p></li>
+<li><p><strong>What replaces Euclidean distance?</strong> The <strong>Bregman divergence</strong> <span class="math inline">D_\varphi(x, y) = \varphi(x) - \varphi(y) - \langle \nabla\varphi(y), x - y \rangle</span>, generated by a strictly convex function <span class="math inline">\varphi</span>. It measures “distance” using the curvature of <span class="math inline">\varphi</span> rather than the flat Euclidean metric. Key properties: non-negative, convex in the first argument, but generally <strong>asymmetric</strong> and not convex in the second argument.</p></li>
+<li><p><strong>How does mirror descent work?</strong> Replace the Euclidean proximal step with a Bregman proximal step (<a href="#eq-md-update" class="quarto-xref"><span>10.1</span></a>). The algorithm admits a beautiful <strong>mirror map interpretation</strong> (<a href="#sec-alternative-md" class="quarto-xref"><span>Section 10.8</span></a>): the forward map <span class="math inline">\nabla\varphi</span> sends iterates to a dual space where the gradient step is linear, and the backward map <span class="math inline">(\nabla\varphi)^{-1}</span> plus Bregman projection returns to the primal space.</p></li>
+<li><p><strong>What do we gain?</strong> For optimization over the simplex <span class="math inline">\Delta_n</span>, choosing <span class="math inline">\varphi(x) = \sum_i x_i \log x_i</span> (negative entropy) gives convergence depending on <span class="math inline">O(\sqrt{\log n})</span> instead of <span class="math inline">O(\sqrt{n})</span>—an <strong>exponential improvement</strong> in the dimension dependence. The mechanism: Pinsker’s lemma ensures <span class="math inline">1</span>-strong convexity in <span class="math inline">\|\cdot\|_1</span>, and the dual norm <span class="math inline">\|\cdot\|_\infty</span> measures subgradient size, which is typically much smaller than <span class="math inline">\|\cdot\|_2</span>.</p></li>
+<li><p><strong>Does the smooth case also improve?</strong> Yes—a Bregman descent lemma (<a href="#lem-descent-md" class="quarto-xref">Lemma&nbsp;<span>10.5</span></a>) extends the analysis to smooth objectives with the same structure as the Euclidean case. Proximal mirror descent (<a href="#sec-proximal-md" class="quarto-xref"><span>Section 10.13</span></a>) handles composite problems <span class="math inline">F = f + h</span> via Bregman forward-backward splitting.</p></li>
+</ol>
+</section>
+<section id="convergence-rate-summary" class="level3" data-number="10.13.5">
+<h3 data-number="10.13.5" class="anchored" data-anchor-id="convergence-rate-summary"><span class="header-section-number">10.13.5</span> Convergence Rate Summary</h3>
+<p>The following table compares mirror descent rates with their Euclidean counterparts. The rates are identical in structure—the advantage lies in the constants.</p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Setting</th>
+<th style="text-align: left;">Mirror Descent Rate</th>
+<th style="text-align: left;">Euclidean Analogue</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Lipschitz</td>
+<td style="text-align: left;"><span class="math inline">O\!\Big(\dfrac{L\sqrt{R/\mu}}{\sqrt{K}}\Big)</span></td>
+<td style="text-align: left;"><span class="math inline">O\!\Big(\dfrac{L_2 \cdot \mathrm{diam}}{\sqrt{K}}\Big)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Convex + smooth</td>
+<td style="text-align: left;"><span class="math inline">O\!\Big(\dfrac{D_\varphi(x^*, x^0)}{\alpha K}\Big)</span></td>
+<td style="text-align: left;"><span class="math inline">O\!\Big(\dfrac{\|x^0 - x^*\|^2}{\alpha K}\Big)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Strongly convex + smooth</td>
+<td style="text-align: left;"><span class="math inline">(1 - \mu\sigma/L)^K \cdot D_\varphi(x^*, x^0)</span></td>
+<td style="text-align: left;"><span class="math inline">(1 - \mu_f/L_f)^K \cdot \|x^0 - x^*\|^2</span></td>
+</tr>
+</tbody>
+</table>
+<p>Here <span class="math inline">R = \sup_x D_\varphi(x, x^0)</span>, <span class="math inline">\mu</span> is the strong convexity parameter of <span class="math inline">\varphi</span>, <span class="math inline">\sigma</span> controls <span class="math inline">D_\varphi \geq \frac{\sigma}{2}\|\cdot\|^2</span>, and <span class="math inline">L</span> is the Lipschitz constant in the dual norm.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="key-takeaways" class="level3" data-number="10.13.6">
+<h3 data-number="10.13.6" class="anchored" data-anchor-id="key-takeaways"><span class="header-section-number">10.13.6</span> Key Takeaways</h3>
+<ul>
+<li><p><strong>Bregman divergence</strong> is the right abstraction for non-Euclidean first-order methods. It generalizes squared Euclidean distance while preserving the key algebraic identity (three-point lemma) needed for convergence proofs.</p></li>
+<li><p><strong>The mirror map</strong> <span class="math inline">\nabla\varphi</span> provides a principled bijection between primal and dual spaces. Gradient steps are linear in the dual space; the geometry of the constraint set is handled by the mirror map.</p></li>
+<li><p><strong>Matching geometry to structure</strong> is the central design principle. The choice of <span class="math inline">\varphi</span> affects convergence only through the constants <span class="math inline">R</span>, <span class="math inline">\mu</span>, <span class="math inline">\sigma</span>, and <span class="math inline">L</span>—by choosing <span class="math inline">\varphi</span> to align with the constraint set, all four can be improved simultaneously.</p></li>
+<li><p><strong>Online mirror descent</strong> extends naturally to adversarial settings, achieving <span class="math inline">O(\sqrt{T})</span> regret. With KL divergence on the simplex, this yields the <strong>multiplicative weights</strong> algorithm, a cornerstone of online learning and game theory.</p></li>
+<li><p><strong>Proximal mirror descent</strong> handles composite objectives <span class="math inline">F = f + h</span> via Bregman forward-backward splitting, achieving the same rates as the smooth case with <span class="math inline">F</span> replacing <span class="math inline">f</span>.</p></li>
+</ul>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Looking Ahead
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In the next chapter we study <strong>accelerated gradient methods</strong>, including Nesterov’s celebrated accelerated gradient descent. By introducing momentum—a carefully weighted combination of the current and previous iterates—these methods achieve faster convergence rates: <span class="math inline">O(1/K^2)</span> for convex smooth problems and <span class="math inline">O((1 - 1/\sqrt{\kappa})^K)</span> for strongly convex problems, improving upon the <span class="math inline">O(1/K)</span> and <span class="math inline">O((1 - 1/\kappa)^K)</span> rates of standard gradient descent.</p>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../lectures/07-proximal-gradient.html" class="pagination-link" aria-label="Proximal Gradient Methods">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Proximal Gradient Methods</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../lectures/09-accelerated-gradient.html" class="pagination-link" aria-label="Accelerated Gradient Methods">
+        <span class="nav-page-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Accelerated Gradient Methods</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<script>
+// Plotly Warmtone theming helpers — shared across all lectures
+// Reads CSS custom properties set by _warmtone.scss (light/dark aware)
+const plotlyConfig = {responsive: true, displayModeBar: false};
+const figFont = '"Source Serif 4", Georgia, "Times New Roman", serif';
+const figFontHeading = '"Crimson Pro", Georgia, serif';
+
+function css(v) {
+  return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+}
+
+function legendStyle() {
+  return {
+    font: {family: figFont, size: 13, color: css('--fig-text')},
+    bgcolor: css('--fig-bg') + 'dd',
+    bordercolor: css('--fig-grid'),
+    borderwidth: 1,
+  };
+}
+
+function themeLayout(extra) {
+  return Object.assign({
+    paper_bgcolor: css('--fig-bg'),
+    plot_bgcolor: css('--fig-plot-bg'),
+    font: {family: figFont, color: css('--fig-text'), size: 14},
+  }, extra || {});
+}
+
+function themeAxis(title, extra) {
+  return Object.assign({
+    title: {text: title, font: {family: figFont, size: 14}},
+    gridcolor: css('--fig-grid'),
+    zerolinecolor: css('--fig-grid'),
+    linecolor: css('--fig-axis'),
+    tickfont: {family: figFont, size: 12, color: css('--fig-axis')},
+  }, extra || {});
+}
+
+// Plotly color sequences matching the Warmtone palette
+const warmtonePalette = [
+  '#7b97ad', '#b8995e', '#ad8480', '#7a9a7e', '#907ea0',
+  '#6f9996', '#8a6e5e', '#b56b6b', '#8fa3b8', '#a09488'
+];
+</script>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>

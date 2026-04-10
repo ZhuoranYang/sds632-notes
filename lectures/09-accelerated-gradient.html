@@ -1,0 +1,2573 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>11&nbsp; Accelerated Gradient Methods – S&amp;DS 432/632 — Advanced Optimization Techniques</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../lectures/11-implicit-layer.html" rel="next">
+<link href="../lectures/08-mirror-descent.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-1db14e1c4cc35bfe1d9badc9e4551eed.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-434abab37f7d394f280d9c89d7fbc13f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    skipStartupTypeset: true,
+    messageStyle: "none",
+    tex2jax: { inlineMath: [], displayMath: [], processEnvironments: false }
+  });
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_SVG"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.0.min.js" charset="utf-8"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../lectures/05-gradient-descent.html">First-Order Methods</a></li><li class="breadcrumb-item"><a href="../lectures/09-accelerated-gradient.html"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Accelerated Gradient Methods</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">S&amp;DS 432/632 — Advanced Optimization Techniques</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Welcome</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Preliminaries</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/01-review.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Review of Convex Optimization</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Duality</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/02-lagrange-duality.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lagrange Duality</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/02b-dual-conjugacy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Dual Conjugacy</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Second-Order Methods</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/03-newton-methods.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Newton Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/04-interior-point.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Interior Point Methods</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">First-Order Methods</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/05-gradient-descent.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Gradient Descent</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/05b-projected-gradient-descent.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Projected Gradient Descent and Frank–Wolfe</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/06-subgradient.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Subgradient Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/07-proximal-gradient.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Proximal Gradient Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/08-mirror-descent.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Mirror Descent</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/09-accelerated-gradient.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Accelerated Gradient Methods</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Applications in Deep Learning</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/11-implicit-layer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Implicit Layers</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/summary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Course Summary</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-overview" id="toc-sec-overview" class="nav-link active" data-scroll-target="#sec-overview"><span class="header-section-number">11.1</span> What Will Be Covered</a></li>
+  <li><a href="#sec-motivation" id="toc-sec-motivation" class="nav-link" data-scroll-target="#sec-motivation"><span class="header-section-number">11.2</span> Motivation</a>
+  <ul class="collapse">
+  <li><a href="#sec-gd-recap" id="toc-sec-gd-recap" class="nav-link" data-scroll-target="#sec-gd-recap"><span class="header-section-number">11.2.1</span> Recap: Gradient Descent Rates</a></li>
+  <li><a href="#sec-gd-issues" id="toc-sec-gd-issues" class="nav-link" data-scroll-target="#sec-gd-issues"><span class="header-section-number">11.2.2</span> Issues with Gradient Descent</a></li>
+  <li><a href="#sec-oracle-model" id="toc-sec-oracle-model" class="nav-link" data-scroll-target="#sec-oracle-model"><span class="header-section-number">11.2.3</span> First-Order Oracle Model</a></li>
+  <li><a href="#sec-lower-bounds" id="toc-sec-lower-bounds" class="nav-link" data-scroll-target="#sec-lower-bounds"><span class="header-section-number">11.2.4</span> Lower Bounds for First-Order Methods</a></li>
+  <li><a href="#sec-lower-bound-convex-proof" id="toc-sec-lower-bound-convex-proof" class="nav-link" data-scroll-target="#sec-lower-bound-convex-proof"><span class="header-section-number">11.2.5</span> Proof of Theorem&nbsp;<span>11.1</span> (Convex Case)</a></li>
+  <li><a href="#sec-lower-bound-sc-proof" id="toc-sec-lower-bound-sc-proof" class="nav-link" data-scroll-target="#sec-lower-bound-sc-proof"><span class="header-section-number">11.2.6</span> Proof of Theorem&nbsp;<span>11.2</span> (Strongly Convex Case)</a></li>
+  </ul></li>
+  <li><a href="#sec-heavy-ball" id="toc-sec-heavy-ball" class="nav-link" data-scroll-target="#sec-heavy-ball"><span class="header-section-number">11.3</span> Heavy-Ball Method</a>
+  <ul class="collapse">
+  <li><a href="#sec-heavy-ball-algorithm" id="toc-sec-heavy-ball-algorithm" class="nav-link" data-scroll-target="#sec-heavy-ball-algorithm"><span class="header-section-number">11.3.1</span> The Algorithm</a></li>
+  <li><a href="#sec-heavy-ball-analysis" id="toc-sec-heavy-ball-analysis" class="nav-link" data-scroll-target="#sec-heavy-ball-analysis"><span class="header-section-number">11.3.2</span> State-Space Analysis for Quadratics</a></li>
+  <li><a href="#sec-heavy-ball-convergence" id="toc-sec-heavy-ball-convergence" class="nav-link" data-scroll-target="#sec-heavy-ball-convergence"><span class="header-section-number">11.3.3</span> Convergence of Heavy-Ball for Quadratics</a></li>
+  <li><a href="#sec-heavy-ball-limitations" id="toc-sec-heavy-ball-limitations" class="nav-link" data-scroll-target="#sec-heavy-ball-limitations"><span class="header-section-number">11.3.4</span> Limitations: Beyond Quadratics</a></li>
+  </ul></li>
+  <li><a href="#sec-nag-convex" id="toc-sec-nag-convex" class="nav-link" data-scroll-target="#sec-nag-convex"><span class="header-section-number">11.4</span> Nesterov’s Accelerated Gradient: Smooth Convex Case</a>
+  <ul class="collapse">
+  <li><a href="#sec-nag-algorithm" id="toc-sec-nag-algorithm" class="nav-link" data-scroll-target="#sec-nag-algorithm"><span class="header-section-number">11.4.1</span> The Algorithm</a></li>
+  <li><a href="#sec-ode-interpretation" id="toc-sec-ode-interpretation" class="nav-link" data-scroll-target="#sec-ode-interpretation"><span class="header-section-number">11.4.2</span> Interpretation via Differential Equations</a></li>
+  <li><a href="#sec-nag-convex-analysis" id="toc-sec-nag-convex-analysis" class="nav-link" data-scroll-target="#sec-nag-convex-analysis"><span class="header-section-number">11.4.3</span> Convergence Analysis</a></li>
+  <li><a href="#sec-visualization" id="toc-sec-visualization" class="nav-link" data-scroll-target="#sec-visualization"><span class="header-section-number">11.4.4</span> Visualization: GD vs.&nbsp;Accelerated GD</a></li>
+  </ul></li>
+  <li><a href="#sec-nag-strongly-convex" id="toc-sec-nag-strongly-convex" class="nav-link" data-scroll-target="#sec-nag-strongly-convex"><span class="header-section-number">11.5</span> Acceleration for Strongly Convex Functions</a>
+  <ul class="collapse">
+  <li><a href="#sec-nag-sc-algorithm" id="toc-sec-nag-sc-algorithm" class="nav-link" data-scroll-target="#sec-nag-sc-algorithm"><span class="header-section-number">11.5.1</span> The Algorithm</a></li>
+  <li><a href="#sec-nag-sc-analysis" id="toc-sec-nag-sc-analysis" class="nav-link" data-scroll-target="#sec-nag-sc-analysis"><span class="header-section-number">11.5.2</span> Convergence Analysis</a></li>
+  </ul></li>
+  <li><a href="#sec-fista" id="toc-sec-fista" class="nav-link" data-scroll-target="#sec-fista"><span class="header-section-number">11.6</span> Accelerated Proximal Gradient (FISTA)</a>
+  <ul class="collapse">
+  <li><a href="#sec-fista-algorithm" id="toc-sec-fista-algorithm" class="nav-link" data-scroll-target="#sec-fista-algorithm"><span class="header-section-number">11.6.1</span> FISTA: Fast Iterative Shrinkage-Thresholding Algorithm</a></li>
+  <li><a href="#sec-fista-convergence" id="toc-sec-fista-convergence" class="nav-link" data-scroll-target="#sec-fista-convergence"><span class="header-section-number">11.6.2</span> Convergence of FISTA</a></li>
+  <li><a href="#sec-lasso-example" id="toc-sec-lasso-example" class="nav-link" data-scroll-target="#sec-lasso-example"><span class="header-section-number">11.6.3</span> Example: Accelerated LASSO</a></li>
+  <li><a href="#sec-rippling" id="toc-sec-rippling" class="nav-link" data-scroll-target="#sec-rippling"><span class="header-section-number">11.6.4</span> Rippling: Effect of Misspecified Momentum</a></li>
+  </ul></li>
+  <li><a href="#sec-restart" id="toc-sec-restart" class="nav-link" data-scroll-target="#sec-restart"><span class="header-section-number">11.7</span> Restart Strategies</a>
+  <ul class="collapse">
+  <li><a href="#sec-gradient-restart" id="toc-sec-gradient-restart" class="nav-link" data-scroll-target="#sec-gradient-restart"><span class="header-section-number">11.7.1</span> Gradient Restart</a></li>
+  <li><a href="#sec-restart-benefits" id="toc-sec-restart-benefits" class="nav-link" data-scroll-target="#sec-restart-benefits"><span class="header-section-number">11.7.2</span> Why Restart Gives Linear Convergence</a></li>
+  </ul></li>
+  <li><a href="#sec-summary" id="toc-sec-summary" class="nav-link" data-scroll-target="#sec-summary"><span class="header-section-number">11.8</span> Summary and Connections</a>
+  <ul class="collapse">
+  <li><a href="#sec-key-results" id="toc-sec-key-results" class="nav-link" data-scroll-target="#sec-key-results"><span class="header-section-number">11.8.1</span> Key Results</a></li>
+  <li><a href="#sec-connections" id="toc-sec-connections" class="nav-link" data-scroll-target="#sec-connections"><span class="header-section-number">11.8.2</span> Connections to Other Lectures</a></li>
+  <li><a href="#sec-open" id="toc-sec-open" class="nav-link" data-scroll-target="#sec-open"><span class="header-section-number">11.8.3</span> Open Directions</a></li>
+  </ul></li>
+  <li><a href="#first-order-methods-master-comparison" id="toc-first-order-methods-master-comparison" class="nav-link" data-scroll-target="#first-order-methods-master-comparison">First-Order Methods: Master Comparison</a></li>
+  <li><a href="#sec-ode-lyapunov" id="toc-sec-ode-lyapunov" class="nav-link" data-scroll-target="#sec-ode-lyapunov">Appendix: ODE Lyapunov Computation</a></li>
+  <li><a href="#sec-chebyshev" id="toc-sec-chebyshev" class="nav-link" data-scroll-target="#sec-chebyshev">Appendix: Chebyshev Polynomials</a>
+  <ul class="collapse">
+  <li><a href="#definition-and-recurrence" id="toc-definition-and-recurrence" class="nav-link" data-scroll-target="#definition-and-recurrence">Definition and Recurrence</a></li>
+  <li><a href="#key-properties" id="toc-key-properties" class="nav-link" data-scroll-target="#key-properties">Key Properties</a></li>
+  <li><a href="#application-to-lower-bounds" id="toc-application-to-lower-bounds" class="nav-link" data-scroll-target="#application-to-lower-bounds">Application to Lower Bounds</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../lectures/05-gradient-descent.html">First-Order Methods</a></li><li class="breadcrumb-item"><a href="../lectures/09-accelerated-gradient.html"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Accelerated Gradient Methods</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Accelerated Gradient Methods</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>In the preceding chapters we established that gradient descent converges at a rate of <span class="math inline">O(1/k)</span> for smooth convex functions and at a linear rate of <span class="math inline">O\!\bigl((1 - 1/\kappa)^k\bigr)</span> for strongly convex functions with condition number <span class="math inline">\kappa = L/\mu</span>. A natural question is: <em>can we do better?</em> Are these rates the best achievable by any first-order method, or is there room for improvement?</p>
+<p>The idea of using <em>momentum</em> — exploiting the history of past iterates to build inertia — dates back to Polyak’s <strong>heavy-ball method</strong><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>, which achieves optimal rates for quadratic functions. However, the full breakthrough came with Yurii Nesterov in 1983<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>, who showed that a carefully designed momentum schedule can close the gap to information-theoretic lower bounds for <em>all</em> smooth convex functions. This chapter develops both methods: the heavy-ball method as a warm-up, and Nesterov’s accelerated gradient method, which achieves an <span class="math inline">O(1/k^2)</span> rate for convex functions and an <span class="math inline">O\!\bigl(\exp(-k/\sqrt{\kappa})\bigr)</span> rate for strongly convex functions — both provably optimal among first-order methods.</p>
+<p>Acceleration is one of the most celebrated results in continuous optimization. Beyond its theoretical elegance, it has profound practical impact: the accelerated proximal gradient method (FISTA) is the workhorse algorithm for large-scale problems in signal processing, imaging, and machine learning. We will also study restart strategies that make acceleration robust in practice when the strong convexity parameter is unknown.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Companion Notebook
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A <a href="../notebooks/accelerated-gradient.ipynb">Jupyter notebook</a> accompanies this chapter with runnable Python implementations of Nesterov’s accelerated gradient, FISTA for Lasso, momentum trajectory visualization, condition number dependence experiments, and adaptive restart strategies.</p>
+</div>
+</div>
+<section id="sec-overview" class="level2" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="sec-overview"><span class="header-section-number">11.1</span> What Will Be Covered</h2>
+<ul>
+<li>Issues with gradient descent and the idea of momentum</li>
+<li>The heavy-ball method (Polyak, 1964): optimal acceleration for quadratics</li>
+<li>Lower bounds for first-order methods and why gradient descent is suboptimal</li>
+<li>Nesterov’s accelerated gradient method and its ODE interpretation</li>
+<li>Convergence analysis via Lyapunov functions</li>
+<li>FISTA: accelerated proximal gradient for composite optimization</li>
+<li>Restart strategies for practical acceleration</li>
+</ul>
+</section>
+<section id="sec-motivation" class="level2" data-number="11.2">
+<h2 data-number="11.2" class="anchored" data-anchor-id="sec-motivation"><span class="header-section-number">11.2</span> Motivation</h2>
+<section id="sec-gd-recap" class="level3" data-number="11.2.1">
+<h3 data-number="11.2.1" class="anchored" data-anchor-id="sec-gd-recap"><span class="header-section-number">11.2.1</span> Recap: Gradient Descent Rates</h3>
+<p>Recall from <a href="../lectures/05-gradient-descent.html">Chapter 6</a> the convergence rates of gradient descent <span class="math inline">x^{k+1} = x^k - \frac{1}{L}\nabla f(x^k)</span>, where <span class="math inline">f</span> is <span class="math inline">L</span>-smooth:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Setting</strong></th>
+<th><strong>Convergence rate</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Convex, <span class="math inline">L</span>-smooth</td>
+<td><span class="math inline">f(x^k) - f(x^*) \leq \dfrac{L\|x^0 - x^*\|_2^2}{2k}</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\mu</span>-strongly convex, <span class="math inline">L</span>-smooth</td>
+<td><span class="math inline">f(x^k) - f(x^*) \leq \dfrac{L}{2}\Bigl(1 - \dfrac{\mu}{L}\Bigr)^k \|x^0 - x^*\|_2^2</span></td>
+</tr>
+</tbody>
+</table>
+<p>In terms of iteration complexity:</p>
+<ul>
+<li><strong>Convex:</strong> <span class="math inline">O(L/\varepsilon)</span> iterations for an <span class="math inline">\varepsilon</span>-suboptimal solution.</li>
+<li><strong>Strongly convex:</strong> <span class="math inline">O(\kappa \cdot \log(1/\varepsilon))</span> iterations, where <span class="math inline">\kappa = L/\mu</span> is the condition number.</li>
+</ul>
+</section>
+<section id="sec-gd-issues" class="level3" data-number="11.2.2">
+<h3 data-number="11.2.2" class="anchored" data-anchor-id="sec-gd-issues"><span class="header-section-number">11.2.2</span> Issues with Gradient Descent</h3>
+<p>Can we do better? Two fundamental issues with gradient descent suggest the answer is yes:</p>
+<ol type="1">
+<li><p><strong>Short-sightedness.</strong> Gradient descent focuses entirely on <em>local</em> improvement: each step minimizes a quadratic upper bound at the current point. This greedy strategy can be suboptimal globally — a step that looks slightly worse locally might lead to much better progress overall.</p></li>
+<li><p><strong>Zigzagging.</strong> On ill-conditioned problems (<span class="math inline">\kappa \gg 1</span>), gradient descent oscillates (zigzags) in the high-curvature directions while making slow progress in the low-curvature directions. The optimal step size <span class="math inline">\alpha = 2/(L+\mu)</span> reduces but does not eliminate this oscillation, leading to the <span class="math inline">O(\kappa)</span> dependence in the convergence rate.</p></li>
+</ol>
+<p>A natural remedy is to <strong>exploit the history</strong> of past iterates: rather than determining <span class="math inline">x^{k+1}</span> solely from the gradient at <span class="math inline">x^k</span>, we can incorporate a <em>momentum</em> term that accumulates information from previous steps, yielding a smoother trajectory and faster convergence. This is the core idea behind both the heavy-ball method and Nesterov’s acceleration.</p>
+</section>
+<section id="sec-oracle-model" class="level3" data-number="11.2.3">
+<h3 data-number="11.2.3" class="anchored" data-anchor-id="sec-oracle-model"><span class="header-section-number">11.2.3</span> First-Order Oracle Model</h3>
+<p>To reason rigorously about whether gradient descent is optimal, we need to formalize what we mean by a “first-order method.” The following model captures any algorithm that generates iterates using only gradient information accumulated so far.</p>
+<div id="def-first-order-oracle" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 11.1 (First-Order Oracle Model)</strong></span> A <strong>first-order method</strong> generates iterates <span class="math inline">x^0, x^1, x^2, \ldots</span> such that <span id="eq-first-order-span"><span class="math display">
+x^k \in x^0 + \operatorname{span}\{\nabla f(x^0), \nabla f(x^1), \ldots, \nabla f(x^{k-1})\}.
+\tag{11.1}</span></span> That is, each iterate lies in the affine subspace spanned by all previously observed gradients.</p>
+</div>
+<p>This model captures gradient descent, momentum methods, conjugate gradient, and any method that combines past gradient information linearly.</p>
+</section>
+<section id="sec-lower-bounds" class="level3" data-number="11.2.4">
+<h3 data-number="11.2.4" class="anchored" data-anchor-id="sec-lower-bounds"><span class="header-section-number">11.2.4</span> Lower Bounds for First-Order Methods</h3>
+<p>With the oracle model in hand, we can now ask: what is the fastest possible convergence rate achievable by <em>any</em> first-order method? The following classical results, due to Nesterov (1983), establish fundamental limits by constructing explicit “hard instances” — functions for which no first-order method can converge faster than the stated rate.</p>
+<div id="thm-lower-bound-convex" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 11.1 (Lower Bound (Convex, Smooth))</strong></span> For any <span class="math inline">k \leq (n-1)/2</span> and any first-order method, there exists an <span class="math inline">L</span>-smooth convex function <span class="math inline">f:\mathbb{R}^n \to \mathbb{R}</span> such that <span id="eq-lower-bound-convex"><span class="math display">
+f(x^k) - f(x^*) \geq \frac{3L\|x^0 - x^*\|_2^2}{32(k+1)^2}.
+\tag{11.2}</span></span></p>
+</div>
+<div id="thm-lower-bound-strongly-convex" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 11.2 (Lower Bound (Strongly Convex, Smooth))</strong></span> For any <span class="math inline">k \leq (n-1)/2</span> and any first-order method, there exists a <span class="math inline">\mu</span>-strongly convex, <span class="math inline">L</span>-smooth function <span class="math inline">f:\mathbb{R}^n \to \mathbb{R}</span> such that <span class="math display">
+f(x^k) - f(x^*) \geq \frac{\mu}{2}\left(\frac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1}\right)^{2k} \|x^0 - x^*\|_2^2.
+</span></p>
+</div>
+<p>Both lower bounds follow the same proof strategy, which is worth understanding at a conceptual level before diving into the details.</p>
+<p><strong>The minimax argument.</strong> To show that <em>no</em> first-order method can converge faster than a given rate, it suffices to exhibit a <em>single</em> hard function for which <em>every</em> first-order method is slow. This is a worst-case (minimax) argument: if there exists even one function <span class="math inline">f</span> in the class (e.g., <span class="math inline">L</span>-smooth convex) where every first-order method requires at least <span class="math inline">T(\varepsilon)</span> iterations for an <span class="math inline">\varepsilon</span>-suboptimal point, then no first-order method can guarantee fewer than <span class="math inline">T(\varepsilon)</span> iterations on all functions in that class. In other words, we prove a lower bound by finding the <em>adversary’s best response</em>: the hardest possible function.</p>
+<p><strong>The hard instance.</strong> Both constructions use explicit quadratic functions on <span class="math inline">\mathbb{R}^n</span> whose Hessians are <strong>tridiagonal</strong>. The tridiagonal structure creates an <em>information bottleneck</em>: gradient evaluations can only “see” neighboring coordinates, so starting from <span class="math inline">x^0 = \mathbf{0}</span>, each iteration reveals at most one new coordinate direction. After <span class="math inline">k</span> iterations, the iterate <span class="math inline">x^k</span> lives in a <span class="math inline">k</span>-dimensional subspace, but the optimum <span class="math inline">x^*</span> has all <span class="math inline">n</span> coordinates nonzero — leaving a gap that cannot be closed faster than the stated rates. The proofs are elegant and illuminate why acceleration is necessary.</p>
+</section>
+<section id="sec-lower-bound-convex-proof" class="level3" data-number="11.2.5">
+<h3 data-number="11.2.5" class="anchored" data-anchor-id="sec-lower-bound-convex-proof"><span class="header-section-number">11.2.5</span> Proof of <a href="#thm-lower-bound-convex" class="quarto-xref">Theorem&nbsp;<span>11.1</span></a> (Convex Case)</h3>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span><strong>Step 1 (Hard instance).</strong> Define the <span class="math inline">n \times n</span> tridiagonal matrix</p>
+<p><span class="math display">
+A = \begin{pmatrix} 2 &amp; -1 &amp; &amp; \\ -1 &amp; 2 &amp; -1 &amp; \\ &amp; \ddots &amp; \ddots &amp; \ddots \\ &amp; &amp; -1 &amp; 1 \end{pmatrix},
+</span></p>
+<p>and consider the quadratic function <span class="math inline">f(x) = \frac{L}{4}(x^\top A x - 2e_1^\top x)</span> on <span class="math inline">\mathbb{R}^n</span> with <span class="math inline">n \geq 2k+1</span>. Since <span class="math inline">x^\top A x = x_1^2 + \sum_{i=1}^{n-1}(x_i - x_{i+1})^2 \geq 0</span>, the matrix <span class="math inline">A</span> is positive semidefinite, and one can verify <span class="math inline">\|A\| \leq 4</span> (the maximum row sum). Thus <span class="math inline">f</span> is convex and <span class="math inline">L</span>-smooth.</p>
+<p>The minimizer satisfies <span class="math inline">Ax^* = e_1</span>. By direct substitution, <span class="math inline">x^* = \mathbf{1}</span> (the all-ones vector), since <span class="math inline">(A\mathbf{1})_1 = 2 - 1 = 1</span>, <span class="math inline">(A\mathbf{1})_i = -1 + 2 - 1 = 0</span> for interior <span class="math inline">i</span>, and <span class="math inline">(A\mathbf{1})_n = -1 + 1 = 0</span>.</p>
+<p><strong>Step 2 (Span property).</strong> Starting from <span class="math inline">x^0 = \mathbf{0}</span>, the gradient <span class="math inline">\nabla f(\mathbf{0}) = -\frac{L}{2}e_1</span> lies in <span class="math inline">\operatorname{span}(e_1)</span>. Since <span class="math inline">A</span> is tridiagonal, multiplying by <span class="math inline">A</span> can introduce at most one new coordinate: if <span class="math inline">v \in \operatorname{span}(e_1, \ldots, e_j)</span>, then <span class="math inline">Av \in \operatorname{span}(e_1, \ldots, e_{j+1})</span>. By induction on the span condition (<a href="#eq-first-order-span" class="quarto-xref"><span>11.1</span></a>), after <span class="math inline">k</span> iterations of any first-order method:</p>
+<p><span class="math display">
+x^k \in \operatorname{span}(e_1, \ldots, e_k), \qquad \text{i.e.,} \quad x^k_i = 0 \;\text{ for all }\; i &gt; k.
+</span></p>
+<p><strong>Step 3 (Subspace lower bound).</strong> Since <span class="math inline">f(x^k) - f(x^*) = \frac{L}{4}\|x^k - x^*\|_A^2</span> (completing the square and using <span class="math inline">Ax^* = e_1</span>), we need to lower-bound <span class="math inline">\|x - x^*\|_A^2</span> over all <span class="math inline">x</span> with <span class="math inline">x_i = 0</span> for <span class="math inline">i &gt; k</span>.</p>
+<p>Using the quadratic form <span class="math inline">x^\top A x = x_1^2 + \sum_{i=1}^{n-1}(x_i - x_{i+1})^2</span> and the fact that <span class="math inline">x^*_i = 1</span> for all <span class="math inline">i</span> (so consecutive differences of <span class="math inline">x^*</span> vanish), we obtain</p>
+<p><span class="math display">
+\|x - x^*\|_A^2 = (x_1-1)^2 + \sum_{i=1}^{n-1}\big((x_i - 1) - (x_{i+1} - 1)\big)^2 = (x_1-1)^2 + \sum_{i=1}^{n-1}(x_i - x_{i+1})^2.
+</span></p>
+<p>Minimizing over <span class="math inline">x_1, \ldots, x_k</span> with <span class="math inline">x_i = 0</span> for <span class="math inline">i &gt; k</span>, the first-order conditions give a linear recurrence with solution</p>
+<p><span class="math display">
+x_i^{\mathrm{opt}} = 1 - \frac{i}{k+1}, \qquad i = 1, \ldots, k.
+</span></p>
+<p>The minimum value is <span class="math inline">(x_1^{\mathrm{opt}} - 1)^2 + \sum_{i=1}^{k-1}\frac{1}{(k+1)^2} + (x_k^{\mathrm{opt}})^2 = \frac{k}{(k+1)^2} + \frac{1}{(k+1)^2} = \frac{1}{k+1}</span>.</p>
+<p><strong>Step 4 (Conclude).</strong> Therefore, for any first-order method,</p>
+<p><span class="math display">
+f(x^k) - f(x^*) \geq \frac{L}{4} \cdot \frac{1}{k+1}.
+</span></p>
+<p>Since <span class="math inline">\|x^0 - x^*\|_2^2 = n \geq 2k + 1 \geq 2(k+1)</span>, we obtain</p>
+<p><span class="math display">
+f(x^k) - f(x^*) \geq \frac{L}{4(k+1)} \geq \frac{L\|x^0 - x^*\|_2^2}{8(k+1)^2}.
+</span></p>
+<p>This establishes the <span class="math inline">\Omega(1/k^2)</span> lower bound (the constant <span class="math inline">3/32</span> in <a href="#thm-lower-bound-convex" class="quarto-xref">Theorem&nbsp;<span>11.1</span></a> comes from a tighter computation). <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+<section id="sec-lower-bound-sc-proof" class="level3" data-number="11.2.6">
+<h3 data-number="11.2.6" class="anchored" data-anchor-id="sec-lower-bound-sc-proof"><span class="header-section-number">11.2.6</span> Proof of <a href="#thm-lower-bound-strongly-convex" class="quarto-xref">Theorem&nbsp;<span>11.2</span></a> (Strongly Convex Case)</h3>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>The strongly convex case uses the same tridiagonal structure but brings in the elegant theory of <strong>Chebyshev polynomials</strong>.</p>
+<p><strong>Step 1 (Hard instance).</strong> Define the quadratic</p>
+<p><span class="math display">
+f(x) = \frac{1}{2}x^\top A x - e_1^\top x, \qquad A = \frac{L - \mu}{4}T + \mu I,
+</span></p>
+<p>where <span class="math inline">T</span> is the tridiagonal matrix from the convex case. Since <span class="math inline">T \succeq 0</span> and <span class="math inline">\|T\| \leq 4</span>, the eigenvalues of <span class="math inline">A</span> lie in <span class="math inline">[\mu,\, \mu + (L-\mu)] = [\mu, L]</span>. Thus <span class="math inline">f</span> is <span class="math inline">\mu</span>-strongly convex and <span class="math inline">L</span>-smooth. The minimizer is <span class="math inline">x^* = A^{-1}e_1</span>.</p>
+<p><strong>Step 2 (Krylov subspace property).</strong> Starting from <span class="math inline">x^0 = \mathbf{0}</span>, any first-order method produces iterates in the <strong>Krylov subspace</strong>:</p>
+<p><span class="math display">
+x^k \in \mathcal{K}_k(A, e_1) = \operatorname{span}(e_1,\, Ae_1,\, A^2 e_1,\, \ldots,\, A^{k-1}e_1).
+</span></p>
+<p>This follows from the span condition (<a href="#eq-first-order-span" class="quarto-xref"><span>11.1</span></a>) by induction: <span class="math inline">\nabla f(x^0) = -e_1</span>, and each subsequent gradient <span class="math inline">\nabla f(x^j) = Ax^j - e_1</span> adds at most one power of <span class="math inline">A</span> to the span.</p>
+<p>Therefore <span class="math inline">x^k = q_{k-1}(A)e_1</span> for some polynomial <span class="math inline">q_{k-1}</span> of degree <span class="math inline">\leq k-1</span>.</p>
+<p><strong>Step 3 (Reduction to polynomial approximation).</strong> The error can be written as</p>
+<p><span class="math display">
+x^k - x^* = q_{k-1}(A)e_1 - A^{-1}e_1 = -\big(I - Aq_{k-1}(A)\big)A^{-1}e_1 = -p_k(A)\,x^*,
+</span></p>
+<p>where <span class="math inline">p_k(t) = 1 - t\,q_{k-1}(t)</span> is a polynomial of degree <span class="math inline">\leq k</span> satisfying <span class="math inline">p_k(0) = 1</span>. The optimality gap becomes</p>
+<p><span class="math display">
+f(x^k) - f(x^*) = \frac{1}{2}\|p_k(A)\,x^*\|_A^2 = \frac{1}{2}\sum_{j=1}^n \lambda_j\, c_j^2\, p_k(\lambda_j)^2,
+</span></p>
+<p>where <span class="math inline">\lambda_j</span> are the eigenvalues of <span class="math inline">A</span>, and <span class="math inline">c_j = v_j^\top x^*</span> are the components of <span class="math inline">x^*</span> in the eigenbasis. Since <span class="math inline">A</span> is tridiagonal and <span class="math inline">e_1</span> has nonzero projection onto every eigenvector, all <span class="math inline">c_j \neq 0</span>. Therefore,</p>
+<p><span class="math display">
+\frac{f(x^k) - f(x^*)}{f(x^0) - f(x^*)} \geq \left(\min_{\substack{p_k:\,\deg p_k \leq k \\ p_k(0) = 1}} \;\max_{\lambda \in [\mu,\, L]}\; |p_k(\lambda)|\right)^{\!2}.
+</span></p>
+<p><strong>Step 4 (Chebyshev polynomial bound).</strong> The classical minimax polynomial approximation on <span class="math inline">[\mu, L]</span> is solved by the <strong>shifted Chebyshev polynomial</strong>:</p>
+<p><span class="math display">
+p_k^*(t) = \frac{T_k\!\Big(\dfrac{L + \mu - 2t}{L - \mu}\Big)}{T_k\!\Big(\dfrac{L + \mu}{L - \mu}\Big)},
+</span></p>
+<p>where <span class="math inline">T_k(\cos\theta) = \cos(k\theta)</span> is the Chebyshev polynomial of the first kind. The minimax value is</p>
+<p><span class="math display">
+\min_{p_k:\, p_k(0)=1} \;\max_{t \in [\mu, L]}\; |p_k(t)| = \frac{1}{T_k\!\Big(\dfrac{L+\mu}{L-\mu}\Big)}.
+</span></p>
+<p><strong>Step 5 (Evaluate the Chebyshev bound).</strong> Using <span class="math inline">T_k(x) \geq \frac{1}{2}(x + \sqrt{x^2 - 1})^k</span> for <span class="math inline">x &gt; 1</span>, we compute</p>
+<p><span class="math display">
+\frac{L+\mu}{L-\mu} + \sqrt{\left(\frac{L+\mu}{L-\mu}\right)^2 - 1} = \frac{L + \mu + 2\sqrt{L\mu}}{L - \mu} = \frac{(\sqrt{L} + \sqrt{\mu})^2}{(\sqrt{L} - \sqrt{\mu})(\sqrt{L} + \sqrt{\mu})} = \frac{\sqrt{\kappa} + 1}{\sqrt{\kappa} - 1}.
+</span></p>
+<p>Therefore <span class="math inline">T_k\big(\frac{L+\mu}{L-\mu}\big) \geq \frac{1}{2}\big(\frac{\sqrt{\kappa}+1}{\sqrt{\kappa}-1}\big)^k</span>, and</p>
+<p><span class="math display">
+\frac{f(x^k) - f(x^*)}{f(x^0) - f(x^*)} \geq \frac{1}{T_k^2} \geq 4\left(\frac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1}\right)^{2k}.
+</span></p>
+<p>Since <span class="math inline">f(x^0) - f(x^*) = \frac{1}{2}\|x^*\|_A^2 \leq \frac{L}{2}\|x^0 - x^*\|_2^2</span>, we obtain the desired lower bound. <span class="math inline">\blacksquare</span></p>
+</div>
+<div id="fig-lower-bound-intuition" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lower-bound-intuition-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch09-lower-bound-intuition.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;11.1: Lower bound intuition: the tridiagonal hard instance forces first-order methods to explore coordinates one at a time, creating a gap between GD rates and information-theoretic lower bounds."><img src="figures/ch09-lower-bound-intuition.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lower-bound-intuition-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11.1: Lower bound intuition: the tridiagonal hard instance forces first-order methods to explore coordinates one at a time, creating a gap between GD rates and information-theoretic lower bounds.
+</figcaption>
+</figure>
+</div>
+<p>The lower bounds give the following iteration complexity requirements:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Setting</strong></th>
+<th><strong>GD rate</strong></th>
+<th><strong>Lower bound</strong></th>
+<th><strong>Gap</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Convex, <span class="math inline">L</span>-smooth</td>
+<td><span class="math inline">O(L/\varepsilon)</span></td>
+<td><span class="math inline">\Omega(L/\sqrt{\varepsilon}\,)</span></td>
+<td><span class="math inline">\sqrt{1/\varepsilon}</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\mu</span>-strongly convex, <span class="math inline">L</span>-smooth</td>
+<td><span class="math inline">O(\kappa\log(1/\varepsilon))</span></td>
+<td><span class="math inline">\Omega(\sqrt{\kappa}\log(1/\varepsilon))</span></td>
+<td><span class="math inline">\sqrt{\kappa}</span></td>
+</tr>
+</tbody>
+</table>
+<p>In both cases, the gap is a factor of a square root. Can we design first-order methods that close this gap? We begin with the <strong>heavy-ball method</strong>, which achieves the optimal rate for quadratic functions, and then present Nesterov’s method, which achieves the optimal rate for <em>all</em> smooth convex functions.</p>
+</section>
+</section>
+<section id="sec-heavy-ball" class="level2" data-number="11.3">
+<h2 data-number="11.3" class="anchored" data-anchor-id="sec-heavy-ball"><span class="header-section-number">11.3</span> Heavy-Ball Method</h2>
+<p>The first momentum-based optimization method was proposed by Boris Polyak in 1964. The idea is intuitive: just as a heavy ball rolling downhill builds up inertia and can traverse flat regions more quickly, we add a momentum term to gradient descent that remembers the previous direction of travel.</p>
+<section id="sec-heavy-ball-algorithm" class="level3" data-number="11.3.1">
+<h3 data-number="11.3.1" class="anchored" data-anchor-id="sec-heavy-ball-algorithm"><span class="header-section-number">11.3.1</span> The Algorithm</h3>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Algorithm: Heavy-Ball Method (Polyak, 1964)
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Initialize:</strong> <span class="math inline">x^0, x^{-1} \in \mathbb{R}^n</span> (typically <span class="math inline">x^{-1} = x^0</span>).</p>
+<p><strong>For</strong> <span class="math inline">k = 0, 1, 2, \ldots</span>: <span id="eq-heavy-ball"><span class="math display">
+x^{k+1} = x^k - \eta\,\nabla f(x^k) + \theta\bigl(x^k - x^{k-1}\bigr).
+\tag{11.3}</span></span></p>
+</div>
+</div>
+<p>The update has two components: a <strong>gradient step</strong> <span class="math inline">-\eta\,\nabla f(x^k)</span> and a <strong>momentum term</strong> <span class="math inline">\theta(x^k - x^{k-1})</span> that pushes the iterate in the direction of the previous displacement. When <span class="math inline">\theta = 0</span>, this reduces to standard gradient descent.</p>
+<p>The momentum term serves as a <em>buffer</em> that smooths the trajectory: in the zigzagging regime, the oscillating gradient components tend to cancel in the momentum accumulation, while the consistently signed components reinforce each other. This dampens oscillations and amplifies progress in the correct direction.</p>
+</section>
+<section id="sec-heavy-ball-analysis" class="level3" data-number="11.3.2">
+<h3 data-number="11.3.2" class="anchored" data-anchor-id="sec-heavy-ball-analysis"><span class="header-section-number">11.3.2</span> State-Space Analysis for Quadratics</h3>
+<p>To understand when and why heavy-ball accelerates, consider the quadratic <span class="math display">
+f(x) = \frac{1}{2}(x - x^*)^\top Q\,(x - x^*),
+</span> where <span class="math inline">Q \succ 0</span> has eigenvalues <span class="math inline">\mu = \lambda_{\min}(Q) \leq \cdots \leq \lambda_{\max}(Q) = L</span>. Since <span class="math inline">\nabla f(x) = Q(x - x^*)</span>, the heavy-ball update in terms of the error <span class="math inline">e^k = x^k - x^*</span> becomes <span class="math display">
+e^{k+1} = (1 + \theta)e^k - \eta\,Q\,e^k - \theta\,e^{k-1} = \bigl[(1+\theta)I - \eta Q\bigr]\,e^k - \theta\,e^{k-1}.
+</span></p>
+<p>Introducing the augmented state <span class="math inline">z^k = \begin{bmatrix} e^k \\ e^{k-1} \end{bmatrix}</span>, this becomes a <strong>linear dynamical system</strong>: <span id="eq-heavy-ball-system"><span class="math display">
+z^{k+1} = H\,z^k, \qquad H = \begin{bmatrix} (1+\theta)I - \eta Q &amp; -\theta\,I \\ I &amp; 0 \end{bmatrix}.
+\tag{11.4}</span></span></p>
+<p>The convergence rate is controlled by the <strong>spectral radius</strong> <span class="math inline">\rho(H)</span>: we have <span class="math inline">\|z^k\| \lesssim \rho(H)^k \|z^0\|</span>. Since <span class="math inline">Q</span> is symmetric, the system decouples in the eigenbasis of <span class="math inline">Q</span>. For each eigenvalue <span class="math inline">\lambda_i</span> of <span class="math inline">Q</span>, the corresponding <span class="math inline">2 \times 2</span> block is <span class="math display">
+H_i = \begin{bmatrix} 1 + \theta - \eta\lambda_i &amp; -\theta \\ 1 &amp; 0 \end{bmatrix},
+</span> with characteristic polynomial <span id="eq-heavy-ball-char"><span class="math display">
+z^2 - (1 + \theta - \eta\lambda_i)\,z + \theta = 0.
+\tag{11.5}</span></span></p>
+<p>The roots have product <span class="math inline">\theta</span> and sum <span class="math inline">1 + \theta - \eta\lambda_i</span>. A key observation: if the discriminant <span class="math inline">(1+\theta - \eta\lambda_i)^2 - 4\theta \leq 0</span>, then the two roots are complex conjugates with <strong>equal magnitude</strong> <span class="math inline">\sqrt{\theta}</span>. If the discriminant is positive, the roots are real and the larger one exceeds <span class="math inline">\sqrt{\theta}</span>.</p>
+<p>Therefore, to minimize <span class="math inline">\rho(H) = \max_i \rho(H_i)</span>, we want the discriminant to be non-positive for <em>every</em> eigenvalue <span class="math inline">\lambda_i \in [\mu, L]</span>: <span id="eq-heavy-ball-condition"><span class="math display">
+(1 + \theta - \eta\lambda_i)^2 \leq 4\theta \qquad \text{for all } \lambda_i \in [\mu, L].
+\tag{11.6}</span></span></p>
+<p>This requires <span class="math inline">-2\sqrt{\theta} \leq 1 + \theta - \eta\lambda_i \leq 2\sqrt{\theta}</span>, which gives <span class="math inline">(1 - \sqrt{\theta})^2 \leq \eta\lambda_i \leq (1+\sqrt{\theta})^2</span>.</p>
+</section>
+<section id="sec-heavy-ball-convergence" class="level3" data-number="11.3.3">
+<h3 data-number="11.3.3" class="anchored" data-anchor-id="sec-heavy-ball-convergence"><span class="header-section-number">11.3.3</span> Convergence of Heavy-Ball for Quadratics</h3>
+<div id="thm-heavy-ball" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 11.3 (Convergence of Heavy-Ball (Quadratic Functions))</strong></span> Let <span class="math inline">f(x) = \frac{1}{2}(x - x^*)^\top Q(x - x^*)</span> where <span class="math inline">Q</span> is <span class="math inline">\mu</span>-strongly convex and <span class="math inline">L</span>-smooth with <span class="math inline">\kappa = L/\mu</span>. Set <span class="math display">
+\eta = \frac{4}{(\sqrt{L} + \sqrt{\mu})^2}, \qquad \theta = \left(\frac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1}\right)^{\!2}.
+</span> Then the heavy-ball iterates (<a href="#eq-heavy-ball" class="quarto-xref"><span>11.3</span></a>) satisfy <span class="math display">
+\left\|\begin{bmatrix} x^{k+1} - x^* \\ x^k - x^* \end{bmatrix}\right\|_2 \lesssim \left(\frac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1}\right)^k \left\|\begin{bmatrix} x^1 - x^* \\ x^0 - x^* \end{bmatrix}\right\|_2.
+</span> In particular, the iteration complexity is <span class="math inline">O(\sqrt{\kappa}\log(1/\varepsilon))</span>.</p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>We need to show <span class="math inline">\rho(H) \leq (\sqrt{\kappa}-1)/(\sqrt{\kappa}+1)</span> with the stated choice of <span class="math inline">\eta</span> and <span class="math inline">\theta</span>.</p>
+<p><strong>Step 1: Ensuring complex roots.</strong> We need condition (<a href="#eq-heavy-ball-condition" class="quarto-xref"><span>11.6</span></a>) to hold for all <span class="math inline">\lambda_i \in [\mu, L]</span>, i.e., <span class="math inline">(1-\sqrt{\theta})^2 \leq \eta\mu</span> and <span class="math inline">\eta L \leq (1+\sqrt{\theta})^2</span>.</p>
+<p>To minimize <span class="math inline">\sqrt{\theta}</span> (and hence maximize the convergence rate), we solve for equality at both endpoints simultaneously: <span class="math display">
+\frac{(1-\sqrt{\theta})^2}{\mu} = \frac{(1+\sqrt{\theta})^2}{L} = \eta.
+</span> Cross-multiplying: <span class="math inline">(1-\sqrt{\theta})/(1+\sqrt{\theta}) = \sqrt{\mu/L} = 1/\sqrt{\kappa}</span>, which yields <span class="math display">
+\sqrt{\theta} = \frac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1}, \qquad \theta = \left(\frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1}\right)^{\!2}.
+</span></p>
+<p><strong>Step 2: Computing <span class="math inline">\eta</span>.</strong> From the equality <span class="math inline">\eta L = (1+\sqrt{\theta})^2</span>: <span class="math display">
+\eta = \frac{(1+\sqrt{\theta})^2}{L} = \frac{\left(1 + \frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1}\right)^2}{L} = \frac{\left(\frac{2\sqrt{\kappa}}{\sqrt{\kappa}+1}\right)^2}{L} = \frac{4\kappa}{L(\sqrt{\kappa}+1)^2} = \frac{4}{(\sqrt{L}+\sqrt{\mu})^2}.
+</span></p>
+<p><strong>Step 3: Spectral radius bound.</strong> With these choices, all eigenvalues of <span class="math inline">H_i</span> are complex with magnitude exactly <span class="math inline">\sqrt{\theta}</span>. Therefore: <span class="math display">
+\rho(H) = \sqrt{\theta} = \frac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1},
+</span> which completes the proof. <span class="math inline">\blacksquare</span></p>
+</div>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><strong>Comparison with gradient descent (strongly convex quadratics):</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Contraction rate</th>
+<th>Iteration complexity</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Gradient Descent</td>
+<td><span class="math inline">\dfrac{\kappa - 1}{\kappa + 1} \approx 1 - \dfrac{2}{\kappa}</span></td>
+<td><span class="math inline">O(\kappa \log(1/\varepsilon))</span></td>
+</tr>
+<tr class="even">
+<td>Heavy-Ball</td>
+<td><span class="math inline">\dfrac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1} \approx 1 - \dfrac{2}{\sqrt{\kappa}}</span></td>
+<td><span class="math inline">O(\sqrt{\kappa} \log(1/\varepsilon))</span></td>
+</tr>
+</tbody>
+</table>
+<p>The heavy-ball method achieves a <strong>quadratic improvement</strong> in the dependence on <span class="math inline">\kappa</span>, matching the lower bound from <a href="#thm-lower-bound-strongly-convex" class="quarto-xref">Theorem&nbsp;<span>11.2</span></a>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-heavy-ball-limitations" class="level3" data-number="11.3.4">
+<h3 data-number="11.3.4" class="anchored" data-anchor-id="sec-heavy-ball-limitations"><span class="header-section-number">11.3.4</span> Limitations: Beyond Quadratics</h3>
+<p>Despite its elegant performance on quadratics, the heavy-ball method has fundamental limitations:</p>
+<ol type="1">
+<li><p><strong>Requires knowing <span class="math inline">L</span> and <span class="math inline">\mu</span>.</strong> The optimal parameters <span class="math inline">\eta</span> and <span class="math inline">\theta</span> depend on both the smoothness constant <span class="math inline">L</span> and the strong convexity parameter <span class="math inline">\mu</span>. In practice, <span class="math inline">\mu</span> is often unknown or zero.</p></li>
+<li><p><strong>Does not accelerate for general convex functions.</strong> The state-space analysis exploits the <em>linearity</em> of the gradient <span class="math inline">\nabla f(x) = Q(x - x^*)</span> for quadratics. For general convex functions, the heavy-ball method with fixed <span class="math inline">\eta, \theta</span> can fail to achieve the <span class="math inline">O(1/k^2)</span> rate — and may even diverge if the parameters are poorly tuned.</p></li>
+<li><p><strong>No <span class="math inline">O(1/k^2)</span> rate in the convex (non-strongly-convex) case.</strong> Unlike Nesterov’s method, the heavy-ball method with constant momentum does not achieve the optimal <span class="math inline">O(1/k^2)</span> rate for convex functions when <span class="math inline">\mu = 0</span>.</p></li>
+</ol>
+<p>These limitations motivate the search for a more robust acceleration scheme. Nesterov’s insight was to use a <strong>time-varying</strong> momentum coefficient that adapts as the algorithm progresses, yielding optimal rates for all smooth convex functions — not just quadratics.</p>
+</section>
+</section>
+<section id="sec-nag-convex" class="level2" data-number="11.4">
+<h2 data-number="11.4" class="anchored" data-anchor-id="sec-nag-convex"><span class="header-section-number">11.4</span> Nesterov’s Accelerated Gradient: Smooth Convex Case</h2>
+<p>Having established that gradient descent leaves a <span class="math inline">\sqrt{\kappa}</span> gap relative to the lower bounds, and that the heavy-ball method closes this gap for quadratics but not general convex functions, we now present Nesterov’s accelerated gradient method, which achieves optimal rates universally. The key innovation is a <em>time-varying</em> momentum coefficient that increases toward <span class="math inline">1</span> as the algorithm progresses.</p>
+<section id="sec-nag-algorithm" class="level3" data-number="11.4.1">
+<h3 data-number="11.4.1" class="anchored" data-anchor-id="sec-nag-algorithm"><span class="header-section-number">11.4.1</span> The Algorithm</h3>
+<p>We consider the problem <span class="math display">
+\min_{x \in \mathbb{R}^n} f(x),
+</span> where <span class="math inline">f</span> is convex and <span class="math inline">L</span>-smooth (i.e., <span class="math inline">\nabla f</span> is <span class="math inline">L</span>-Lipschitz continuous).</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Algorithm: Nesterov’s Accelerated Gradient (Convex Case)
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Initialize:</strong> <span class="math inline">x^0 = y^0 \in \mathbb{R}^n</span>, <span class="math inline">\theta_0 = 1</span>.</p>
+<p><strong>For</strong> <span class="math inline">k = 0, 1, 2, \ldots</span>: <span id="eq-nag-convex"><span class="math display">
+\begin{aligned}
+y^{k+1} &amp;= x^k - \frac{1}{L}\nabla f(x^k), \\
+\theta_{k+1} &amp;= \frac{1 + \sqrt{1 + 4\theta_k^2}}{2}, \\
+x^{k+1} &amp;= y^{k+1} + \frac{\theta_k - 1}{\theta_{k+1}}\bigl(y^{k+1} - y^k\bigr).
+\end{aligned}
+\tag{11.7}</span></span> The momentum coefficient <span class="math inline">\beta_k = (\theta_k - 1)/\theta_{k+1}</span> is time-varying and increasing. Since <span class="math inline">\theta_k \geq (k+2)/2</span>, we have <span class="math inline">\beta_k \approx k/(k+3)</span> for large <span class="math inline">k</span>, but the exact <span class="math inline">\theta_k</span> recursion is needed for the convergence proof.</p>
+</div>
+</div>
+<p>The following plot shows the <span class="math inline">\theta_k</span> sequence and the resulting momentum coefficient <span class="math inline">\beta_k = (\theta_k - 1)/\theta_{k+1}</span>.</p>
+<div id="fig-theta-sequence" style="width:100%;max-width:720px;margin:auto;"></div>
+<script>
+(function(){
+  const nK = 40;
+  const theta = [1];
+  for (let k = 0; k < nK; k++) theta.push((1 + Math.sqrt(1 + 4*theta[k]*theta[k])) / 2);
+  const iters = Array.from({length: nK+1}, (_, i) => i);
+
+  // Momentum coefficient beta_k = (theta_k - 1) / theta_{k+1}
+  const beta = [], approx = [];
+  for (let k = 0; k < nK; k++) {
+    beta.push((theta[k] - 1) / theta[k+1]);
+    approx.push(k / (k + 3));
+  }
+  const bIters = Array.from({length: nK}, (_, i) => i);
+
+  const traces = [
+    {x: iters, y: theta, mode: 'lines+markers', xaxis: 'x', yaxis: 'y',
+     line: {color: '#7B97AD', width: 2.5}, marker: {size: 4, color: '#7B97AD'},
+     name: '\u03B8\u2096', legendgroup: 'left', showlegend: true},
+    {x: iters, y: iters.map(k => (k+2)/2), mode: 'lines', xaxis: 'x', yaxis: 'y',
+     line: {color: '#C47A6A', width: 1.5, dash: 'dash'},
+     name: '(k+2)/2 (lower bound)', legendgroup: 'left', showlegend: true},
+    {x: bIters, y: beta, mode: 'lines+markers', xaxis: 'x2', yaxis: 'y2',
+     line: {color: '#7B97AD', width: 2.5}, marker: {size: 4, color: '#7B97AD'},
+     name: '\u03B2\u2096 = (\u03B8\u2096\u22121)/\u03B8\u2096\u208A\u2081', legendgroup: 'right', showlegend: true},
+    {x: bIters, y: approx, mode: 'lines', xaxis: 'x2', yaxis: 'y2',
+     line: {color: '#C47A6A', width: 1.5, dash: 'dash'},
+     name: 'k/(k+3) (approx.)', legendgroup: 'right', showlegend: true},
+  ];
+
+  const layout = {
+    grid: {rows: 1, columns: 2, pattern: 'independent'},
+    xaxis: {title: 'k', domain: [0, 0.45], gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    yaxis: {title: '\u03B8\u2096', gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    xaxis2: {title: 'k', domain: [0.55, 1], gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    yaxis2: {title: 'Momentum \u03B2\u2096', range: [0, 1.05], gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    annotations: [
+      {text: '<b>Growth of \u03B8\u2096</b>', x: 0.22, y: 1.08, xref: 'paper', yref: 'paper', showarrow: false, font: {size: 13, color: '#3D3530'}},
+      {text: '<b>Momentum \u03B2\u2096 = (\u03B8\u2096\u22121)/\u03B8\u2096\u208A\u2081</b>', x: 0.77, y: 1.08, xref: 'paper', yref: 'paper', showarrow: false, font: {size: 13, color: '#3D3530'}}
+    ],
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: '#faf7f3',
+    font: {family: '"Source Serif 4", Georgia, serif', color: '#3d3530', size: 13},
+    showlegend: true,
+    legend: {x: 0.5, y: 0.02, xanchor: 'center', yanchor: 'bottom', orientation: 'h',
+      bgcolor: '#faf7f3ee', bordercolor: '#d5cdc4', borderwidth: 1, font: {size: 11}},
+    margin: {t: 40, b: 85, l: 55, r: 20},
+    width: 720, height: 400
+  };
+
+  Plotly.newPlot('fig-theta-sequence', traces, layout, {responsive: true, displayModeBar: false});
+})();
+</script>
+<p><em>Left: the sequence <span class="math inline">\theta_k</span> grows linearly, lower-bounded by <span class="math inline">(k+2)/2</span>. Right: the momentum coefficient <span class="math inline">\beta_k = (\theta_k - 1)/\theta_{k+1}</span> increases toward <span class="math inline">1</span>, closely tracking the approximation <span class="math inline">k/(k+3)</span>. The exact <span class="math inline">\theta_k</span> recursion (not the approximation) is what makes the Lyapunov proof work.</em></p>
+<p>The algorithm maintains two sequences: <span class="math inline">\{y^k\}</span> (gradient steps) and <span class="math inline">\{x^k\}</span> (extrapolated points). The following table compares the update formulas side by side with the heavy-ball method, making the structural difference transparent:</p>
+<div id="tbl-momentum-comparison" class="hover quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-momentum-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;11.1: Structural comparison of heavy-ball and Nesterov’s accelerated gradient.
+</figcaption>
+<div aria-describedby="tbl-momentum-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table-hover caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Heavy-Ball</strong></th>
+<th><strong>Nesterov’s AGD</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Step 1</strong></td>
+<td>Gradient at <em>current</em> <span class="math inline">x^k</span></td>
+<td>Momentum (look-ahead)</td>
+</tr>
+<tr class="even">
+<td></td>
+<td><span class="math inline">\quad\to\; x^k - \eta\,\nabla f(x^k)</span></td>
+<td><span class="math inline">\quad\to\; y^k = x^k + \beta_k(x^k - x^{k-1})</span></td>
+</tr>
+<tr class="odd">
+<td><strong>Step 2</strong></td>
+<td>Add momentum</td>
+<td>Gradient at <em>look-ahead</em> <span class="math inline">y^k</span></td>
+</tr>
+<tr class="even">
+<td></td>
+<td><span class="math inline">\quad\to\; x^{k+1} = x^k - \eta\,\nabla f(x^k) + \theta(x^k\!-\!x^{k-1})</span></td>
+<td><span class="math inline">\quad\to\; x^{k+1} = y^k - \frac{1}{L}\nabla f(y^k)</span></td>
+</tr>
+<tr class="odd">
+<td><strong><span class="math inline">\nabla f</span> evaluated at</strong></td>
+<td>Current iterate <span class="math inline">x^k</span></td>
+<td>Look-ahead point <span class="math inline">y^k</span></td>
+</tr>
+<tr class="even">
+<td><strong>Momentum coeff.</strong></td>
+<td>Fixed <span class="math inline">\theta = \bigl(\frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1}\bigr)^2</span></td>
+<td>Time-varying <span class="math inline">\beta_k = \frac{\theta_k - 1}{\theta_{k+1}} \approx \frac{k}{k+3} \to 1</span></td>
+</tr>
+<tr class="odd">
+<td><strong>Scope</strong></td>
+<td>Quadratics only</td>
+<td>All smooth convex <span class="math inline">f</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div id="fig-momentum-comparison" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-momentum-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch09-momentum-comparison.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;11.2: Comparison of heavy-ball and Nesterov’s AGD. Both methods combine a gradient step with a momentum step, but in different order. Heavy-ball evaluates the gradient at the current point x^k; Nesterov first extrapolates to a look-ahead point y^k and evaluates the gradient there."><img src="figures/ch09-momentum-comparison.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-momentum-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11.2: Comparison of heavy-ball and Nesterov’s AGD. Both methods combine a gradient step with a momentum step, but in different order. Heavy-ball evaluates the gradient at the current point <span class="math inline">x^k</span>; Nesterov first extrapolates to a look-ahead point <span class="math inline">y^k</span> and evaluates the gradient there.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Comparison with Heavy-Ball
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Two key differences separate Nesterov’s method from heavy-ball:</p>
+<ol type="1">
+<li><p><strong>Order of operations.</strong> Heavy-ball evaluates <span class="math inline">\nabla f</span> at the current iterate <span class="math inline">x^k</span> and adds momentum afterward. Nesterov first extrapolates to a look-ahead point <span class="math inline">y^k</span> and evaluates <span class="math inline">\nabla f</span> <em>there</em>, using more up-to-date curvature information.</p></li>
+<li><p><strong>Time-varying momentum.</strong> Heavy-ball uses a fixed coefficient <span class="math inline">\theta</span>, which must be tuned to the (unknown) strong convexity <span class="math inline">\mu</span>. Nesterov’s coefficient <span class="math inline">\beta_k = (\theta_k - 1)/\theta_{k+1}</span> is <em>time-varying</em> and increasing toward <span class="math inline">1</span>. This schedule is not chosen by hand — it is <em>derived</em> from the convergence analysis: the recursion <span class="math inline">\theta_{k+1} = (1+\sqrt{1+4\theta_k^2})/2</span> satisfies the key identity <span class="math inline">\theta_k(\theta_k - 1) = \theta_{k-1}^2</span> (see (<a href="#eq-theta-identity" class="quarto-xref"><span>11.12</span></a>) in the proof of <a href="#thm-nag-convex" class="quarto-xref">Theorem&nbsp;<span>11.4</span></a>), which is precisely what makes the Lyapunov function decrease. Since <span class="math inline">\theta_k \geq (k+2)/2</span>, the momentum coefficient satisfies <span class="math inline">\beta_k \approx k/(k+3)</span> for large <span class="math inline">k</span>.</p></li>
+</ol>
+<p>Together, these two innovations are what enable Nesterov’s method to achieve optimal rates for <em>all</em> smooth convex functions, not just quadratics.</p>
+</div>
+</div>
+</section>
+<section id="sec-ode-interpretation" class="level3" data-number="11.4.2">
+<h3 data-number="11.4.2" class="anchored" data-anchor-id="sec-ode-interpretation"><span class="header-section-number">11.4.2</span> Interpretation via Differential Equations</h3>
+<p>Nesterov’s momentum coefficient <span class="math inline">\beta_k = (\theta_k - 1)/\theta_{k+1} \approx k/(k+3) = 1 - 3/(k+3)</span> is particularly mysterious at first sight. Why does it approach <span class="math inline">1</span> at a rate governed by the constant <span class="math inline">3</span>? A beautiful explanation comes from the <strong>continuous-time limit</strong> of the algorithm, discovered by Su, Boyd, and Candès<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</p>
+<p><strong>Heuristic derivation.</strong> We derive the ODE in three steps.</p>
+<p><em>Step 1: Rewrite the recursion.</em> Combining both lines of (<a href="#eq-nag-convex" class="quarto-xref"><span>11.7</span></a>) into a single recursion on <span class="math inline">\{x^k\}</span> and using step size <span class="math inline">\eta = 1/L</span>, the update takes the form <span class="math display">
+x^{k+1} - x^k = \frac{k-1}{k+2}\bigl(x^k - x^{k-1}\bigr) - \eta\,\nabla f(y^k).
+</span> Dividing both sides by <span class="math inline">\sqrt{\eta}</span>: <span class="math display">
+\frac{x^{k+1} - x^k}{\sqrt{\eta}} = \frac{k-1}{k+2}\cdot\frac{x^k - x^{k-1}}{\sqrt{\eta}} - \sqrt{\eta}\,\nabla f(y^k).
+</span></p>
+<p><em>Step 2: Pass to continuous time.</em> Introduce a continuous-time variable <span class="math inline">\tau = k\sqrt{\eta}</span>, so that each discrete step corresponds to a time increment <span class="math inline">\Delta\tau = \sqrt{\eta}</span>. Define <span class="math inline">X(\tau) \approx x^k</span> as the continuous interpolation. Taylor-expanding around <span class="math inline">\tau</span>: <span class="math display">
+x^{k+1} = X(\tau + \sqrt{\eta}) \approx X(\tau) + \dot{X}(\tau)\sqrt{\eta} + \tfrac{1}{2}\ddot{X}(\tau)\,\eta,
+</span> so the finite differences become <span class="math display">
+\frac{x^{k+1} - x^k}{\sqrt{\eta}} \approx \dot{X}(\tau) + \tfrac{1}{2}\ddot{X}(\tau)\sqrt{\eta}, \qquad \frac{x^k - x^{k-1}}{\sqrt{\eta}} \approx \dot{X}(\tau) - \tfrac{1}{2}\ddot{X}(\tau)\sqrt{\eta}.
+</span> Meanwhile, the momentum coefficient satisfies <span class="math inline">\frac{k-1}{k+2} = 1 - \frac{3}{k+2} \approx 1 - \frac{3\sqrt{\eta}}{\tau}</span>.</p>
+<p><em>Step 3: Substitute and simplify.</em> Plugging into the recursion: <span class="math display">
+\dot{X} + \tfrac{1}{2}\ddot{X}\sqrt{\eta} \;\approx\; \Bigl(1 - \frac{3\sqrt{\eta}}{\tau}\Bigr)\!\Bigl(\dot{X} - \tfrac{1}{2}\ddot{X}\sqrt{\eta}\Bigr) - \sqrt{\eta}\,\nabla f(X).
+</span> Expanding the right-hand side and collecting terms of order <span class="math inline">\sqrt{\eta}</span>: <span class="math display">
+\sqrt{\eta}\Bigl[\ddot{X} + \frac{3}{\tau}\dot{X} + \nabla f(X)\Bigr] \approx 0.
+</span> Dividing by <span class="math inline">\sqrt{\eta}</span> yields the <strong>second-order ODE</strong>: <span id="eq-nesterov-ode"><span class="math display">
+\ddot{X}(\tau) + \frac{3}{\tau}\,\dot{X}(\tau) + \nabla f\bigl(X(\tau)\bigr) = 0.
+\tag{11.8}</span></span></p>
+<p><strong>Physical interpretation.</strong> This is a <strong>damped oscillator</strong>: <span class="math inline">\nabla f(X)</span> acts as a restoring force pulling <span class="math inline">X</span> toward the minimizer, while <span class="math inline">(3/\tau)\dot{X}</span> is a time-varying <em>friction</em> that decreases as <span class="math inline">\tau</span> grows. The decreasing friction allows the system to build up momentum over time — explaining why the discrete algorithm’s momentum coefficient grows toward <span class="math inline">1</span>.</p>
+<p><strong>Convergence of the ODE.</strong> Define the Lyapunov function <span class="math display">
+\mathcal{E}(\tau) = \tau^2\bigl(f(X(\tau)) - f(x^*)\bigr) + 2\!\left\|X(\tau) + \frac{\tau}{2}\dot{X}(\tau) - x^*\right\|_2^2.
+</span> We show in the appendix (see <span class="quarto-unresolved-ref">?sec-ode-lyapunov</span>) that a direct computation using (<a href="#eq-nesterov-ode" class="quarto-xref"><span>11.8</span></a>) and convexity of <span class="math inline">f</span> gives <span class="math inline">\dot{\mathcal{E}}(\tau) \leq 0</span>. Therefore <span class="math inline">f(X(\tau)) - f(x^*) \leq \mathcal{E}(\tau)/\tau^2 \leq \mathcal{E}(0)/\tau^2 = O(1/\tau^2)</span>, recovering Nesterov’s <span class="math inline">O(1/k^2)</span> rate in the continuous limit.</p>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><strong>Connection to the discrete proof.</strong> The continuous Lyapunov <span class="math inline">\mathcal{E}(\tau)</span> is the blueprint for the discrete one in <a href="#thm-nag-convex" class="quarto-xref">Theorem&nbsp;<span>11.4</span></a>. The correspondence is:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Continuous (<span class="math inline">\tau = k\sqrt{\eta}</span>)</th>
+<th>Discrete</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\tau^2</span></td>
+<td><span class="math inline">\theta_{k-1}^2</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">f(X(\tau)) - f(x^*)</span></td>
+<td><span class="math inline">f(y^k) - f(x^*)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">X + \frac{\tau}{2}\dot{X} - x^*</span></td>
+<td><span class="math inline">u^k = \theta_{k-1}(y^k - x^*) - (\theta_{k-1}-1)(y^{k-1} - x^*)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The auxiliary sequence <span class="math inline">u^k</span> discretizes <span class="math inline">X + \frac{\tau}{2}\dot{X} - x^*</span> via the approximation <span class="math inline">\dot{X} \approx (y^k - y^{k-1})/\sqrt{\eta}</span>. The discrete identity <span class="math inline">\theta_k(\theta_k - 1) = \theta_{k-1}^2</span> (<a href="#eq-theta-identity" class="quarto-xref"><span>11.12</span></a>) is the algebraic counterpart of the continuous condition <span class="math inline">\dot{\mathcal{E}} \leq 0</span>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: The Magic Number 3
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The constant <span class="math inline">3</span> in (<a href="#eq-nesterov-ode" class="quarto-xref"><span>11.8</span></a>) is the <em>smallest</em> damping coefficient that guarantees <span class="math inline">O(1/\tau^2)</span> convergence. Replacing <span class="math inline">3/\tau</span> with <span class="math inline">\alpha/\tau</span> for any <span class="math inline">\alpha \geq 3</span> still yields <span class="math inline">O(1/\tau^2)</span>, but <span class="math inline">\alpha &lt; 3</span> does not. In this sense, <span class="math inline">3</span> minimizes the pre-constant in the convergence bound, and Nesterov’s choice <span class="math inline">\beta_k \approx k/(k+3)</span> is the tightest possible momentum schedule.</p>
+</div>
+</div>
+</section>
+<section id="sec-nag-convex-analysis" class="level3" data-number="11.4.3">
+<h3 data-number="11.4.3" class="anchored" data-anchor-id="sec-nag-convex-analysis"><span class="header-section-number">11.4.3</span> Convergence Analysis</h3>
+<p>We now establish the convergence rate of the accelerated gradient method (<a href="#eq-nag-convex" class="quarto-xref"><span>11.7</span></a>). The following theorem shows that it achieves an <span class="math inline">O(1/k^2)</span> convergence rate, which is a quadratic improvement over gradient descent and matches the lower bound from <a href="#thm-lower-bound-convex" class="quarto-xref">Theorem&nbsp;<span>11.1</span></a>.</p>
+<div id="thm-nag-convex" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 11.4 (Convergence of Accelerated Gradient (Convex))</strong></span> Let <span class="math inline">f</span> be convex and <span class="math inline">L</span>-smooth. Then the iterates of (<a href="#eq-nag-convex" class="quarto-xref"><span>11.7</span></a>) satisfy <span id="eq-nag-convex-rate"><span class="math display">
+f(y^k) - f(x^*) \leq \frac{2L\|x^0 - x^*\|_2^2}{(k+1)^2}.
+\tag{11.9}</span></span></p>
+</div>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><strong>Comparison with gradient descent:</strong></p>
+<ul>
+<li><strong>GD:</strong> <span class="math inline">f(x^k) - f(x^*) = O(1/k)</span>.</li>
+<li><strong>Accelerated GD:</strong> <span class="math inline">f(y^k) - f(x^*) = O(1/k^2)</span>.</li>
+</ul>
+<p>This is a quadratic improvement in the convergence rate. In terms of iteration complexity, to achieve <span class="math inline">f(y^k) - f(x^*) \leq \varepsilon</span>:</p>
+<ul>
+<li><strong>GD:</strong> <span class="math inline">k = O(L/\varepsilon)</span>.</li>
+<li><strong>Accelerated GD:</strong> <span class="math inline">k = O(\sqrt{L/\varepsilon})</span>.</li>
+</ul>
+<p>The accelerated rate matches the lower bound (<a href="#eq-lower-bound-convex" class="quarto-xref"><span>11.2</span></a>) up to constants.</p>
+</div>
+</div>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>We prove <a href="#thm-nag-convex" class="quarto-xref">Theorem&nbsp;<span>11.4</span></a> by constructing a <strong>Lyapunov function</strong> (energy) that is non-increasing along the iterates — a direct discretization of the continuous-time argument in <span class="quarto-unresolved-ref">?sec-ode-lyapunov</span>. The proof reveals <em>where the momentum schedule comes from</em>: the <span class="math inline">\theta_k</span> recursion in the algorithm (<a href="#eq-nag-convex" class="quarto-xref"><span>11.7</span></a>) is uniquely determined by the requirement that the Lyapunov function decreases.</p>
+<p><strong>Step 1: Fundamental inequality.</strong> Since <span class="math inline">y^{k+1} = x^k - \frac{1}{L}\nabla f(x^k)</span>, combining the descent lemma (<span class="math inline">L</span>-smoothness) with convexity and completing the square yields: for <strong>any</strong> <span class="math inline">z \in \mathbb{R}^n</span>, <span id="eq-fundamental-ineq"><span class="math display">
+f(y^{k+1}) - f(z) \leq \frac{L}{2}\|z - x^k\|_2^2 - \frac{L}{2}\|z - y^{k+1}\|_2^2.
+\tag{11.10}</span></span> (This follows from: <span class="math inline">f(y^{k+1}) \leq f(x^k) - \frac{1}{2L}\|\nabla f(x^k)\|^2 \leq f(z) + \langle \nabla f(x^k), x^k - z \rangle - \frac{1}{2L}\|\nabla f(x^k)\|^2 = f(z) + \frac{L}{2}\|z - x^k\|^2 - \frac{L}{2}\|z - y^{k+1}\|^2</span>, where the last equality uses <span class="math inline">y^{k+1} = x^k - \frac{1}{L}\nabla f(x^k)</span> to complete the square.)</p>
+<p><strong>Step 2: The momentum sequence <span class="math inline">\theta_k</span>.</strong> Define <span class="math inline">\theta_0 = 1</span> and <span id="eq-lambda-recursion"><span class="math display">
+\theta_{k+1} = \frac{1 + \sqrt{1 + 4\theta_k^2}}{2}.
+\tag{11.11}</span></span> This recursion is the positive root of <span class="math inline">\theta_{k+1}^2 - \theta_{k+1} = \theta_k^2</span>, which we write as the <strong>key algebraic identity</strong>: <span id="eq-theta-identity"><span class="math display">
+\theta_k(\theta_k - 1) = \theta_{k-1}^2.
+\tag{11.12}</span></span> By induction, <span class="math inline">\theta_k \geq (k+2)/2</span> for all <span class="math inline">k \geq 0</span>. This is exactly the <span class="math inline">\theta_k</span> sequence used in the algorithm (<a href="#eq-nag-convex" class="quarto-xref"><span>11.7</span></a>), giving the momentum coefficient <span class="math inline">\beta_k = (\theta_k - 1)/\theta_{k+1}</span>.</p>
+<p>Where does this recursion come from? The answer emerges in Step 4: it is the <em>unique</em> choice that makes the Lyapunov function decrease.</p>
+<p><strong>Step 3: Lyapunov function.</strong> Define the auxiliary sequence <span class="math display">
+u^k = \theta_{k-1}(y^k - x^*) - (\theta_{k-1} - 1)(y^{k-1} - x^*),
+</span> with <span class="math inline">u^1 = y^1 - x^*</span> (since <span class="math inline">\theta_0 = 1</span>). The Lyapunov function is <span class="math display">
+\mathcal{E}_k = \theta_{k-1}^2\bigl(f(y^k) - f(x^*)\bigr) + \frac{L}{2}\|u^k\|_2^2.
+</span> This combines the optimality gap (weighted by <span class="math inline">\theta_{k-1}^2</span>) with a distance-like term. We will show <span class="math inline">\mathcal{E}_{k+1} \leq \mathcal{E}_k</span>.</p>
+<p><strong>Step 4: Lyapunov decrease (the key step).</strong> Apply (<a href="#eq-fundamental-ineq" class="quarto-xref"><span>11.10</span></a>) with the specific choice <span class="math display">
+z = \frac{1}{\theta_k}\,x^* + \left(1 - \frac{1}{\theta_k}\right)y^k.
+</span> A direct computation using the definition of <span class="math inline">u^k</span> and the extrapolation <span class="math inline">x^k = y^k + \beta_{k-1}(y^k - y^{k-1})</span> shows: <span class="math display">
+z - x^k = -\frac{u^k}{\theta_k}, \qquad z - y^{k+1} = -\frac{u^{k+1}}{\theta_k}.
+</span> Substituting into (<a href="#eq-fundamental-ineq" class="quarto-xref"><span>11.10</span></a>): <span class="math display">
+f(y^{k+1}) - f(z) \leq \frac{L}{2\theta_k^2}\bigl(\|u^k\|_2^2 - \|u^{k+1}\|_2^2\bigr).
+</span> By convexity of <span class="math inline">f</span>, the evaluation point <span class="math inline">z</span> satisfies <span class="math inline">f(z) \leq \theta_k^{-1}f(x^*) + (1 - \theta_k^{-1})f(y^k)</span>, so <span class="math display">
+f(y^{k+1}) - f(x^*) \leq \left(1 - \frac{1}{\theta_k}\right)\bigl(f(y^k) - f(x^*)\bigr) + \frac{L}{2\theta_k^2}\bigl(\|u^k\|_2^2 - \|u^{k+1}\|_2^2\bigr).
+</span> Multiplying both sides by <span class="math inline">\theta_k^2</span> and using the identity <span class="math inline">\theta_k(\theta_k - 1) = \theta_{k-1}^2</span> from (<a href="#eq-theta-identity" class="quarto-xref"><span>11.12</span></a>): <span class="math display">
+\theta_k^2\bigl(f(y^{k+1}) - f(x^*)\bigr) + \frac{L}{2}\|u^{k+1}\|_2^2 \leq \theta_{k-1}^2\bigl(f(y^k) - f(x^*)\bigr) + \frac{L}{2}\|u^k\|_2^2.
+</span> That is, <span class="math inline">\mathcal{E}_{k+1} \leq \mathcal{E}_k</span>. <em>This is where the identity (<a href="#eq-theta-identity" class="quarto-xref"><span>11.12</span></a>) — and hence the <span class="math inline">\theta_k</span> recursion — is essential: it is precisely the algebraic condition needed for the weighted optimality gap to telescope.</em></p>
+<p><strong>Step 5: Concluding the rate.</strong> Telescoping from <span class="math inline">k</span> down to <span class="math inline">1</span>: <span class="math inline">\mathcal{E}_k \leq \mathcal{E}_1</span>. Since <span class="math inline">\theta_0 = 1</span> and <span class="math inline">u^1 = y^1 - x^*</span>: <span class="math display">
+\mathcal{E}_1 = f(y^1) - f(x^*) + \frac{L}{2}\|y^1 - x^*\|_2^2.
+</span> Applying (<a href="#eq-fundamental-ineq" class="quarto-xref"><span>11.10</span></a>) at <span class="math inline">k = 0</span> with <span class="math inline">z = x^*</span>: <span class="math inline">f(y^1) - f(x^*) \leq \frac{L}{2}\|x^0 - x^*\|_2^2 - \frac{L}{2}\|y^1 - x^*\|_2^2</span>. Thus <span class="math inline">\mathcal{E}_1 \leq \frac{L}{2}\|x^0 - x^*\|_2^2</span>.</p>
+<p>Therefore: <span class="math display">
+\theta_{k-1}^2\bigl(f(y^k) - f(x^*)\bigr) \leq \mathcal{E}_k \leq \frac{L}{2}\|x^0 - x^*\|_2^2.
+</span> Since <span class="math inline">\theta_{k-1} \geq (k+1)/2</span>: <span class="math display">
+f(y^k) - f(x^*) \leq \frac{L\|x^0 - x^*\|_2^2}{2\theta_{k-1}^2} \leq \frac{2L\|x^0 - x^*\|_2^2}{(k+1)^2}.
+</span> <span class="math inline">\blacksquare</span></p>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Why “Acceleration” is Mysterious
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Unlike gradient descent, the accelerated method does <strong>not</strong> guarantee monotone decrease of <span class="math inline">f(x^k)</span>. The function values can oscillate. The proof works through a carefully constructed Lyapunov function rather than a descent argument. This makes acceleration fundamentally different from standard gradient methods, and its deep mechanism remains an active area of research.</p>
+</div>
+</div>
+</section>
+<section id="sec-visualization" class="level3" data-number="11.4.4">
+<h3 data-number="11.4.4" class="anchored" data-anchor-id="sec-visualization"><span class="header-section-number">11.4.4</span> Visualization: GD vs.&nbsp;Accelerated GD</h3>
+<p>The following plot compares gradient descent and Nesterov’s accelerated gradient on a <span class="math inline">50</span>-dimensional quadratic <span class="math inline">f(x) = \frac{1}{2}\sum_{i=1}^{50} \lambda_i x_i^2</span> with eigenvalues uniformly spaced in <span class="math inline">[\mu, L]</span>, giving condition number <span class="math inline">\kappa = L/\mu = 500</span>. With such a large condition number, GD makes painfully slow progress while AGD converges dramatically faster.</p>
+<div id="fig-all-methods" style="width:100%;max-width:720px;margin:auto;"></div>
+<script>
+(function(){
+  const L = 500, mu = 1, kappa = L/mu;
+  const nIter = 500;
+  const n = 50;
+  const eigenvals = Array.from({length: n}, (_, i) => mu + (L - mu) * i / (n - 1));
+  const x0 = eigenvals.map(() => 1);
+  function fval(z) { return 0.5 * eigenvals.reduce((s, l, i) => s + l*z[i]*z[i], 0); }
+  const f0 = fval(x0);
+
+  // 1. GD (step = 1/L)
+  let xGD = [...x0];
+  const gdF = [f0];
+  for (let k = 0; k < nIter; k++) {
+    xGD = xGD.map((xi, i) => xi - (1/L) * eigenvals[i] * xi);
+    gdF.push(fval(xGD));
+  }
+
+  // 2. Nesterov AGD (convex variant: exact theta_k recursion)
+  let xAC = [...x0], yAC = [...x0], thetaAC = 1;
+  const acF = [f0];
+  for (let k = 0; k < nIter; k++) {
+    const yNew = xAC.map((xi, i) => xi - (1/L) * eigenvals[i] * xi);
+    const thetaNew = (1 + Math.sqrt(1 + 4*thetaAC*thetaAC)) / 2;
+    const mom = (thetaAC - 1) / thetaNew;
+    const xNew = yNew.map((yi, i) => yi + mom * (yi - yAC[i]));
+    yAC = yNew; xAC = xNew; thetaAC = thetaNew;
+    acF.push(fval(yAC));
+  }
+
+  // 3. O(1/k) and O(1/k^2) reference lines
+  const refGD = [], refAGD = [];
+  for (let k = 0; k <= nIter; k++) {
+    refGD.push(k === 0 ? f0 : f0 * 2 * L / (mu * k));      // O(L/(mu*k)) = O(kappa/k)
+    refAGD.push(k === 0 ? f0 : f0 * 2 * L / ((k+1)*(k+1)));  // O(L/k^2)
+  }
+
+  const iters = Array.from({length: nIter+1}, (_, i) => i);
+  const traces = [
+    {x: iters, y: gdF.map(v => Math.max(v, 1e-16)), mode: 'lines',
+     line: {color: '#C47A6A', width: 2.5}, name: 'GD (step 1/L)'},
+    {x: iters, y: acF.map(v => Math.max(Math.abs(v), 1e-16)), mode: 'lines',
+     line: {color: '#7B97AD', width: 2.5}, name: 'Nesterov AGD'},
+    {x: iters, y: refGD.map(v => Math.max(v, 1e-16)), mode: 'lines',
+     line: {color: '#C47A6A', width: 1, dash: 'dot'}, name: 'O(1/k) rate'},
+    {x: iters, y: refAGD.map(v => Math.max(v, 1e-16)), mode: 'lines',
+     line: {color: '#7B97AD', width: 1, dash: 'dot'}, name: 'O(1/k\u00B2) rate'},
+  ];
+
+  const layout = {
+    title: {text: 'GD vs. Nesterov AGD on Quadratic (n=50, \u03BA=500)', font: {size: 15, color: '#3D3530'}},
+    xaxis: {title: {text: 'Iteration k', font: {size: 14}}, range: [0, nIter], gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    yaxis: {title: {text: 'f(x\u1D4F) \u2212 f(x*)', font: {size: 14}}, type: 'log', gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: '#faf7f3',
+    font: {family: '"Source Serif 4", Georgia, serif', color: '#3d3530', size: 13},
+    showlegend: true,
+    legend: {x: 0.55, y: 0.98, bgcolor: '#faf7f3ee', bordercolor: '#d5cdc4', borderwidth: 1, font: {size: 12}},
+    margin: {t: 50, b: 55, l: 70, r: 20},
+    width: 720, height: 480
+  };
+
+  Plotly.newPlot('fig-all-methods', traces, layout, {responsive: true, displayModeBar: false});
+})();
+</script>
+<p><em>GD vs.&nbsp;Nesterov AGD on a 50-dimensional quadratic with <span class="math inline">\kappa = 500</span>. <strong>GD</strong> (red) converges at the <span class="math inline">O(1/k)</span> rate — barely reducing the error over <span class="math inline">500</span> iterations. <strong>Nesterov AGD</strong> (blue) converges at the much faster <span class="math inline">O(1/k^2)</span> rate, with the oscillations characteristic of the momentum mechanism. Dotted lines show the theoretical rates for reference.</em></p>
+</section>
+</section>
+<section id="sec-nag-strongly-convex" class="level2" data-number="11.5">
+<h2 data-number="11.5" class="anchored" data-anchor-id="sec-nag-strongly-convex"><span class="header-section-number">11.5</span> Acceleration for Strongly Convex Functions</h2>
+<p>When <span class="math inline">f</span> is additionally <span class="math inline">\mu</span>-strongly convex (<span class="math inline">\mu &gt; 0</span>), we can exploit the strong convexity to obtain a <strong>linear</strong> convergence rate with improved dependence on the condition number.</p>
+<section id="sec-nag-sc-algorithm" class="level3" data-number="11.5.1">
+<h3 data-number="11.5.1" class="anchored" data-anchor-id="sec-nag-sc-algorithm"><span class="header-section-number">11.5.1</span> The Algorithm</h3>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Algorithm: Nesterov’s Accelerated Gradient (Strongly Convex Case)
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Initialize:</strong> <span class="math inline">x^0 = y^0 \in \mathbb{R}^n</span>. Set <span class="math inline">q = \mu/L</span> and <span class="math inline">\gamma = \frac{\sqrt{q}}{1+\sqrt{q}} = \frac{\sqrt{\mu/L}}{1+\sqrt{\mu/L}}</span>.</p>
+<p><strong>For</strong> <span class="math inline">k = 0, 1, 2, \ldots</span>: <span id="eq-nag-sc"><span class="math display">
+\begin{aligned}
+y^{k+1} &amp;= x^k - \frac{1}{L}\nabla f(x^k), \\
+x^{k+1} &amp;= y^{k+1} + \frac{1-\gamma}{1+\gamma}\bigl(y^{k+1} - y^k\bigr).
+\end{aligned}
+\tag{11.13}</span></span></p>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Fixed Momentum Coefficient
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In contrast to the convex case where the momentum coefficient <span class="math inline">\beta_k = (\theta_k - 1)/\theta_{k+1}</span> is time-varying, the strongly convex case uses a <strong>fixed</strong> momentum coefficient <span class="math display">
+\beta = \frac{1-\gamma}{1+\gamma} = \frac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1},
+</span> where <span class="math inline">\kappa = L/\mu</span>. When <span class="math inline">\kappa</span> is large, <span class="math inline">\beta \approx 1 - 2/\sqrt{\kappa}</span>, which is close to <span class="math inline">1</span>.</p>
+</div>
+</div>
+</section>
+<section id="sec-nag-sc-analysis" class="level3" data-number="11.5.2">
+<h3 data-number="11.5.2" class="anchored" data-anchor-id="sec-nag-sc-analysis"><span class="header-section-number">11.5.2</span> Convergence Analysis</h3>
+<div id="thm-nag-sc" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 11.5 (Convergence of Accelerated Gradient (Strongly Convex))</strong></span> Let <span class="math inline">f</span> be <span class="math inline">\mu</span>-strongly convex and <span class="math inline">L</span>-smooth with <span class="math inline">\kappa = L/\mu</span>. Then the iterates of (<a href="#eq-nag-sc" class="quarto-xref"><span>11.13</span></a>) satisfy <span id="eq-nag-sc-rate"><span class="math display">
+f(y^k) - f(x^*) \leq \frac{L + \mu}{2}\|x^0 - x^*\|_2^2 \cdot \left(\frac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1}\right)^{2k}.
+\tag{11.14}</span></span> In particular, to achieve <span class="math inline">f(y^k) - f(x^*) \leq \varepsilon</span>, we need <span class="math display">
+k = O\!\left(\sqrt{\kappa} \cdot \log\frac{1}{\varepsilon}\right)
+</span> iterations.</p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>We use a Lyapunov function that contracts <em>geometrically</em> at each step, paralleling the convex proof but with the constant momentum <span class="math inline">\beta = \frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1}</span> replacing the time-varying <span class="math inline">\theta_k</span> schedule.</p>
+<p><strong>Step 1: Setup.</strong> Define <span class="math inline">\lambda = \frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1}</span> and the Lyapunov function <span class="math display">
+\mathcal{E}_k = f(y^k) - f(x^*) + \frac{\mu}{2}\|v^k - x^*\|_2^2,
+</span> where <span class="math inline">v^k</span> is an auxiliary sequence satisfying the recursion <span class="math display">
+v^{k+1} = \frac{1}{1+\gamma}\bigl(v^k + \gamma\, y^{k+1} - \gamma\, \tfrac{1}{\mu}\nabla f(x^k)\bigr), \qquad \gamma = \sqrt{q} = \sqrt{\mu/L},
+</span> with <span class="math inline">v^0 = x^0</span>.</p>
+<p><strong>Step 2: Fundamental inequality (strongly convex).</strong> Since <span class="math inline">y^{k+1} = x^k - \frac{1}{L}\nabla f(x^k)</span>, the descent lemma and <span class="math inline">\mu</span>-strong convexity give: for any <span class="math inline">z</span>, <span class="math display">
+f(y^{k+1}) - f(z) \leq \frac{L}{2}\|z - x^k\|_2^2 - \frac{L}{2}\|z - y^{k+1}\|_2^2 - \frac{\mu}{2}\|x^k - z\|_2^2.
+</span></p>
+<p><strong>Step 3: Lyapunov contraction.</strong> Evaluate the inequality at <span class="math inline">z = \frac{\gamma}{1+\gamma}v^k + \frac{1}{1+\gamma}y^k</span> (a convex combination analogous to the choice <span class="math inline">z = \theta_k^{-1}x^* + (1-\theta_k^{-1})y^k</span> in the convex proof). Using the extrapolation formula <span class="math inline">x^k = y^k + \beta(y^k - y^{k-1})</span> and the recursion for <span class="math inline">v^k</span>, a computation analogous to Steps 3–4 of the convex proof yields: <span class="math display">
+f(y^{k+1}) - f(x^*) + \frac{\mu}{2}\|v^{k+1} - x^*\|_2^2 \leq (1-\gamma)\left(f(y^k) - f(x^*) + \frac{\mu}{2}\|v^k - x^*\|_2^2\right).
+</span> That is, <span class="math inline">\mathcal{E}_{k+1} \leq (1 - \gamma)\,\mathcal{E}_k</span>. The contraction factor <span class="math inline">1 - \gamma = 1 - \sqrt{\mu/L} = \frac{\sqrt{\kappa}-1}{\sqrt{\kappa}} \leq \lambda^2</span>.</p>
+<p><strong>Step 4: Telescoping.</strong> By induction, <span class="math inline">\mathcal{E}_k \leq (1-\gamma)^k \mathcal{E}_0</span>. Since <span class="math inline">\mathcal{E}_0 = f(y^0) - f(x^*) + \frac{\mu}{2}\|x^0 - x^*\|_2^2 \leq \frac{L+\mu}{2}\|x^0 - x^*\|_2^2</span>: <span class="math display">
+f(y^k) - f(x^*) \leq \mathcal{E}_k \leq \frac{L+\mu}{2}\|x^0 - x^*\|_2^2 \cdot (1-\gamma)^k \leq \frac{L+\mu}{2}\|x^0-x^*\|_2^2\cdot\left(\frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1}\right)^{2k}.
+</span> Since <span class="math inline">\frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1} \leq \exp\!\bigl(-1/\sqrt{\kappa}\bigr)</span>, we obtain the <span class="math inline">O(\sqrt{\kappa}\log(1/\varepsilon))</span> complexity. <span class="math inline">\blacksquare</span></p>
+</div>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><strong>Summary of rates (smooth optimization):</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Convex</th>
+<th>Strongly Convex (<span class="math inline">\kappa = L/\mu</span>)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Gradient Descent</td>
+<td><span class="math inline">O(1/k)</span></td>
+<td><span class="math inline">O\!\bigl((1-1/\kappa)^k\bigr)</span></td>
+</tr>
+<tr class="even">
+<td>Accelerated GD</td>
+<td><span class="math inline">O(1/k^2)</span></td>
+<td><span class="math inline">O\!\bigl((({\sqrt\kappa-1})/({\sqrt\kappa+1}))^{2k}\bigr)</span></td>
+</tr>
+<tr class="odd">
+<td>Lower Bound</td>
+<td><span class="math inline">\Omega(1/k^2)</span></td>
+<td><span class="math inline">\Omega\!\bigl((({\sqrt\kappa-1})/({\sqrt\kappa+1}))^{2k}\bigr)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The accelerated gradient method is <strong>optimal</strong> among first-order methods in both settings.</p>
+</div>
+</div>
+</div>
+<p>The following plot compares GD, heavy-ball, and Nesterov AGD (strongly convex) on a <span class="math inline">50</span>-dimensional quadratic with <span class="math inline">\kappa = 500</span>. All three methods use the optimal step size <span class="math inline">1/L</span>; the accelerated methods additionally use knowledge of <span class="math inline">\mu</span>.</p>
+<div id="fig-sc-methods" style="width:100%;max-width:720px;margin:auto;"></div>
+<script>
+(function(){
+  const L = 500, mu = 1, kappa = L/mu;
+  const nIter = 300;
+  const n = 50;
+  const eigenvals = Array.from({length: n}, (_, i) => mu + (L - mu) * i / (n - 1));
+  const x0 = eigenvals.map(() => 1);
+  function fval(z) { return 0.5 * eigenvals.reduce((s, l, i) => s + l*z[i]*z[i], 0); }
+  const f0 = fval(x0);
+
+  // 1. GD (step = 1/L)
+  let xGD = [...x0];
+  const gdF = [f0];
+  for (let k = 0; k < nIter; k++) {
+    xGD = xGD.map((xi, i) => xi - (1/L) * eigenvals[i] * xi);
+    gdF.push(fval(xGD));
+  }
+
+  // 2. Heavy-ball (optimal params for quadratic)
+  const etaHB = 4 / Math.pow(Math.sqrt(L) + Math.sqrt(mu), 2);
+  const betaHB = Math.pow((Math.sqrt(kappa) - 1) / (Math.sqrt(kappa) + 1), 2);
+  let xHB = [...x0], xHBp = [...x0];
+  const hbF = [f0];
+  for (let k = 0; k < nIter; k++) {
+    const xNew = xHB.map((xi, i) =>
+      xi - etaHB * eigenvals[i] * xi + betaHB * (xi - xHBp[i])
+    );
+    xHBp = [...xHB]; xHB = xNew;
+    hbF.push(fval(xHB));
+  }
+
+  // 3. Nesterov AGD (strongly convex variant: fixed momentum)
+  const gamma = Math.sqrt(mu/L);
+  const betaSC = (1 - gamma) / (1 + gamma);
+  let xSC = [...x0], ySC = [...x0];
+  const scF = [f0];
+  for (let k = 0; k < nIter; k++) {
+    const yNew = xSC.map((xi, i) => xi - (1/L) * eigenvals[i] * xi);
+    const xNew = yNew.map((yi, i) => yi + betaSC * (yi - ySC[i]));
+    ySC = yNew; xSC = xNew;
+    scF.push(fval(ySC));
+  }
+
+  const iters = Array.from({length: nIter+1}, (_, i) => i);
+  const traces = [
+    {x: iters, y: gdF.map(v => Math.max(v, 1e-16)), mode: 'lines',
+     line: {color: '#C47A6A', width: 2.5}, name: 'GD (step 1/L)'},
+    {x: iters, y: hbF.map(v => Math.max(Math.abs(v), 1e-16)), mode: 'lines',
+     line: {color: '#7A9A7E', width: 2.5}, name: 'Heavy-ball (optimal \u03B7, \u03B8)'},
+    {x: iters, y: scF.map(v => Math.max(Math.abs(v), 1e-16)), mode: 'lines',
+     line: {color: '#7B97AD', width: 2.5}, name: 'Nesterov AGD-SC (\u03B2 = (\u221A\u03BA\u22121)/(\u221A\u03BA+1))'},
+  ];
+
+  const layout = {
+    title: {text: 'Strongly Convex: GD vs. Heavy-Ball vs. Nesterov AGD (\u03BA=500)', font: {size: 14, color: '#3D3530'}},
+    xaxis: {title: {text: 'Iteration k', font: {size: 14}}, range: [0, nIter], gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    yaxis: {title: {text: 'f(x\u1D4F) \u2212 f(x*)', font: {size: 14}}, type: 'log', gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: '#faf7f3',
+    font: {family: '"Source Serif 4", Georgia, serif', color: '#3d3530', size: 13},
+    showlegend: true,
+    legend: {x: 0.3, y: 0.98, bgcolor: '#faf7f3ee', bordercolor: '#d5cdc4', borderwidth: 1, font: {size: 12}},
+    margin: {t: 50, b: 55, l: 70, r: 20},
+    width: 720, height: 480
+  };
+
+  Plotly.newPlot('fig-sc-methods', traces, layout, {responsive: true, displayModeBar: false});
+})();
+</script>
+<p><em>Three methods on a 50-dimensional quadratic with <span class="math inline">\kappa = 500</span>. <strong>GD</strong> (red) converges at the slow linear rate <span class="math inline">(1-1/\kappa)^k</span>. Both <strong>heavy-ball</strong> (green) and <strong>Nesterov AGD-SC</strong> (blue) achieve the accelerated rate <span class="math inline">O\bigl((\frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1})^{2k}\bigr) \approx O(e^{-2k/\sqrt{\kappa}})</span>, which is dramatically faster. Heavy-ball requires exact knowledge of both <span class="math inline">L</span> and <span class="math inline">\mu</span>; Nesterov’s method also requires <span class="math inline">\mu</span> but is more robust to misspecification (see <a href="#sec-rippling" class="quarto-xref"><span>Section 11.6.4</span></a>).</em></p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Historical Note: Nesterov’s Estimate Sequence Technique
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Nesterov’s original 1983 proof used a more abstract framework called <strong>estimate sequences</strong>: one constructs a sequence of quadratic upper bounds <span class="math inline">\phi_k(x)</span> satisfying <span class="math inline">\phi_k(x) \leq (1-\lambda_k)f(x) + \lambda_k \phi_0(x)</span>, and designs the algorithm so that <span class="math inline">f(x^k) \leq \min_x \phi_k(x)</span>. This immediately gives <span class="math inline">f(x^k) - f(x^*) \leq \lambda_k[\phi_0(x^*) - f(x^*)]</span>, and the rate is controlled by how fast <span class="math inline">\lambda_k \to 0</span>. The estimate sequence framework is the most general approach — it unifies the convex, strongly convex, and composite cases — but the Lyapunov analysis presented above is more direct and better suited for a first encounter. See Chapter 2 of Nesterov’s <em>Introductory Lectures on Convex Optimization</em> (2004) for the full treatment.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-fista" class="level2" data-number="11.6">
+<h2 data-number="11.6" class="anchored" data-anchor-id="sec-fista"><span class="header-section-number">11.6</span> Accelerated Proximal Gradient (FISTA)</h2>
+<p>We now extend acceleration to the <strong>composite</strong> optimization problem studied in <a href="../lectures/07-proximal-gradient.html">Chapter 8</a>: <span id="eq-composite"><span class="math display">
+\min_{x \in \mathbb{R}^n}\; F(x) = g(x) + h(x),
+\tag{11.15}</span></span> where:</p>
+<ul>
+<li><span class="math inline">g</span> is convex and <span class="math inline">L</span>-smooth (differentiable with <span class="math inline">L</span>-Lipschitz gradient),</li>
+<li><span class="math inline">h</span> is convex, possibly non-smooth, but has an easy-to-compute proximal operator.</li>
+</ul>
+<p>Recall from <a href="../lectures/07-proximal-gradient.html">Chapter 8</a> that the <strong>proximal gradient</strong> (ISTA) update is: <span id="eq-ista-update"><span class="math display">
+x^{k+1} = \operatorname{prox}_{\frac{1}{L}h}\!\left(x^k - \frac{1}{L}\nabla g(x^k)\right),
+\tag{11.16}</span></span> which converges at rate <span class="math inline">O(1/k)</span>.</p>
+<section id="sec-fista-algorithm" class="level3" data-number="11.6.1">
+<h3 data-number="11.6.1" class="anchored" data-anchor-id="sec-fista-algorithm"><span class="header-section-number">11.6.1</span> FISTA: Fast Iterative Shrinkage-Thresholding Algorithm</h3>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Algorithm: FISTA<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Initialize:</strong> <span class="math inline">x^0 = y^1 \in \mathbb{R}^n</span>, <span class="math inline">\theta_1 = 1</span>.</p>
+<p><strong>For</strong> <span class="math inline">k = 1, 2, \ldots</span>: <span id="eq-fista"><span class="math display">
+\begin{aligned}
+x^k &amp;= \operatorname{prox}_{\frac{1}{L}h}\!\left(y^k - \frac{1}{L}\nabla g(y^k)\right), \\
+\theta_{k+1} &amp;= \frac{1 + \sqrt{1 + 4\theta_k^2}}{2}, \\
+y^{k+1} &amp;= x^k + \frac{\theta_k - 1}{\theta_{k+1}}\bigl(x^k - x^{k-1}\bigr).
+\end{aligned}
+\tag{11.17}</span></span></p>
+</div>
+</div>
+<div id="fig-fista-flow" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-fista-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch09-fista-flow.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;11.3: FISTA algorithm flow: extrapolation, gradient of g, and proximal step. FISTA achieves O(1/k^2) versus ISTA’s O(1/k) with the same per-iteration cost."><img src="figures/ch09-fista-flow.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-fista-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11.3: FISTA algorithm flow: extrapolation, gradient of <span class="math inline">g</span>, and proximal step. FISTA achieves <span class="math inline">O(1/k^2)</span> versus ISTA’s <span class="math inline">O(1/k)</span> with the same per-iteration cost.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Structure of FISTA
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>FISTA has the same structure as Nesterov’s accelerated gradient (<a href="#eq-nag-convex" class="quarto-xref"><span>11.7</span></a>), but replaces the gradient step with the proximal-gradient step (<a href="#eq-ista-update" class="quarto-xref"><span>11.16</span></a>):</p>
+<ol type="1">
+<li>Compute a proximal-gradient step from the extrapolated point <span class="math inline">y^k</span>.</li>
+<li>Extrapolate using momentum with coefficient <span class="math inline">(\theta_k - 1)/\theta_{k+1}</span>.</li>
+</ol>
+<p>The <span class="math inline">\theta_k</span> sequence is <em>identical</em> to the one in (<a href="#eq-lambda-recursion" class="quarto-xref"><span>11.11</span></a>) — the same recursion, the same initial value <span class="math inline">\theta_1 = 1</span>, and the same momentum schedule. There is no need to introduce separate notation: FISTA is simply Nesterov’s AGD with the gradient step replaced by a proximal-gradient step.</p>
+</div>
+</div>
+</section>
+<section id="sec-fista-convergence" class="level3" data-number="11.6.2">
+<h3 data-number="11.6.2" class="anchored" data-anchor-id="sec-fista-convergence"><span class="header-section-number">11.6.2</span> Convergence of FISTA</h3>
+<p>The following theorem confirms that FISTA achieves the same <span class="math inline">O(1/k^2)</span> accelerated rate as Nesterov’s method (compare (<a href="#eq-nag-convex-rate" class="quarto-xref"><span>11.9</span></a>)), but for the composite objective <span class="math inline">F = g + h</span> defined in (<a href="#eq-composite" class="quarto-xref"><span>11.15</span></a>).</p>
+<div id="thm-fista" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 11.6 (Convergence of FISTA)</strong></span> Let <span class="math inline">g</span> be convex and <span class="math inline">L</span>-smooth, <span class="math inline">h</span> be closed and convex. Then FISTA satisfies <span class="math display">
+F(x^k) - F(x^*) \leq \frac{2L\|x^0 - x^*\|_2^2}{(k+1)^2}.
+</span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>The proof follows the same Lyapunov strategy as <a href="#thm-nag-convex" class="quarto-xref">Theorem&nbsp;<span>11.4</span></a>. The key step is replacing the smooth fundamental inequality (<a href="#eq-fundamental-ineq" class="quarto-xref"><span>11.10</span></a>) with a composite analogue.</p>
+<p><strong>Step 1: Fundamental proximal inequality.</strong> We need to show: for any <span class="math inline">z</span>, <span id="eq-fista-key"><span class="math display">
+F(x^k) \leq F(z) + \frac{L}{2}\|z - y^k\|_2^2 - \frac{L}{2}\|x^k - y^k\|_2^2.
+\tag{11.18}</span></span></p>
+<p><em>Derivation.</em> Since <span class="math inline">x^k = \operatorname{prox}_{h/L}(y^k - \frac{1}{L}\nabla g(y^k))</span>, its optimality condition states: there exists <span class="math inline">\xi \in \partial h(x^k)</span> such that <span class="math inline">L(y^k - x^k) - \nabla g(y^k) = \xi</span>. By <span class="math inline">L</span>-smoothness of <span class="math inline">g</span> (descent lemma): <span class="math display">
+g(x^k) \leq g(y^k) + \langle \nabla g(y^k), x^k - y^k \rangle + \frac{L}{2}\|x^k - y^k\|_2^2.
+</span> Adding <span class="math inline">h(x^k)</span> to both sides and using convexity of <span class="math inline">g</span> at <span class="math inline">z</span> (<span class="math inline">g(y^k) \leq g(z) + \langle \nabla g(y^k), y^k - z\rangle</span>): <span class="math display">
+F(x^k) \leq g(z) + \langle \nabla g(y^k), x^k - z \rangle + \frac{L}{2}\|x^k - y^k\|_2^2 + h(x^k).
+</span> Since <span class="math inline">\xi = L(y^k - x^k) - \nabla g(y^k)</span> and <span class="math inline">h(z) \geq h(x^k) + \langle \xi, z - x^k\rangle</span> (convexity of <span class="math inline">h</span>): <span class="math display">
+h(x^k) \leq h(z) - \langle L(y^k - x^k) - \nabla g(y^k), z - x^k\rangle.
+</span> Substituting and completing the square (exactly as in the smooth case) yields (<a href="#eq-fista-key" class="quarto-xref"><span>11.18</span></a>).</p>
+<p><strong>Step 2: Lyapunov decrease.</strong> Since <span class="math inline">\theta_k</span> satisfies the same recursion (<a href="#eq-lambda-recursion" class="quarto-xref"><span>11.11</span></a>) and identity <span class="math inline">\theta_k(\theta_k - 1) = \theta_{k-1}^2</span>, define <span class="math display">
+u^k = \theta_{k-1}(x^k - x^*) - (\theta_{k-1} - 1)(x^{k-1} - x^*), \qquad \mathcal{E}_k = \theta_{k-1}^2\bigl(F(x^k) - F(x^*)\bigr) + \frac{L}{2}\|u^k\|_2^2.
+</span> Applying (<a href="#eq-fista-key" class="quarto-xref"><span>11.18</span></a>) with <span class="math inline">z = \theta_k^{-1}x^* + (1 - \theta_k^{-1})x^k</span>, the same algebra as Steps 4–5 of <a href="#thm-nag-convex" class="quarto-xref">Theorem&nbsp;<span>11.4</span></a> (using convexity of <span class="math inline">F</span> at <span class="math inline">z</span> and the identity <span class="math inline">\theta_k(\theta_k - 1) = \theta_{k-1}^2</span>) gives <span class="math inline">\mathcal{E}_{k+1} \leq \mathcal{E}_k</span>.</p>
+<p><strong>Step 3: Conclude.</strong> Telescoping: <span class="math inline">\mathcal{E}_k \leq \mathcal{E}_1 \leq \frac{L}{2}\|x^0 - x^*\|_2^2</span>. Since <span class="math inline">\theta_{k-1} \geq (k+1)/2</span>: <span class="math display">
+F(x^k) - F(x^*) \leq \frac{L\|x^0 - x^*\|_2^2}{2\theta_{k-1}^2} \leq \frac{2L\|x^0 - x^*\|_2^2}{(k+1)^2}.
+</span> <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+<section id="sec-lasso-example" class="level3" data-number="11.6.3">
+<h3 data-number="11.6.3" class="anchored" data-anchor-id="sec-lasso-example"><span class="header-section-number">11.6.3</span> Example: Accelerated LASSO</h3>
+<p>To illustrate FISTA concretely, we apply it to the LASSO problem — one of the most widely used composite optimization problems in statistics and machine learning. The LASSO objective decomposes naturally into a smooth quadratic loss <span class="math inline">g</span> and a non-smooth <span class="math inline">\ell_1</span> penalty <span class="math inline">h</span>, making it a perfect fit for the FISTA update (<a href="#eq-fista" class="quarto-xref"><span>11.17</span></a>).</p>
+<div id="exm-lasso" class="theorem example">
+<p><span class="theorem-title"><strong>Example 11.1 (FISTA for LASSO)</strong></span> Consider the LASSO problem: <span class="math display">
+\min_{x \in \mathbb{R}^n}\; \frac{1}{2}\|Ax - b\|_2^2 + \lambda\|x\|_1.
+</span> Here <span class="math inline">g(x) = \frac{1}{2}\|Ax - b\|_2^2</span> is <span class="math inline">L</span>-smooth with <span class="math inline">L = \|A^\top A\|</span> (largest eigenvalue of <span class="math inline">A^\top A</span>), and <span class="math inline">h(x) = \lambda\|x\|_1</span>.</p>
+<p>The proximal operator of <span class="math inline">h</span> is the <strong>soft-thresholding</strong> operator: <span class="math display">
+\operatorname{prox}_{\alpha h}(x)_j = \operatorname{sign}(x_j)\max\{|x_j| - \alpha\lambda,\, 0\}, \quad j = 1, \ldots, n.
+</span></p>
+<p>FISTA for LASSO becomes: <span class="math display">
+\begin{aligned}
+x^k &amp;= \mathcal{S}_{\lambda/L}\!\left(y^k - \frac{1}{L}A^\top(Ay^k - b)\right), \\
+\theta_{k+1} &amp;= \frac{1 + \sqrt{1 + 4\theta_k^2}}{2}, \\
+y^{k+1} &amp;= x^k + \frac{\theta_k - 1}{\theta_{k+1}}(x^k - x^{k-1}),
+\end{aligned}
+</span> where <span class="math inline">\mathcal{S}_\tau(x)_j = \operatorname{sign}(x_j)\max\{|x_j| - \tau, 0\}</span> is the soft-thresholding operator.</p>
+<p>ISTA converges at rate <span class="math inline">O(1/k)</span> while FISTA converges at <span class="math inline">O(1/k^2)</span>.</p>
+</div>
+<div id="fig-ista-vs-fista" style="width:100%;max-width:720px;margin:auto;"></div>
+<script>
+(function(){
+  // Actual LASSO simulation: min 0.5*||Ax-b||^2 + lam*||x||_1
+  // Diagonal A for efficiency, eigenvalues from mu to L
+  const n = 30, L = 20, mu = 1, lam = 0.3;
+  const aSquared = Array.from({length: n}, (_, i) => mu + (L - mu) * i / (n - 1));
+  // b chosen so unconstrained min at x=2, LASSO shrinks toward 0
+  const b = aSquared.map(a2 => Math.sqrt(a2) * 2);
+  const x0 = new Array(n).fill(0);
+
+  function soft(z, thr) { return Math.sign(z) * Math.max(Math.abs(z) - thr, 0); }
+  function fval(x) {
+    let g = 0, h = 0;
+    for (let i = 0; i < n; i++) {
+      const r = Math.sqrt(aSquared[i]) * x[i] - b[i];
+      g += 0.5 * r * r;
+      h += lam * Math.abs(x[i]);
+    }
+    return g + h;
+  }
+
+  // Compute F* approximately by running many FISTA iterations
+  let xOpt = [...x0], yOpt = [...x0], tOpt = 1;
+  for (let k = 0; k < 2000; k++) {
+    const gradY = yOpt.map((yi, i) => aSquared[i] * yi - Math.sqrt(aSquared[i]) * b[i]);
+    const xNew = yOpt.map((yi, i) => soft(yi - gradY[i] / L, lam / L));
+    const tNew = (1 + Math.sqrt(1 + 4*tOpt*tOpt)) / 2;
+    const yNew = xNew.map((xi, i) => xi + (tOpt - 1) / tNew * (xi - xOpt[i]));
+    xOpt = xNew; yOpt = yNew; tOpt = tNew;
+  }
+  const fStar = fval(xOpt);
+
+  const nIter = 200;
+
+  // ISTA (proximal gradient, step 1/L)
+  let xI = [...x0];
+  const istaF = [fval(x0) - fStar];
+  for (let k = 0; k < nIter; k++) {
+    const gradX = xI.map((xi, i) => aSquared[i] * xi - Math.sqrt(aSquared[i]) * b[i]);
+    xI = xI.map((xi, i) => soft(xi - gradX[i] / L, lam / L));
+    istaF.push(fval(xI) - fStar);
+  }
+
+  // FISTA
+  let xF = [...x0], yF = [...x0], tF = 1;
+  const fistaF = [fval(x0) - fStar];
+  for (let k = 0; k < nIter; k++) {
+    const gradY = yF.map((yi, i) => aSquared[i] * yi - Math.sqrt(aSquared[i]) * b[i]);
+    const xNew = yF.map((yi, i) => soft(yi - gradY[i] / L, lam / L));
+    const tNew = (1 + Math.sqrt(1 + 4*tF*tF)) / 2;
+    const yNew = xNew.map((xi, i) => xi + (tF - 1) / tNew * (xi - xF[i]));
+    xF = xNew; yF = yNew; tF = tNew;
+    fistaF.push(fval(xF) - fStar);
+  }
+
+  const iters = Array.from({length: nIter+1}, (_, i) => i);
+  const traces = [
+    {x: iters, y: istaF.map(v => Math.max(v, 1e-10)), mode: 'lines',
+     line: {color: '#C47A6A', width: 2.5}, name: 'ISTA (Proximal GD)'},
+    {x: iters, y: fistaF.map(v => Math.max(v, 1e-10)), mode: 'lines',
+     line: {color: '#7B97AD', width: 2.5}, name: 'FISTA (Accelerated)'},
+  ];
+
+  const layout = {
+    title: {text: 'ISTA vs. FISTA on LASSO (actual simulation, n=30)', font: {size: 14, color: '#3D3530'}},
+    xaxis: {title: {text: 'Iteration k', font: {size: 14}}, range: [0, nIter], gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    yaxis: {title: {text: 'F(x\u1D4F) \u2212 F(x*)', font: {size: 14}}, type: 'log', range: [-8, 2], gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: '#faf7f3',
+    font: {family: '"Source Serif 4", Georgia, serif', color: '#3d3530', size: 13},
+    showlegend: true,
+    legend: {x: 0.45, y: 0.98, bgcolor: '#faf7f3ee', bordercolor: '#d5cdc4', borderwidth: 1, font: {size: 13}},
+    margin: {t: 50, b: 55, l: 70, r: 20},
+    width: 700, height: 460
+  };
+
+  Plotly.newPlot('fig-ista-vs-fista', traces, layout, {responsive: true, displayModeBar: false});
+})();
+</script>
+<p><em>Figure 9.4: ISTA vs.&nbsp;FISTA on a 30-dimensional LASSO problem (<span class="math inline">\kappa = 20</span>, <span class="math inline">\lambda = 0.3</span>). Unlike the theoretical curves, the actual FISTA trajectory shows characteristic non-monotone oscillations while still converging quadratically faster than ISTA overall.</em></p>
+</section>
+<section id="sec-rippling" class="level3" data-number="11.6.4">
+<h3 data-number="11.6.4" class="anchored" data-anchor-id="sec-rippling"><span class="header-section-number">11.6.4</span> Rippling: Effect of Misspecified Momentum</h3>
+<p>A practical challenge with the strongly convex variant (<a href="#eq-nag-sc" class="quarto-xref"><span>11.13</span></a>) is that it requires knowing <span class="math inline">\mu</span>. If we use a guess <span class="math inline">\widehat{\mu}</span> in place of <span class="math inline">\mu</span>, the momentum becomes <span class="math inline">\beta = (\sqrt{\kappa_{\text{est}}}-1)/(\sqrt{\kappa_{\text{est}}}+1)</span> where <span class="math inline">\kappa_{\text{est}} = L/\widehat{\mu}</span>. Two failure modes arise:</p>
+<ul>
+<li><strong><span class="math inline">\widehat{\mu} &lt; \mu</span> (overestimating <span class="math inline">\kappa</span>, too much momentum):</strong> the iterates overshoot, producing characteristic <em>ripples</em> whose period scales as <span class="math inline">\sqrt{L/\mu}</span>.</li>
+<li><strong><span class="math inline">\widehat{\mu} &gt; \mu</span> (underestimating <span class="math inline">\kappa</span>, too little momentum):</strong> convergence is slower but smoother — we sacrifice the rate improvement but remain stable.</li>
+</ul>
+<div id="fig-rippling" style="width:100%;max-width:720px;margin:auto;"></div>
+<script>
+(function(){
+  const L = 100, mu = 1, kappa = L/mu; // kappa = 100
+  const n = 30;
+  const eigenvals = Array.from({length: n}, (_, i) => mu + (L - mu) * i / (n - 1));
+  const x0 = eigenvals.map(() => 1);
+  function fval(z) { return 0.5 * eigenvals.reduce((s, l, i) => s + l*z[i]*z[i], 0); }
+  const f0 = fval(x0);
+  const nIter = 400;
+
+  function runAGD(muGuess) {
+    const gamma = Math.sqrt(muGuess / L);
+    const beta = (1 - gamma) / (1 + gamma);
+    let xn = [...x0], yn = [...x0];
+    const fVals = [f0];
+    for (let k = 0; k < nIter; k++) {
+      const yNew = xn.map((xi, i) => xi - (1/L) * eigenvals[i] * xi);
+      const xNew = yNew.map((yi, i) => yi + beta * (yi - yn[i]));
+      yn = yNew; xn = xNew;
+      fVals.push(fval(yn));
+    }
+    return fVals;
+  }
+
+  const iters = Array.from({length: nIter+1}, (_, i) => i);
+  const traces = [
+    {x: iters, y: runAGD(mu).map(v => Math.max(Math.abs(v), 1e-16)),
+     mode: 'lines', line: {color: '#3D3530', width: 2.5},
+     name: '\u03BC\u0302 = \u03BC (optimal, \u03BA=100)'},
+    {x: iters, y: runAGD(mu/10).map(v => Math.max(Math.abs(v), 1e-16)),
+     mode: 'lines', line: {color: '#7B97AD', width: 2},
+     name: '\u03BC\u0302 = \u03BC/10 (too much momentum)'},
+    {x: iters, y: runAGD(mu/100).map(v => Math.max(Math.abs(v), 1e-16)),
+     mode: 'lines', line: {color: '#B8995E', width: 2},
+     name: '\u03BC\u0302 = \u03BC/100 (strong rippling)'},
+    {x: iters, y: runAGD(10*mu).map(v => Math.max(Math.abs(v), 1e-16)),
+     mode: 'lines', line: {color: '#C47A6A', width: 2},
+     name: '\u03BC\u0302 = 10\u03BC (too little momentum)'},
+  ];
+
+  const layout = {
+    title: {text: 'Effect of Misspecified \u03BC on Nesterov AGD-SC (\u03BA = 100)', font: {size: 14, color: '#3D3530'}},
+    xaxis: {title: {text: 'Iteration k', font: {size: 14}}, range: [0, nIter], gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    yaxis: {title: {text: 'f(y\u1D4F) \u2212 f(x*)', font: {size: 14}}, type: 'log', gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: '#faf7f3',
+    font: {family: '"Source Serif 4", Georgia, serif', color: '#3d3530', size: 13},
+    showlegend: true,
+    legend: {x: 0.3, y: 0.98, bgcolor: '#faf7f3ee', bordercolor: '#d5cdc4', borderwidth: 1, font: {size: 12}},
+    margin: {t: 50, b: 55, l: 70, r: 20},
+    width: 720, height: 480
+  };
+
+  Plotly.newPlot('fig-rippling', traces, layout, {responsive: true, displayModeBar: false});
+})();
+</script>
+<p><em>Rippling behavior when the strong convexity parameter is misspecified on a quadratic with true <span class="math inline">\kappa = 100</span>. <strong>Black:</strong> optimal <span class="math inline">\widehat{\mu} = \mu</span> gives fast, smooth convergence. <strong>Blue/gold:</strong> underestimating <span class="math inline">\mu</span> (using <span class="math inline">\widehat{\mu} = \mu/10</span> or <span class="math inline">\mu/100</span>) creates oscillations from excessive momentum. <strong>Red:</strong> overestimating <span class="math inline">\mu</span> (<span class="math inline">\widehat{\mu} = 10\mu</span>) gives slower but stable convergence. This asymmetry motivates the restart strategies below.</em></p>
+</section>
+</section>
+<section id="sec-restart" class="level2" data-number="11.7">
+<h2 data-number="11.7" class="anchored" data-anchor-id="sec-restart"><span class="header-section-number">11.7</span> Restart Strategies</h2>
+<p>The convergence guarantees established in <a href="#thm-nag-convex" class="quarto-xref">Theorem&nbsp;<span>11.4</span></a> and <a href="#thm-nag-sc" class="quarto-xref">Theorem&nbsp;<span>11.5</span></a> assume exact knowledge of problem parameters. In practice, the convex-case AGD (<a href="#eq-nag-convex" class="quarto-xref"><span>11.7</span></a>) has a key limitation: its momentum <span class="math inline">\beta_k = (\theta_k - 1)/\theta_{k+1} \to 1</span> grows monotonically, eventually causing <strong>oscillations</strong> when the function is actually strongly convex. Meanwhile, the strongly convex variant (<a href="#eq-nag-sc" class="quarto-xref"><span>11.13</span></a>) requires knowing <span class="math inline">\mu</span>, which is often unavailable.</p>
+<p><strong>Restart</strong> techniques resolve this dilemma: run the convex-case AGD, but periodically <strong>reset the momentum to zero</strong> (i.e., set <span class="math inline">\theta \leftarrow 1</span> and <span class="math inline">y^k \leftarrow x^k</span>). Each restart launches a fresh AGD run from the current iterate, giving a new <span class="math inline">O(1/k^2)</span> convergence phase. If restarts are timed well, these polynomial phases compound into linear convergence.</p>
+<section id="sec-gradient-restart" class="level3" data-number="11.7.1">
+<h3 data-number="11.7.1" class="anchored" data-anchor-id="sec-gradient-restart"><span class="header-section-number">11.7.1</span> Gradient Restart</h3>
+<p>The most effective adaptive restart criterion uses the gradient to detect overshoot:</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Algorithm: Nesterov AGD with Gradient Restart<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Initialize:</strong> <span class="math inline">x^0 = y^0 \in \mathbb{R}^n</span>, <span class="math inline">\theta = 1</span>.</p>
+<p><strong>For</strong> <span class="math inline">k = 0, 1, 2, \ldots</span>:</p>
+<ol type="1">
+<li><strong>Gradient step:</strong> <span class="math inline">y^{k+1} = x^k - \frac{1}{L}\nabla f(x^k)</span>.</li>
+<li><strong>Update <span class="math inline">\theta</span>:</strong> <span class="math inline">\theta_{\text{new}} = \frac{1 + \sqrt{1 + 4\theta^2}}{2}</span>.</li>
+<li><strong>Extrapolation:</strong> <span class="math inline">x^{k+1} = y^{k+1} + \frac{\theta - 1}{\theta_{\text{new}}}(y^{k+1} - y^k)</span>.</li>
+<li><strong>Restart check:</strong> If <span class="math inline">\langle \nabla f(y^{k+1}),\, x^{k+1} - x^k \rangle &gt; 0</span>, then: <span class="math display">
+\text{reset:} \quad x^{k+1} \leftarrow y^{k+1}, \quad \theta \leftarrow 1.
+</span> Otherwise: <span class="math inline">\theta \leftarrow \theta_{\text{new}}</span>.</li>
+</ol>
+</div>
+</div>
+<p><strong>Why this condition works.</strong> The momentum direction <span class="math inline">x^{k+1} - x^k</span> is the step taken by extrapolation. The gradient <span class="math inline">\nabla f(y^{k+1})</span> points in the direction of steepest <em>ascent</em>. When <span class="math inline">\langle \nabla f(y^{k+1}), x^{k+1} - x^k \rangle &gt; 0</span>, the extrapolation step has a positive component along the ascent direction — the momentum is pushing the iterates <em>uphill</em>. This is the signature of overshoot: the method has passed the valley floor and is climbing the opposite wall. Resetting <span class="math inline">\theta \leftarrow 1</span> kills the momentum and starts a fresh AGD phase from <span class="math inline">y^{k+1}</span>.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Other Restart Schemes
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Function restart:</strong> restart when <span class="math inline">f(y^{k+1}) &gt; f(y^k)</span>. Simpler but less sensitive — it waits until the objective actually increases, which may be too late.</li>
+<li><strong>Speed restart:</strong> restart when <span class="math inline">\|y^{k+1} - y^k\| &lt; \|y^k - y^{k-1}\|</span>. The iterates are slowing down, suggesting the method is oscillating.</li>
+<li><strong>Fixed-frequency restart:</strong> restart every <span class="math inline">T</span> iterations. Requires choosing <span class="math inline">T \approx \sqrt{\kappa}</span>, which needs knowledge of <span class="math inline">\kappa</span>.</li>
+</ul>
+</div>
+</div>
+</section>
+<section id="sec-restart-benefits" class="level3" data-number="11.7.2">
+<h3 data-number="11.7.2" class="anchored" data-anchor-id="sec-restart-benefits"><span class="header-section-number">11.7.2</span> Why Restart Gives Linear Convergence</h3>
+<div id="thm-restart" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 11.7 (Convergence with Restart)</strong></span> If <span class="math inline">f</span> is <span class="math inline">\mu</span>-strongly convex and <span class="math inline">L</span>-smooth but <span class="math inline">\mu</span> is unknown, applying the convex-case accelerated method (<a href="#eq-nag-convex" class="quarto-xref"><span>11.7</span></a>) with <strong>fixed-frequency restart</strong> every <span class="math inline">T = \Theta(\sqrt{\kappa})</span> iterations yields <span class="math display">
+f(y^k) - f(x^*) \leq C \cdot \exp\!\left(-\frac{k}{\sqrt{\kappa}}\right)\bigl(f(x^0) - f(x^*)\bigr),
+</span> achieving the same <span class="math inline">O(\sqrt{\kappa}\log(1/\varepsilon))</span> complexity as the strongly convex variant (<a href="#eq-nag-sc-rate" class="quarto-xref"><span>11.14</span></a>).</p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span><strong>Sketch.</strong> Within each restart phase of <span class="math inline">T</span> iterations, the convex-case AGD guarantee (<a href="#thm-nag-convex" class="quarto-xref">Theorem&nbsp;<span>11.4</span></a>) gives <span class="math inline">f(y^T) - f(x^*) \leq 2L\|x^0_{\text{phase}} - x^*\|^2 / T^2</span>. By strong convexity, <span class="math inline">\|x^0_{\text{phase}} - x^*\|^2 \leq (2/\mu)(f(x^0_{\text{phase}}) - f(x^*))</span>. Combining: each phase reduces the gap by a factor of <span class="math inline">4L/(\mu T^2) = 4\kappa/T^2</span>. Choosing <span class="math inline">T = 2\sqrt{\kappa}</span> gives a contraction factor <span class="math inline">\leq 1</span> per phase, and after <span class="math inline">k/T</span> phases: <span class="math inline">f - f^* \leq (4\kappa/T^2)^{k/T}(f^0 - f^*) = e^{-k/(2\sqrt{\kappa})} \cdot \text{const}</span>. <span class="math inline">\blacksquare</span></p>
+</div>
+<p>In practice, the adaptive gradient restart criterion triggers at approximately the right frequency without needing to know <span class="math inline">\kappa</span>, often outperforming both the convex-case AGD (which ignores strong convexity) and the SC variant (which requires knowing <span class="math inline">\mu</span>).</p>
+<div id="fig-restart" style="width:100%;max-width:720px;margin:auto;"></div>
+<script>
+(function(){
+  const L = 100, mu = 1, kappa = L/mu;
+  const n = 30;
+  const eigenvals = Array.from({length: n}, (_, i) => mu + (L - mu) * i / (n - 1));
+  const x0 = eigenvals.map(() => 1);
+  function fval(z) { return 0.5 * eigenvals.reduce((s, l, i) => s + l*z[i]*z[i], 0); }
+  const f0 = fval(x0);
+  const nIter = 500;
+
+  function runAGD(useRestart) {
+    let xn = [...x0], yn = [...x0];
+    const fVals = [f0];
+    let th = 1;
+    for (let k = 0; k < nIter; k++) {
+      const yNew = xn.map((xi, i) => xi - (1/L) * eigenvals[i] * xi);
+      const thNew = (1 + Math.sqrt(1 + 4*th*th)) / 2;
+      const mom = (th - 1) / thNew;
+      const xNew = yNew.map((yi, i) => yi + mom * (yi - yn[i]));
+
+      let doRestart = false;
+      if (useRestart && th > 1.5) {
+        const gY = yNew.map((yi, i) => eigenvals[i] * yi);
+        const momDir = xNew.map((xi, i) => xi - xn[i]);
+        const ip = gY.reduce((s, g, i) => s + g * momDir[i], 0);
+        if (ip > 0) doRestart = true;
+      }
+
+      if (doRestart) {
+        yn = yNew; xn = [...yNew]; th = 1;
+      } else {
+        yn = yNew; xn = xNew; th = thNew;
+      }
+      fVals.push(fval(yn));
+    }
+    return fVals;
+  }
+
+  // GD for reference
+  let xGD = [...x0];
+  const gdF = [f0];
+  for (let k = 0; k < nIter; k++) {
+    xGD = xGD.map((xi, i) => xi - (1/L) * eigenvals[i] * xi);
+    gdF.push(fval(xGD));
+  }
+
+  const iters = Array.from({length: nIter+1}, (_, i) => i);
+  const traces = [
+    {x: iters, y: gdF.map(v => Math.max(v, 1e-16)), mode: 'lines',
+     line: {color: '#7B7067', width: 1.5, dash: 'dot'}, name: 'GD'},
+    {x: iters, y: runAGD(false).map(v => Math.max(Math.abs(v), 1e-16)), mode: 'lines',
+     line: {color: '#C47A6A', width: 2}, name: 'AGD (no restart)'},
+    {x: iters, y: runAGD(true).map(v => Math.max(Math.abs(v), 1e-16)), mode: 'lines',
+     line: {color: '#7B97AD', width: 2.5}, name: 'AGD + gradient restart'},
+  ];
+
+  const layout = {
+    title: {text: 'Gradient Restart on Strongly Convex Quadratic (\u03BA = 100)', font: {size: 15, color: '#3D3530'}},
+    xaxis: {title: {text: 'Iteration k', font: {size: 14}}, range: [0, nIter], gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    yaxis: {title: {text: 'f(y\u1D4F) \u2212 f(x*)', font: {size: 14}}, type: 'log', gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: '#faf7f3',
+    font: {family: '"Source Serif 4", Georgia, serif', color: '#3d3530', size: 13},
+    showlegend: true,
+    legend: {x: 0.4, y: 0.98, bgcolor: '#faf7f3ee', bordercolor: '#d5cdc4', borderwidth: 1, font: {size: 12}},
+    margin: {t: 50, b: 55, l: 70, r: 20},
+    width: 720, height: 480
+  };
+
+  Plotly.newPlot('fig-restart', traces, layout, {responsive: true, displayModeBar: false});
+})();
+</script>
+<p><em>Gradient restart on a strongly convex quadratic (<span class="math inline">\kappa = 100</span>). <strong>GD</strong> (dotted) converges at the slow rate <span class="math inline">(1-1/\kappa)^k</span>. <strong>AGD without restart</strong> (red) uses the convex-case momentum and converges at <span class="math inline">O(1/k^2)</span> with characteristic oscillations — it does not exploit strong convexity. <strong>AGD with gradient restart</strong> (blue) detects each overshoot via <span class="math inline">\langle \nabla f, \text{momentum direction}\rangle &gt; 0</span>, resets <span class="math inline">\theta \leftarrow 1</span>, and achieves linear convergence — recovering the optimal <span class="math inline">O(\sqrt{\kappa}\log(1/\varepsilon))</span> rate without knowing <span class="math inline">\mu</span>.</em></p>
+</section>
+</section>
+<section id="sec-summary" class="level2" data-number="11.8">
+<h2 data-number="11.8" class="anchored" data-anchor-id="sec-summary"><span class="header-section-number">11.8</span> Summary and Connections</h2>
+<section id="sec-key-results" class="level3" data-number="11.8.1">
+<h3 data-number="11.8.1" class="anchored" data-anchor-id="sec-key-results"><span class="header-section-number">11.8.1</span> Key Results</h3>
+<div class="callout callout-style-simple callout-note">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><strong>Main takeaways from this lecture:</strong></p>
+<ol type="1">
+<li><p><strong>Heavy-ball method</strong> (Polyak, 1964): Adding momentum <span class="math inline">\theta(x^k - x^{k-1})</span> with <em>fixed</em> parameters achieves <span class="math inline">O(\sqrt{\kappa}\log(1/\varepsilon))</span> for quadratics but does not generalize to all convex functions.</p></li>
+<li><p><strong>Lower bounds</strong> show that gradient descent is suboptimal by a factor of <span class="math inline">\sqrt{\kappa}</span> (or <span class="math inline">\sqrt{1/\varepsilon}</span> in the convex case). The tridiagonal hard instances create an information bottleneck.</p></li>
+<li><p><strong>Nesterov’s accelerated gradient</strong> (1983) achieves the optimal rate among first-order methods using <em>time-varying</em> momentum:</p>
+<ul>
+<li>Convex: <span class="math inline">O(1/k^2)</span> vs.&nbsp;<span class="math inline">O(1/k)</span> for GD.</li>
+<li>Strongly convex: <span class="math inline">O(\exp(-k/\sqrt{\kappa}))</span> vs.&nbsp;<span class="math inline">O(\exp(-k/\kappa))</span> for GD.</li>
+</ul></li>
+<li><p><strong>The ODE perspective</strong> (Su, Boyd, Candes 2014) explains the momentum coefficient: Nesterov’s method discretizes <span class="math inline">\ddot{X} + (3/\tau)\dot{X} + \nabla f(X) = 0</span>, where <span class="math inline">3</span> is the smallest damping constant giving <span class="math inline">O(1/\tau^2)</span> convergence.</p></li>
+<li><p><strong>Convergence via Lyapunov functions</strong>: The <span class="math inline">\theta_k</span> recursion <span class="math inline">\theta_k^2 - \theta_k = \theta_{k-1}^2</span> is <em>derived</em> from the Lyapunov decrease requirement, not assumed. The same proof handles both smooth and composite (FISTA) settings.</p></li>
+<li><p><strong>FISTA</strong> extends acceleration to composite problems <span class="math inline">\min\; g(x) + h(x)</span>, and <strong>restart strategies</strong> make acceleration practical when <span class="math inline">\mu</span> is unknown.</p></li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-connections" class="level3" data-number="11.8.2">
+<h3 data-number="11.8.2" class="anchored" data-anchor-id="sec-connections"><span class="header-section-number">11.8.2</span> Connections to Other Lectures</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th><strong>Chapter</strong></th>
+<th><strong>Connection to Acceleration</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="../lectures/05-gradient-descent.html">Chapter 6</a> (GD)</td>
+<td>Acceleration improves GD’s rate by <span class="math inline">\sqrt{\kappa}</span></td>
+</tr>
+<tr class="even">
+<td><a href="../lectures/06-subgradient.html">Chapter 7</a> (Subgradient)</td>
+<td>Acceleration does <strong>not</strong> apply to non-smooth optimization without smoothing</td>
+</tr>
+<tr class="odd">
+<td><a href="../lectures/07-proximal-gradient.html">Chapter 8</a> (Proximal GD)</td>
+<td>FISTA = accelerated proximal gradient</td>
+</tr>
+<tr class="even">
+<td><a href="../lectures/08-mirror-descent.html">Chapter 9</a> (Mirror Descent)</td>
+<td>Accelerated mirror descent exists but requires more sophisticated analysis</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="sec-open" class="level3" data-number="11.8.3">
+<h3 data-number="11.8.3" class="anchored" data-anchor-id="sec-open"><span class="header-section-number">11.8.3</span> Open Directions</h3>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Remark: Modern Perspectives on Acceleration
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ol type="1">
+<li><p><strong>Acceleration via coupling</strong> (Allen-Zhu and Orecchia, 2017): Acceleration can be understood as coupling mirror descent with gradient descent — a viewpoint that connects to <a href="../lectures/08-mirror-descent.html">Chapter 9</a>.</p></li>
+<li><p><strong>Catalyst framework</strong> (Lin, Mairal, Harchaoui, 2015): Any first-order method can be “accelerated” by wrapping it in a proximal point outer loop.</p></li>
+<li><p><strong>Integral quadratic constraints</strong> (Lessard, Recht, Packard, 2016): The heavy-ball and Nesterov methods can be analyzed in a unified framework using tools from robust control theory.</p></li>
+<li><p><strong>Acceleration for saddle-point problems and minimax optimization</strong> extends these ideas to the non-convex and game-theoretic settings studied in modern machine learning.</p></li>
+</ol>
+</div>
+</div>
+</section>
+</section>
+<section id="first-order-methods-master-comparison" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="first-order-methods-master-comparison">First-Order Methods: Master Comparison</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 15%">
+<col style="width: 16%">
+<col style="width: 24%">
+<col style="width: 20%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Problem Class</th>
+<th>Rate (convex)</th>
+<th>Rate (strongly convex)</th>
+<th>Per-Iteration Cost</th>
+<th>Key Feature</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Gradient Descent</td>
+<td>Smooth</td>
+<td><span class="math inline">O(1/k)</span></td>
+<td><span class="math inline">O((1-\mu/L)^k)</span></td>
+<td>1 gradient</td>
+<td>Simplest baseline</td>
+</tr>
+<tr class="even">
+<td>Subgradient</td>
+<td>Lipschitz</td>
+<td><span class="math inline">O(1/\sqrt{k})</span></td>
+<td><span class="math inline">O(1/\sqrt{k})</span></td>
+<td>1 subgradient</td>
+<td>Handles non-smooth</td>
+</tr>
+<tr class="odd">
+<td>Proximal Gradient</td>
+<td>Composite <span class="math inline">f+g</span></td>
+<td><span class="math inline">O(1/k)</span></td>
+<td><span class="math inline">O((1-\mu/L)^k)</span></td>
+<td>1 gradient + 1 prox</td>
+<td>Exploits structure</td>
+</tr>
+<tr class="even">
+<td>Mirror Descent</td>
+<td>Simplex/geometry</td>
+<td><span class="math inline">O(\sqrt{\log n / k})</span></td>
+<td>—</td>
+<td>1 gradient + mirror map</td>
+<td>Dimension-adaptive</td>
+</tr>
+<tr class="odd">
+<td>Heavy-Ball</td>
+<td>Smooth quadratic</td>
+<td>—</td>
+<td><span class="math inline">O((1-\sqrt{\mu/L})^k)</span></td>
+<td>1 gradient</td>
+<td>Optimal for quadratics</td>
+</tr>
+<tr class="even">
+<td>Nesterov’s AGD</td>
+<td>Smooth</td>
+<td><span class="math inline">O(1/k^2)</span></td>
+<td><span class="math inline">O((1-\sqrt{\mu/L})^k)</span></td>
+<td>1 gradient</td>
+<td>Optimal rate</td>
+</tr>
+<tr class="odd">
+<td>FISTA</td>
+<td>Composite <span class="math inline">f+g</span></td>
+<td><span class="math inline">O(1/k^2)</span></td>
+<td><span class="math inline">O((1-\sqrt{\mu/L})^k)</span></td>
+<td>1 gradient + 1 prox</td>
+<td>Accelerated proximal</td>
+</tr>
+<tr class="even">
+<td><strong>Lower bound</strong></td>
+<td><strong>Smooth convex</strong></td>
+<td><span class="math inline">\Omega(1/k^2)</span></td>
+<td><span class="math inline">\Omega((1-\sqrt{\mu/L})^k)</span></td>
+<td>—</td>
+<td><strong>Cannot do better</strong></td>
+</tr>
+</tbody>
+</table>
+<p><em>Here <span class="math inline">L</span> is the smoothness constant, <span class="math inline">\mu</span> is the strong convexity parameter, and <span class="math inline">n</span> is the dimension.</em></p>
+</section>
+<section id="sec-ode-lyapunov" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="sec-ode-lyapunov">Appendix: ODE Lyapunov Computation</h2>
+<p>We verify that the Lyapunov function <span class="math display">
+\mathcal{E}(\tau) = \tau^2\bigl(f(X) - f(x^*)\bigr) + 2\left\|X + \frac{\tau}{2}\dot{X} - x^*\right\|^2
+</span> is non-increasing along solutions of the ODE <span class="math inline">\ddot{X} + \frac{3}{\tau}\dot{X} + \nabla f(X) = 0</span>.</p>
+<p><strong>Setup.</strong> Write <span class="math inline">\mathcal{E} = A + B</span> where <span class="math inline">A = \tau^2(f(X) - f^*)</span> and <span class="math inline">B = 2\|V\|^2</span> with <span class="math inline">V = X + \frac{\tau}{2}\dot{X} - x^*</span>.</p>
+<p><strong>Differentiating <span class="math inline">A</span>.</strong> By the chain rule: <span class="math display">
+\dot{A} = 2\tau(f(X) - f^*) + \tau^2\langle \nabla f(X),\, \dot{X}\rangle.
+</span></p>
+<p><strong>Differentiating <span class="math inline">B</span>.</strong> First compute <span class="math inline">\dot{V}</span>: <span class="math display">
+\dot{V} = \dot{X} + \frac{1}{2}\dot{X} + \frac{\tau}{2}\ddot{X} = \frac{3}{2}\dot{X} + \frac{\tau}{2}\ddot{X}.
+</span> Substituting the ODE <span class="math inline">\ddot{X} = -\frac{3}{\tau}\dot{X} - \nabla f(X)</span>: <span class="math display">
+\dot{V} = \frac{3}{2}\dot{X} + \frac{\tau}{2}\!\left(-\frac{3}{\tau}\dot{X} - \nabla f(X)\right) = \frac{3}{2}\dot{X} - \frac{3}{2}\dot{X} - \frac{\tau}{2}\nabla f(X) = -\frac{\tau}{2}\nabla f(X).
+</span> Therefore: <span class="math display">
+\dot{B} = 2 \cdot 2\langle V,\, \dot{V}\rangle = 4\!\left\langle X + \frac{\tau}{2}\dot{X} - x^*,\; -\frac{\tau}{2}\nabla f(X)\right\rangle = -2\tau\langle X - x^* + \frac{\tau}{2}\dot{X},\; \nabla f(X)\rangle.
+</span></p>
+<p><strong>Combining.</strong> Adding <span class="math inline">\dot{A} + \dot{B}</span>: <span class="math display">
+\dot{\mathcal{E}} = 2\tau(f(X) - f^*) + \tau^2\langle \nabla f(X), \dot{X}\rangle - 2\tau\langle X - x^*, \nabla f(X)\rangle - \tau^2\langle \dot{X}, \nabla f(X)\rangle.
+</span> The <span class="math inline">\tau^2\langle \nabla f(X), \dot{X}\rangle</span> terms cancel: <span class="math display">
+\dot{\mathcal{E}} = 2\tau\bigl[f(X) - f^* - \langle \nabla f(X),\, X - x^*\rangle\bigr].
+</span> By <strong>convexity</strong> of <span class="math inline">f</span>: <span class="math inline">f(x^*) \geq f(X) + \langle \nabla f(X), x^* - X\rangle</span>, i.e., <span class="math inline">f(X) - f^* - \langle \nabla f(X), X - x^*\rangle \leq 0</span>. Since <span class="math inline">\tau \geq 0</span>: <span class="math display">
+\dot{\mathcal{E}}(\tau) \leq 0.
+</span></p>
+<p>This confirms <span class="math inline">\mathcal{E}</span> is non-increasing. Since <span class="math inline">\tau^2(f(X) - f^*) \leq \mathcal{E}(\tau) \leq \mathcal{E}(0)</span>, we get <span class="math inline">f(X(\tau)) - f^* = O(1/\tau^2)</span>, which is the continuous analogue of the <span class="math inline">O(1/k^2)</span> rate. <span class="math inline">\blacksquare</span></p>
+</section>
+<section id="sec-chebyshev" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="sec-chebyshev">Appendix: Chebyshev Polynomials</h2>
+<p>The lower bound proof for strongly convex functions (<a href="#thm-lower-bound-strongly-convex" class="quarto-xref">Theorem&nbsp;<span>11.2</span></a>) relies on <strong>Chebyshev polynomials</strong>, which solve the minimax polynomial approximation problem. We collect their key properties here.</p>
+<section id="definition-and-recurrence" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="definition-and-recurrence">Definition and Recurrence</h3>
+<div id="def-chebyshev" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 11.2 (Chebyshev Polynomials of the First Kind)</strong></span> The <strong>Chebyshev polynomial</strong> <span class="math inline">T_k</span> of degree <span class="math inline">k</span> is defined by <span class="math display">
+T_k(\cos\theta) = \cos(k\theta), \qquad \theta \in [0, \pi].
+</span> Equivalently, for <span class="math inline">|x| \leq 1</span>: <span class="math inline">T_k(x) = \cos(k\arccos x)</span>.</p>
+</div>
+<p>The first few Chebyshev polynomials are: <span class="math display">
+T_0(x) = 1, \quad T_1(x) = x, \quad T_2(x) = 2x^2 - 1, \quad T_3(x) = 4x^3 - 3x, \quad T_4(x) = 8x^4 - 8x^2 + 1.
+</span></p>
+<p>They satisfy the <strong>three-term recurrence</strong>: <span class="math display">
+T_{k+1}(x) = 2x\,T_k(x) - T_{k-1}(x), \qquad k \geq 1.
+</span></p>
+<div id="fig-chebyshev" style="width:100%;max-width:720px;margin:auto;"></div>
+<script>
+(function(){
+  const N = 300;
+  const xs = Array.from({length: N+1}, (_, i) => -1 + 2*i/N);
+
+  function chebyshev(k, x) {
+    if (k === 0) return 1;
+    if (k === 1) return x;
+    let prev2 = 1, prev1 = x;
+    for (let j = 2; j <= k; j++) {
+      const curr = 2*x*prev1 - prev2;
+      prev2 = prev1; prev1 = curr;
+    }
+    return prev1;
+  }
+
+  const colors = ['#7A9A7E', '#7B97AD', '#B8995E', '#C47A6A', '#907EA0'];
+  const traces = [];
+  for (let k = 1; k <= 5; k++) {
+    traces.push({
+      x: xs, y: xs.map(x => chebyshev(k, x)), mode: 'lines',
+      line: {color: colors[k-1], width: 2.5},
+      name: 'T\u2080' + '\u2081\u2082\u2083\u2084\u2085'[k-1].replace(/[^\u2080-\u2089]/g, '') || 'T' + k
+    });
+  }
+  // Fix names
+  traces[0].name = 'T\u2081(x)';
+  traces[1].name = 'T\u2082(x)';
+  traces[2].name = 'T\u2083(x)';
+  traces[3].name = 'T\u2084(x)';
+  traces[4].name = 'T\u2085(x)';
+
+  const layout = {
+    title: {text: 'Chebyshev Polynomials T\u2081 through T\u2085', font: {size: 15, color: '#3D3530'}},
+    xaxis: {title: {text: 'x', font: {size: 14}}, range: [-1.05, 1.05], gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4', zeroline: true},
+    yaxis: {title: {text: 'T\u2096(x)', font: {size: 14}}, range: [-1.3, 1.3], gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4', zeroline: true},
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: '#faf7f3',
+    font: {family: '"Source Serif 4", Georgia, serif', color: '#3d3530', size: 13},
+    showlegend: true,
+    legend: {x: 0.02, y: 0.98, bgcolor: '#faf7f3ee', bordercolor: '#d5cdc4', borderwidth: 1, font: {size: 13}},
+    margin: {t: 50, b: 55, l: 55, r: 20},
+    width: 700, height: 480,
+    shapes: [
+      {type: 'line', x0: -1.05, x1: 1.05, y0: 1, y1: 1, line: {color: '#d5cdc4', width: 1, dash: 'dot'}},
+      {type: 'line', x0: -1.05, x1: 1.05, y0: -1, y1: -1, line: {color: '#d5cdc4', width: 1, dash: 'dot'}}
+    ]
+  };
+
+  Plotly.newPlot('fig-chebyshev', traces, layout, {responsive: true, displayModeBar: false});
+})();
+</script>
+<p><em>Chebyshev polynomials <span class="math inline">T_1</span> through <span class="math inline">T_5</span> on <span class="math inline">[-1, 1]</span>. Each <span class="math inline">T_k</span> oscillates between <span class="math inline">-1</span> and <span class="math inline">+1</span> exactly <span class="math inline">k+1</span> times, achieving the maximum deviation at the endpoints and at <span class="math inline">k-1</span> interior points. This equioscillation property is what makes them optimal for minimax approximation.</em></p>
+</section>
+<section id="key-properties" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="key-properties">Key Properties</h3>
+<p><strong>(C1) Boundedness.</strong> <span class="math inline">|T_k(x)| \leq 1</span> for all <span class="math inline">x \in [-1, 1]</span>.</p>
+<p><strong>(C2) Equioscillation.</strong> <span class="math inline">T_k</span> attains the values <span class="math inline">\pm 1</span> at <span class="math inline">k + 1</span> points in <span class="math inline">[-1, 1]</span>: the Chebyshev nodes <span class="math inline">x_j = \cos(j\pi/k)</span> for <span class="math inline">j = 0, 1, \ldots, k</span>.</p>
+<p><strong>(C3) Growth outside <span class="math inline">[-1, 1]</span>.</strong> For <span class="math inline">|x| &gt; 1</span>, <span class="math inline">T_k</span> grows exponentially: <span class="math display">
+T_k(x) = \frac{1}{2}\left[\bigl(x + \sqrt{x^2 - 1}\bigr)^k + \bigl(x - \sqrt{x^2 - 1}\bigr)^k\right].
+</span> In particular, for <span class="math inline">x &gt; 1</span>: <span class="math inline">T_k(x) \geq \frac{1}{2}(x + \sqrt{x^2 - 1})^k</span>.</p>
+<p><strong>(C4) Minimax optimality.</strong> Among all monic polynomials of degree <span class="math inline">k</span> (leading coefficient <span class="math inline">= 1</span>), the rescaled Chebyshev polynomial <span class="math inline">2^{1-k}T_k</span> has the <em>smallest</em> maximum absolute value on <span class="math inline">[-1, 1]</span>: <span class="math display">
+\min_{\substack{p \text{ monic} \\ \deg p = k}} \max_{x \in [-1,1]} |p(x)| = 2^{1-k}, \qquad \text{achieved by } p^*(x) = 2^{1-k}T_k(x).
+</span></p>
+</section>
+<section id="application-to-lower-bounds" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="application-to-lower-bounds">Application to Lower Bounds</h3>
+<p>In the lower bound proof, we need to approximate <span class="math inline">0</span> on <span class="math inline">[\mu, L]</span> by polynomials <span class="math inline">p_k</span> satisfying <span class="math inline">p_k(0) = 1</span>. The affine change of variables <span class="math inline">t \mapsto (L + \mu - 2t)/(L - \mu)</span> maps <span class="math inline">[\mu, L]</span> to <span class="math inline">[-1, 1]</span> and <span class="math inline">0</span> to <span class="math inline">(L+\mu)/(L-\mu) &gt; 1</span>. The shifted Chebyshev polynomial <span class="math display">
+p_k^*(t) = \frac{T_k\!\bigl(\frac{L+\mu-2t}{L-\mu}\bigr)}{T_k\!\bigl(\frac{L+\mu}{L-\mu}\bigr)}
+</span> satisfies <span class="math inline">p_k^*(0) = 1</span>, <span class="math inline">|p_k^*(t)| \leq 1/T_k\!\bigl(\frac{L+\mu}{L-\mu}\bigr)</span> on <span class="math inline">[\mu, L]</span>, and is minimax optimal. Using property <strong>(C3)</strong> with <span class="math inline">x = (L+\mu)/(L-\mu)</span>, we obtain the exponential lower bound <span class="math inline">\bigl(\frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1}\bigr)^{2k}</span> as shown in the proof of <a href="#thm-lower-bound-strongly-convex" class="quarto-xref">Theorem&nbsp;<span>11.2</span></a>.</p>
+<div id="fig-chebyshev-approx" style="width:100%;max-width:720px;margin:auto;"></div>
+<script>
+(function(){
+  const mu = 1, L = 10, kappa = L/mu;
+  const N = 300;
+  const ts = Array.from({length: N+1}, (_, i) => mu + (L-mu)*i/N);
+
+  function chebyshev(k, x) {
+    if (k === 0) return 1;
+    if (k === 1) return x;
+    let p2 = 1, p1 = x;
+    for (let j = 2; j <= k; j++) { const c = 2*x*p1 - p2; p2 = p1; p1 = c; }
+    return p1;
+  }
+
+  function shiftedCheby(k, t) {
+    const xVal = (L + mu - 2*t)/(L - mu);
+    const x0 = (L + mu)/(L - mu);
+    return chebyshev(k, xVal) / chebyshev(k, x0);
+  }
+
+  const colors = ['#7A9A7E', '#7B97AD', '#B8995E', '#C47A6A', '#907EA0'];
+  const degs = [2, 4, 6, 8, 10];
+  const traces = [];
+  degs.forEach((k, idx) => {
+    traces.push({
+      x: ts, y: ts.map(t => shiftedCheby(k, t)), mode: 'lines',
+      line: {color: colors[idx], width: 2.5},
+      name: 'k = ' + k
+    });
+  });
+
+  const layout = {
+    title: {text: 'Shifted Chebyshev Approximation on [\u03BC, L] with \u03BA = 10', font: {size: 15, color: '#3D3530'}},
+    xaxis: {title: {text: 't', font: {size: 14}}, range: [mu-0.3, L+0.3], gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4'},
+    yaxis: {title: {text: 'p\u2096*(t)', font: {size: 14}}, range: [-0.5, 1.1], gridcolor: '#e8e2da', zerolinecolor: '#d5cdc4', zeroline: true},
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: '#faf7f3',
+    font: {family: '"Source Serif 4", Georgia, serif', color: '#3d3530', size: 13},
+    showlegend: true,
+    legend: {x: 0.7, y: 0.98, bgcolor: '#faf7f3ee', bordercolor: '#d5cdc4', borderwidth: 1, font: {size: 13}},
+    margin: {t: 50, b: 55, l: 55, r: 20},
+    width: 700, height: 480,
+    shapes: [
+      {type: 'line', x0: mu-0.3, x1: L+0.3, y0: 0, y1: 0, line: {color: '#d5cdc4', width: 1, dash: 'dot'}}
+    ]
+  };
+
+  Plotly.newPlot('fig-chebyshev-approx', traces, layout, {responsive: true, displayModeBar: false});
+})();
+</script>
+<p><em>Shifted Chebyshev approximation polynomials <span class="math inline">p_k^*(t)</span> on <span class="math inline">[\mu, L] = [1, 10]</span> for <span class="math inline">k = 2, 4, 6, 8, 10</span>. Each polynomial satisfies <span class="math inline">p_k^*(0) = 1</span> and approximates <span class="math inline">0</span> on <span class="math inline">[\mu, L]</span> with exponentially decreasing error as <span class="math inline">k</span> grows. The equioscillation pattern of the Chebyshev polynomial is visible in the oscillations.</em></p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Looking Ahead
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In the next chapter, we shift from classical optimization algorithms to modern deep learning architectures. We will study the <strong>Transformer</strong>, a computational architecture built on self-attention mechanisms that has revolutionized sequence modeling. Remarkably, Transformers have deep connections to optimization — they can express iterative optimization algorithms as forward passes through their layers.</p>
+</div>
+</div>
+
+
+</section>
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>B. T. Polyak, “Some methods of speeding up the convergence of iteration methods,” <em>USSR Computational Mathematics and Mathematical Physics</em>, 4(5):1–17, 1964.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Y. Nesterov, “A method of solving a convex programming problem with convergence rate <span class="math inline">O(1/k^2)</span>,” <em>Soviet Mathematics Doklady</em>, 27(2):372–376, 1983.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>W. Su, S. Boyd, and E. J. Candès, “A differential equation for modeling Nesterov’s accelerated gradient method: theory and insights,” <em>Journal of Machine Learning Research</em>, 17(153):1–43, 2016.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>A. Beck and M. Teboulle, “A fast iterative shrinkage-thresholding algorithm for linear inverse problems,” <em>SIAM Journal on Imaging Sciences</em>, 2(1):183–202, 2009.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>B. O’Donoghue and E. Candes, “Adaptive restart for accelerated gradient schemes,” <em>Foundations of Computational Mathematics</em>, 15(3):715–732, 2015.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../lectures/08-mirror-descent.html" class="pagination-link" aria-label="Mirror Descent">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Mirror Descent</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../lectures/11-implicit-layer.html" class="pagination-link" aria-label="Implicit Layers">
+        <span class="nav-page-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Implicit Layers</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<script>
+// Plotly Warmtone theming helpers — shared across all lectures
+// Reads CSS custom properties set by _warmtone.scss (light/dark aware)
+const plotlyConfig = {responsive: true, displayModeBar: false};
+const figFont = '"Source Serif 4", Georgia, "Times New Roman", serif';
+const figFontHeading = '"Crimson Pro", Georgia, serif';
+
+function css(v) {
+  return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+}
+
+function legendStyle() {
+  return {
+    font: {family: figFont, size: 13, color: css('--fig-text')},
+    bgcolor: css('--fig-bg') + 'dd',
+    bordercolor: css('--fig-grid'),
+    borderwidth: 1,
+  };
+}
+
+function themeLayout(extra) {
+  return Object.assign({
+    paper_bgcolor: css('--fig-bg'),
+    plot_bgcolor: css('--fig-plot-bg'),
+    font: {family: figFont, color: css('--fig-text'), size: 14},
+  }, extra || {});
+}
+
+function themeAxis(title, extra) {
+  return Object.assign({
+    title: {text: title, font: {family: figFont, size: 14}},
+    gridcolor: css('--fig-grid'),
+    zerolinecolor: css('--fig-grid'),
+    linecolor: css('--fig-axis'),
+    tickfont: {family: figFont, size: 12, color: css('--fig-axis')},
+  }, extra || {});
+}
+
+// Plotly color sequences matching the Warmtone palette
+const warmtonePalette = [
+  '#7b97ad', '#b8995e', '#ad8480', '#7a9a7e', '#907ea0',
+  '#6f9996', '#8a6e5e', '#b56b6b', '#8fa3b8', '#a09488'
+];
+</script>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>

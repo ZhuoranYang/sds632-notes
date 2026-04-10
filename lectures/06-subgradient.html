@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>8&nbsp; Subgradient Methods – S&amp;DS 432/632 — Advanced Optimization Techniques</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../lectures/07-proximal-gradient.html" rel="next">
+<link href="../lectures/05b-projected-gradient-descent.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-1db14e1c4cc35bfe1d9badc9e4551eed.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-434abab37f7d394f280d9c89d7fbc13f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    skipStartupTypeset: true,
+    messageStyle: "none",
+    tex2jax: { inlineMath: [], displayMath: [], processEnvironments: false }
+  });
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_SVG"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.0.min.js" charset="utf-8"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../lectures/05-gradient-descent.html">First-Order Methods</a></li><li class="breadcrumb-item"><a href="../lectures/06-subgradient.html"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Subgradient Methods</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">S&amp;DS 432/632 — Advanced Optimization Techniques</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Welcome</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Preliminaries</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/01-review.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Review of Convex Optimization</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Duality</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/02-lagrange-duality.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lagrange Duality</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/02b-dual-conjugacy.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Dual Conjugacy</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Second-Order Methods</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/03-newton-methods.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Newton Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/04-interior-point.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Interior Point Methods</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">First-Order Methods</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/05-gradient-descent.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Gradient Descent</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/05b-projected-gradient-descent.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Projected Gradient Descent and Frank–Wolfe</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/06-subgradient.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Subgradient Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/07-proximal-gradient.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Proximal Gradient Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/08-mirror-descent.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Mirror Descent</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/09-accelerated-gradient.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Accelerated Gradient Methods</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Applications in Deep Learning</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/11-implicit-layer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Implicit Layers</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../lectures/summary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Course Summary</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-overview" id="toc-sec-overview" class="nav-link active" data-scroll-target="#sec-overview"><span class="header-section-number">8.1</span> What Will Be Covered</a></li>
+  <li><a href="#sec-subgradients" id="toc-sec-subgradients" class="nav-link" data-scroll-target="#sec-subgradients"><span class="header-section-number">8.2</span> Subgradients</a></li>
+  <li><a href="#sec-examples" id="toc-sec-examples" class="nav-link" data-scroll-target="#sec-examples"><span class="header-section-number">8.3</span> Examples of Subgradients</a>
+  <ul class="collapse">
+  <li><a href="#sec-ex-abs" id="toc-sec-ex-abs" class="nav-link" data-scroll-target="#sec-ex-abs"><span class="header-section-number">8.3.1</span> Absolute Value</a></li>
+  <li><a href="#sec-ex-norm2" id="toc-sec-ex-norm2" class="nav-link" data-scroll-target="#sec-ex-norm2"><span class="header-section-number">8.3.2</span> Euclidean Norm</a></li>
+  <li><a href="#sec-ex-general-norm" id="toc-sec-ex-general-norm" class="nav-link" data-scroll-target="#sec-ex-general-norm"><span class="header-section-number">8.3.3</span> General Norm</a></li>
+  <li><a href="#sec-ex-max-two" id="toc-sec-ex-max-two" class="nav-link" data-scroll-target="#sec-ex-max-two"><span class="header-section-number">8.3.4</span> Pointwise Maximum of Two Convex Functions</a></li>
+  <li><a href="#sec-ex-lagrange-dual" id="toc-sec-ex-lagrange-dual" class="nav-link" data-scroll-target="#sec-ex-lagrange-dual"><span class="header-section-number">8.3.5</span> Lagrange Dual</a></li>
+  <li><a href="#sec-ex-indicator" id="toc-sec-ex-indicator" class="nav-link" data-scroll-target="#sec-ex-indicator"><span class="header-section-number">8.3.6</span> Indicator Function</a></li>
+  </ul></li>
+  <li><a href="#sec-lipschitz-bounded" id="toc-sec-lipschitz-bounded" class="nav-link" data-scroll-target="#sec-lipschitz-bounded"><span class="header-section-number">8.4</span> Lipschitzness and Boundedness of Subgradients</a></li>
+  <li><a href="#sec-strong-monotonicity" id="toc-sec-strong-monotonicity" class="nav-link" data-scroll-target="#sec-strong-monotonicity"><span class="header-section-number">8.5</span> (Strong) Convexity and (Strong) Monotonicity of <span class="math inline">\partial f</span></a></li>
+  <li><a href="#sec-calculus" id="toc-sec-calculus" class="nav-link" data-scroll-target="#sec-calculus"><span class="header-section-number">8.6</span> Subgradient Calculus</a>
+  <ul class="collapse">
+  <li><a href="#sec-calc-scaling" id="toc-sec-calc-scaling" class="nav-link" data-scroll-target="#sec-calc-scaling"><span class="header-section-number">8.6.1</span> Scaling</a></li>
+  <li><a href="#sec-calc-summation" id="toc-sec-calc-summation" class="nav-link" data-scroll-target="#sec-calc-summation"><span class="header-section-number">8.6.2</span> Summation</a></li>
+  <li><a href="#sec-calc-ex-l1" id="toc-sec-calc-ex-l1" class="nav-link" data-scroll-target="#sec-calc-ex-l1"><span class="header-section-number">8.6.3</span> Example: <span class="math inline">\ell_1</span>-Norm</a></li>
+  <li><a href="#sec-calc-affine" id="toc-sec-calc-affine" class="nav-link" data-scroll-target="#sec-calc-affine"><span class="header-section-number">8.6.4</span> Affine Transformation</a></li>
+  <li><a href="#sec-calc-chain" id="toc-sec-calc-chain" class="nav-link" data-scroll-target="#sec-calc-chain"><span class="header-section-number">8.6.5</span> Chain Rule</a></li>
+  <li><a href="#sec-calc-composition" id="toc-sec-calc-composition" class="nav-link" data-scroll-target="#sec-calc-composition"><span class="header-section-number">8.6.6</span> Composition</a></li>
+  <li><a href="#sec-calc-pointwise-max" id="toc-sec-calc-pointwise-max" class="nav-link" data-scroll-target="#sec-calc-pointwise-max"><span class="header-section-number">8.6.7</span> Pointwise Maximum</a></li>
+  <li><a href="#sec-calc-pointwise-sup" id="toc-sec-calc-pointwise-sup" class="nav-link" data-scroll-target="#sec-calc-pointwise-sup"><span class="header-section-number">8.6.8</span> Pointwise Supremum</a></li>
+  </ul></li>
+  <li><a href="#sec-optimality" id="toc-sec-optimality" class="nav-link" data-scroll-target="#sec-optimality"><span class="header-section-number">8.7</span> Optimality Conditions</a>
+  <ul class="collapse">
+  <li><a href="#sec-opt-unconstrained" id="toc-sec-opt-unconstrained" class="nav-link" data-scroll-target="#sec-opt-unconstrained"><span class="header-section-number">8.7.1</span> Unconstrained Case</a></li>
+  <li><a href="#sec-opt-constrained" id="toc-sec-opt-constrained" class="nav-link" data-scroll-target="#sec-opt-constrained"><span class="header-section-number">8.7.2</span> Convex and Constrained Case</a></li>
+  <li><a href="#sec-opt-kkt" id="toc-sec-opt-kkt" class="nav-link" data-scroll-target="#sec-opt-kkt"><span class="header-section-number">8.7.3</span> General Case: KKT Condition</a></li>
+  </ul></li>
+  <li><a href="#sec-subgradient-descent" id="toc-sec-subgradient-descent" class="nav-link" data-scroll-target="#sec-subgradient-descent"><span class="header-section-number">8.8</span> Subgradient Descent</a>
+  <ul class="collapse">
+  <li><a href="#sec-unconstrained-subgrad" id="toc-sec-unconstrained-subgrad" class="nav-link" data-scroll-target="#sec-unconstrained-subgrad"><span class="header-section-number">8.8.1</span> Unconstrained Subgradient Descent</a></li>
+  <li><a href="#sec-projected-subgrad" id="toc-sec-projected-subgrad" class="nav-link" data-scroll-target="#sec-projected-subgrad"><span class="header-section-number">8.8.2</span> Projected Subgradient Descent</a></li>
+  </ul></li>
+  <li><a href="#sec-convergence" id="toc-sec-convergence" class="nav-link" data-scroll-target="#sec-convergence"><span class="header-section-number">8.9</span> Convergence Theory</a>
+  <ul class="collapse">
+  <li><a href="#sec-implications" id="toc-sec-implications" class="nav-link" data-scroll-target="#sec-implications"><span class="header-section-number">8.9.1</span> Implications of (<span>8.2</span>)</a></li>
+  </ul></li>
+  <li><a href="#sec-proof-convergence" id="toc-sec-proof-convergence" class="nav-link" data-scroll-target="#sec-proof-convergence"><span class="header-section-number">8.10</span> Proof of Convergence</a>
+  <ul class="collapse">
+  <li><a href="#sec-three-point" id="toc-sec-three-point" class="nav-link" data-scroll-target="#sec-three-point"><span class="header-section-number">8.10.1</span> Three-Point Lemma and Projection</a></li>
+  <li><a href="#sec-fundamental-inequality" id="toc-sec-fundamental-inequality" class="nav-link" data-scroll-target="#sec-fundamental-inequality"><span class="header-section-number">8.10.2</span> Fundamental Inequality</a></li>
+  <li><a href="#sec-proof-sublinear" id="toc-sec-proof-sublinear" class="nav-link" data-scroll-target="#sec-proof-sublinear"><span class="header-section-number">8.10.3</span> Proof of Theorem&nbsp;<span>8.7</span></a></li>
+  <li><a href="#sec-polyak" id="toc-sec-polyak" class="nav-link" data-scroll-target="#sec-polyak"><span class="header-section-number">8.10.4</span> Polyak’s Rule</a></li>
+  </ul></li>
+  <li><a href="#sec-strongly-convex" id="toc-sec-strongly-convex" class="nav-link" data-scroll-target="#sec-strongly-convex"><span class="header-section-number">8.11</span> Faster <span class="math inline">O(1/k)</span> Rate for Strongly Convex <span class="math inline">f</span></a>
+  <ul class="collapse">
+  <li><a href="#sec-extended-fundamental" id="toc-sec-extended-fundamental" class="nav-link" data-scroll-target="#sec-extended-fundamental"><span class="header-section-number">8.11.1</span> Extended Fundamental Lemma</a></li>
+  <li><a href="#sec-proof-1k" id="toc-sec-proof-1k" class="nav-link" data-scroll-target="#sec-proof-1k"><span class="header-section-number">8.11.2</span> Proof of <span class="math inline">O(1/k)</span> Rate</a></li>
+  </ul></li>
+  <li><a href="#sec-application" id="toc-sec-application" class="nav-link" data-scroll-target="#sec-application"><span class="header-section-number">8.12</span> Application: Projection to Intersection of Convex Sets</a>
+  <ul class="collapse">
+  <li><a href="#sec-subgrad-of-f" id="toc-sec-subgrad-of-f" class="nav-link" data-scroll-target="#sec-subgrad-of-f"><span class="header-section-number">8.12.1</span> Subgradient of <span class="math inline">f</span></a></li>
+  <li><a href="#sec-polyak-stepsize" id="toc-sec-polyak-stepsize" class="nav-link" data-scroll-target="#sec-polyak-stepsize"><span class="header-section-number">8.12.2</span> Polyak’s Stepsize Yields Projection</a></li>
+  <li><a href="#sec-greedy-projection" id="toc-sec-greedy-projection" class="nav-link" data-scroll-target="#sec-greedy-projection"><span class="header-section-number">8.12.3</span> Greedy Projection Algorithm</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../lectures/05-gradient-descent.html">First-Order Methods</a></li><li class="breadcrumb-item"><a href="../lectures/06-subgradient.html"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Subgradient Methods</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Subgradient Methods</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Many important optimization problems involve objective functions that are not differentiable everywhere. The <span class="math inline">\ell_1</span>-norm <span class="math inline">\|x\|_1</span>, the pointwise maximum of a family of functions, and indicator functions of constraint sets are all fundamental building blocks of modern optimization models—yet none of them are smooth. Gradient descent, which relies on the existence of a gradient at every iterate, simply cannot be applied directly.</p>
+<p>The theory of <strong>subgradients</strong> provides the right generalization. A subgradient at a point <span class="math inline">x</span> is any vector that defines a supporting hyperplane to the epigraph of <span class="math inline">f</span> at <span class="math inline">(x, f(x))</span>. For differentiable functions the subgradient reduces to the ordinary gradient, but for nonsmooth convex functions the set of subgradients—the <strong>subdifferential</strong>—is typically a convex set rather than a singleton. This richer structure leads to a complete calculus (sum rules, chain rules, pointwise maximum rules) and to optimality conditions that unify smooth and nonsmooth settings.</p>
+<p>Armed with these tools, we develop the <strong>subgradient method</strong>: at each step, move in the direction of a negative subgradient with a carefully chosen step size. Unlike gradient descent, subgradient steps are not guaranteed to decrease the objective, so the analysis tracks the best iterate seen so far. The resulting convergence rates—<span class="math inline">O(1/\sqrt{K})</span> for convex Lipschitz functions, and <span class="math inline">O(1/K)</span> under strong convexity—are slower than those of gradient descent for smooth problems, but they apply to a much broader class of functions.</p>
+<p><strong>Reference:</strong> Chapter 3 of <a href="https://doi.org/10.1137/1.9781611974997">[Beck]</a>.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Companion Notebook
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A <a href="../notebooks/subgradient-proximal-gradient.ipynb">Jupyter notebook</a> accompanies this chapter with runnable Python implementations of subgradient methods and proximal gradient descent, including ISTA for Lasso and convergence comparisons.</p>
+</div>
+</div>
+<section id="sec-overview" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="sec-overview"><span class="header-section-number">8.1</span> What Will Be Covered</h2>
+<ol type="1">
+<li>Subgradients and the subdifferential</li>
+<li>Subgradient calculus (sum, chain, pointwise max rules)</li>
+<li>Optimality conditions for unconstrained and constrained problems</li>
+<li>Subgradient descent and projected subgradient descent</li>
+<li>Convergence rates for Lipschitz convex and strongly convex functions</li>
+</ol>
+</section>
+<section id="sec-subgradients" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="sec-subgradients"><span class="header-section-number">8.2</span> Subgradients</h2>
+<p>Recall that if <span class="math inline">f</span> is convex and differentiable, then</p>
+<p><span class="math display">f(y) \geq f(x) + \langle \nabla f(x),\, y - x \rangle.</span></p>
+<p>When <span class="math inline">f</span> is not differentiable, we can still ask: is there a vector <span class="math inline">g</span> such that the affine function <span class="math inline">f(x) + \langle g, y - x \rangle</span> lies below <span class="math inline">f</span> everywhere? Such a vector is called a subgradient.</p>
+<p><strong>How to read <a href="#fig-subgradient-concept" class="quarto-xref">Figure&nbsp;<span>8.1</span></a>.</strong> The left panel shows a smooth convex function: at each point there is exactly one tangent line (supporting hyperplane) that lies below the curve. The right panel shows a nonsmooth function with a kink: at the kink, infinitely many lines pass below the curve, each defining a valid subgradient. The set of all such slopes is the subdifferential <span class="math inline">\partial f(x)</span> — a convex set that reduces to a singleton <span class="math inline">\{\nabla f(x)\}</span> at smooth points.</p>
+<div id="fig-subgradient-concept" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-subgradient-concept-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch06-subgradient-concept.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;8.1: Subgradients as supporting hyperplanes: a differentiable function has a unique tangent (left), while a non-differentiable function admits many supporting lines at a kink (right)."><img src="figures/ch06-subgradient-concept.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-subgradient-concept-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.1: Subgradients as supporting hyperplanes: a differentiable function has a unique tangent (left), while a non-differentiable function admits many supporting lines at a kink (right).
+</figcaption>
+</figure>
+</div>
+<div id="fig-subgradient-vs-gradient" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-subgradient-vs-gradient-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/subgradient-vs-gradient.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;8.2: Gradient versus subgradient: a smooth function has a unique gradient defining a tangent hyperplane (left), while a non-smooth function has a subdifferential — a set of valid subgradients at the point of non-differentiability (right)."><img src="figures/subgradient-vs-gradient.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-subgradient-vs-gradient-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.2: Gradient versus subgradient: a smooth function has a unique gradient defining a tangent hyperplane (left), while a non-smooth function has a subdifferential — a set of valid subgradients at the point of non-differentiability (right).
+</figcaption>
+</figure>
+</div>
+<div id="def-subgradient" class="theorem definition">
+<p><span class="theorem-title"><strong>Definition 8.1 (Subgradient)</strong></span> Let <span class="math inline">f</span> be a convex function. Let <span class="math inline">D = \operatorname{dom}(f)</span>. A <strong>subgradient</strong> of <span class="math inline">f</span> at <span class="math inline">x</span> is any vector <span class="math inline">g \in \mathbb{R}^n</span> satisfying</p>
+<p><span id="eq-subgradient-def"><span class="math display">f(y) \geq f(x) + \langle g,\, y - x \rangle \quad \forall\, y \in D. \tag{8.1}</span></span></p>
+</div>
+<p>We define the set of all subgradients of <span class="math inline">f</span> at <span class="math inline">x</span> as the <strong>subdifferential</strong> of <span class="math inline">f</span> at <span class="math inline">x</span>, denoted by <span class="math inline">\partial f</span>:</p>
+<p><span class="math display">\partial f(x) = \bigl\{ g \in \mathbb{R}^n :\; f(y) \geq f(x) + \langle g,\, y - x \rangle,\; \forall\, y \in D \bigr\}.</span></p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Properties of the Subdifferential
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A crucial point to keep in mind: <strong>the subdifferential <span class="math inline">\partial f(x)</span> is a <em>set</em>, not a single vector.</strong> It collects <em>all</em> subgradients at <span class="math inline">x</span>—every vector <span class="math inline">g</span> satisfying the supporting hyperplane inequality <span class="math inline">f(y) \geq f(x) + \langle g, y - x \rangle</span>. At a “kink” like <span class="math inline">x = 0</span> for <span class="math inline">f(x) = |x|</span>, this set is an entire interval <span class="math inline">[-1, 1]</span>. At smooth points, the set collapses to a single element: the usual gradient. This <strong>set-valued</strong> nature is what allows the subdifferential to describe the local geometry of nonsmooth functions.</p>
+<ul>
+<li><strong>Existence.</strong> <span class="math inline">\partial f(x)</span> is always nonempty for <span class="math inline">x \in \operatorname{int}(D)</span>. This is a fundamental fact: every convex function admits a supporting hyperplane at any interior point. At boundary points, subgradients may fail to exist (see <a href="#exm-boundary-not-subdiff" class="quarto-xref">Example&nbsp;<span>8.1</span></a> below).</li>
+<li><strong>Consistency with the gradient.</strong> If <span class="math inline">\nabla f</span> exists at <span class="math inline">x</span>, then <span class="math inline">\partial f(x) = \{\nabla f(x)\}</span>—the subdifferential is a <strong>singleton containing exactly the gradient</strong>. This means subgradient methods automatically recover gradient descent on smooth regions: the subgradient “is” the gradient wherever the gradient exists.</li>
+<li><strong>Singleton implies differentiability.</strong> The converse also holds: if <span class="math inline">\partial f(x) = \{g\}</span> is a singleton, then <span class="math inline">f</span> <em>must</em> be differentiable at <span class="math inline">x</span> and <span class="math inline">g = \nabla f(x)</span>. In other words, <span class="math inline">|\partial f(x)| = 1</span> if and only if <span class="math inline">f</span> is differentiable at <span class="math inline">x</span>. A “thick” subdifferential (more than one element) is the hallmark of a nondifferentiable point.</li>
+<li><strong>Closed and convex.</strong> <span class="math inline">\partial f(x)</span> is always a closed convex set (even for nonconvex <span class="math inline">f</span>). This follows directly from the definition: it is the intersection of half-spaces <span class="math inline">\{g : f(y) - f(x) - \langle g, y - x \rangle \geq 0\}</span> over all <span class="math inline">y</span>.</li>
+<li><strong>Convention outside the domain.</strong> For any <span class="math inline">x \notin \operatorname{dom}(f)</span>, we define <span class="math inline">\partial f(x) = \emptyset</span>.</li>
+<li><strong>Nonconvex extension.</strong> The subgradient definition extends to nonconvex functions, but <span class="math inline">\partial f(x)</span> may be empty even at interior points. The rich theory above relies on convexity.</li>
+</ul>
+</div>
+</div>
+<div id="exm-boundary-not-subdiff" class="theorem example">
+<p><span class="theorem-title"><strong>Example 8.1 (Convex Function Not Subdifferentiable at the Boundary)</strong></span> Consider</p>
+<p><span class="math display">f(x) = \begin{cases} -\sqrt{x} &amp; x \geq 0, \\ \infty &amp; \text{otherwise.} \end{cases}</span></p>
+<p>Here <span class="math inline">\operatorname{dom}(f) = [0, \infty)</span>. The function <span class="math inline">f</span> is <strong>not subdifferentiable</strong> at <span class="math inline">x = 0</span>.</p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>Suppose <span class="math inline">\exists\, g \in \partial f(0)</span>. Then for all <span class="math inline">x \geq 0</span>,</p>
+<p><span class="math display">f(x) = -\sqrt{x} \geq f(0) + g \cdot x = g \cdot x.</span></p>
+<p>So <span class="math inline">-\sqrt{x} \geq g x</span> for all <span class="math inline">x \geq 0</span>.</p>
+<ul>
+<li>Set <span class="math inline">x = 1</span>: <span class="math inline">\Rightarrow g \leq -1 &lt; 0</span>.</li>
+<li>Set <span class="math inline">x = \tfrac{1}{2g^2}</span>: <span class="math inline">\Rightarrow -\sqrt{\tfrac{1}{2g^2}} \geq \tfrac{1}{2g}</span>, i.e.&nbsp;<span class="math inline">\tfrac{1}{2g^2} \leq \tfrac{1}{4g^2}</span>.</li>
+</ul>
+<p>This is a contradiction, so no subgradient exists at <span class="math inline">x = 0</span>. Hence we conclude the proof. <span class="math inline">\blacksquare</span></p>
+</div>
+<div id="thm-subdiff-nonempty" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 8.1 (Nonemptiness of the Subdifferential)</strong></span> For any <span class="math inline">x \in \operatorname{int}(\operatorname{dom}(f))</span>, with <span class="math inline">f</span> convex,</p>
+<p><span class="math display">\partial f(x) \neq \emptyset.</span></p>
+</div>
+<p>This is a <strong>regularity theorem</strong>: it guarantees that the subdifferential machinery never breaks down at interior points. Without it, every subgradient-based algorithm and proof technique would need to first check whether a subgradient exists at the current iterate—a condition that is virtually impossible to verify in practice.</p>
+<p><strong>Why is this true?</strong> The geometric intuition is clean. At any interior point <span class="math inline">x</span>, the epigraph <span class="math inline">\operatorname{epi}(f) = \{(y, t) : t \geq f(y)\}</span> is a convex set, and the point <span class="math inline">(x, f(x))</span> lies on its boundary. By the <strong>supporting hyperplane theorem</strong>, there exists a hyperplane that supports <span class="math inline">\operatorname{epi}(f)</span> at <span class="math inline">(x, f(x))</span>—i.e., it touches the boundary without cutting into the interior. The “slope” of this hyperplane is precisely a subgradient <span class="math inline">g \in \partial f(x)</span>. The condition <span class="math inline">x \in \operatorname{int}(\operatorname{dom}(f))</span> is needed to ensure that the epigraph has nonempty interior near <span class="math inline">(x, f(x))</span>, which is the hypothesis of the supporting hyperplane theorem.</p>
+<p><strong>Why does this matter?</strong> This result underpins the entire subgradient method: at each iteration <span class="math inline">x^k \in \operatorname{int}(\operatorname{dom}(f))</span>, we are guaranteed to find some <span class="math inline">g^k \in \partial f(x^k)</span> to use as a descent direction. It also justifies the optimality condition <span class="math inline">0 \in \partial f(x^*)</span>: if the subdifferential could be empty, the condition would be vacuously satisfied at every point, rendering it useless. The restriction to interior points is essential—as <a href="#exm-boundary-not-subdiff" class="quarto-xref">Example&nbsp;<span>8.1</span></a> shows, subgradients can fail to exist at boundary points of the domain.</p>
+</section>
+<section id="sec-examples" class="level2" data-number="8.3">
+<h2 data-number="8.3" class="anchored" data-anchor-id="sec-examples"><span class="header-section-number">8.3</span> Examples of Subgradients</h2>
+<p>We now work through a series of concrete examples, starting from scalar functions and building up to multivariate and set-valued cases. These examples illustrate the key pattern: at points where <span class="math inline">f</span> is differentiable, the subdifferential is a singleton <span class="math inline">\{\nabla f(x)\}</span>; at “kinks” or non-smooth points, the subdifferential expands into a set that interpolates the neighboring gradients.</p>
+<section id="sec-ex-abs" class="level3" data-number="8.3.1">
+<h3 data-number="8.3.1" class="anchored" data-anchor-id="sec-ex-abs"><span class="header-section-number">8.3.1</span> Absolute Value</h3>
+<p>The simplest non-smooth convex function is the absolute value <span class="math inline">f(x) = |x|</span> on <span class="math inline">\mathbb{R}</span>. Away from the origin, the function is differentiable with derivative <span class="math inline">\pm 1</span>. At <span class="math inline">x = 0</span>, the subdifferential fills in the gap:</p>
+<p><span class="math display">\partial f(x) = \begin{cases} \{\operatorname{sign}(x)\} &amp; x \neq 0, \\ [-1, 1] &amp; x = 0. \end{cases}</span></p>
+<div id="fig-abs-subdifferential" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-abs-subdifferential-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch06-abs-subdifferential.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;8.3: Subdifferential of f(x) = |x|: graph of the function (left) and the set-valued subdifferential map \partial f(x) (right)."><img src="figures/ch06-abs-subdifferential.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-abs-subdifferential-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.3: Subdifferential of <span class="math inline">f(x) = |x|</span>: graph of the function (left) and the set-valued subdifferential map <span class="math inline">\partial f(x)</span> (right).
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-ex-norm2" class="level3" data-number="8.3.2">
+<h3 data-number="8.3.2" class="anchored" data-anchor-id="sec-ex-norm2"><span class="header-section-number">8.3.2</span> Euclidean Norm</h3>
+<p>Moving to higher dimensions, consider the Euclidean norm <span class="math inline">f(x) = \|x\|_2</span> on <span class="math inline">\mathbb{R}^n</span>. The function is smooth everywhere except at the origin, where all directions look equally steep.</p>
+<ul>
+<li>For <span class="math inline">x \neq 0</span>: <span class="math inline">f(x) = \sqrt{\sum_{i=1}^{n} x_i^2}</span> is differentiable, and</li>
+</ul>
+<p><span class="math display">\frac{\partial f}{\partial x_i} = \tfrac{1}{2}\Bigl(\sum_{i=1}^{n} x_i^2\Bigr)^{-1/2} \cdot 2x_i = \frac{x_i}{\|x\|}.</span></p>
+<p>So the unique subgradient is <span class="math inline">\dfrac{x}{\|x\|_2}</span>.</p>
+<ul>
+<li>For <span class="math inline">x = 0</span>: the subdifferential is the entire unit ball <span class="math inline">\partial f(0) = \{g : \|g\|_2 \leq 1\}</span>.</li>
+</ul>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>For all <span class="math inline">y \in \mathbb{R}^n</span> and any <span class="math inline">z</span> with <span class="math inline">\|z\|_2 \leq 1</span>, Cauchy–Schwarz gives <span class="math inline">\langle z, y \rangle \leq \|z\|_2\|y\|_2 \leq \|y\|_2 = f(y) - f(0)</span>, confirming <span class="math inline">z \in \partial f(0)</span>. <span class="math inline">\blacksquare</span></p>
+</div>
+<div id="fig-norm2-subdifferential" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-norm2-subdifferential-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch06-norm2-subdifferential.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;8.4: Subdifferential of f(x) = \|x\|_2 in 2D: at x \neq 0, the unique subgradient is the unit vector x/\|x\|_2 (left); at x = 0, the subdifferential is the entire unit disk (right)."><img src="figures/ch06-norm2-subdifferential.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-norm2-subdifferential-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.4: Subdifferential of <span class="math inline">f(x) = \|x\|_2</span> in 2D: at <span class="math inline">x \neq 0</span>, the unique subgradient is the unit vector <span class="math inline">x/\|x\|_2</span> (left); at <span class="math inline">x = 0</span>, the subdifferential is the entire unit disk (right).
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-ex-general-norm" class="level3" data-number="8.3.3">
+<h3 data-number="8.3.3" class="anchored" data-anchor-id="sec-ex-general-norm"><span class="header-section-number">8.3.3</span> General Norm</h3>
+<p>The <span class="math inline">\ell_2</span>-norm result generalizes to any norm <span class="math inline">\|\cdot\|</span> on <span class="math inline">\mathbb{R}^n</span>. Let <span class="math inline">f(x) = \|x\|</span>. The subdifferential at the origin is the unit ball in the <strong>dual norm</strong> <span class="math inline">\|\cdot\|_*</span>:</p>
+<p><span class="math display">\partial f(0) = \{z : \|z\|_* \leq 1\}.</span></p>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>We verify that every <span class="math inline">z</span> with <span class="math inline">\|z\|_* \leq 1</span> satisfies the subgradient inequality. By the definition of the dual norm, for all <span class="math inline">y \in \mathbb{R}^n</span>: <span class="math display">\|y\| = \sup_{\|z\|_* \leq 1} z^\top y \geq z^\top y = z^\top (y - 0) = f(0) + z^\top (y - 0),</span> where the last equality uses <span class="math inline">f(0) = 0</span>. This is exactly the subgradient condition at <span class="math inline">x = 0</span>. <span class="math inline">\blacksquare</span></p>
+</div>
+<p>For example, the dual of the <span class="math inline">\ell_1</span>-norm is the <span class="math inline">\ell_\infty</span>-norm, so <span class="math inline">\partial \|x\|_1\big|_{x=0} = \{z : \|z\|_\infty \leq 1\} = [-1, 1]^n</span>—the hypercube in <span class="math inline">\mathbb{R}^n</span>.</p>
+</section>
+<section id="sec-ex-max-two" class="level3" data-number="8.3.4">
+<h3 data-number="8.3.4" class="anchored" data-anchor-id="sec-ex-max-two"><span class="header-section-number">8.3.4</span> Pointwise Maximum of Two Convex Functions</h3>
+<p>Taking the pointwise maximum of convex functions preserves convexity, but introduces kinks wherever the active function switches. Consider <span class="math inline">f(x) = \max\{f_1(x),\, f_2(x)\}</span> in the scalar case, where <span class="math inline">f_1, f_2</span> are convex and differentiable.</p>
+<p><span class="math display">\partial f(x) = \begin{cases} \{f_1'(x)\} &amp; \text{if } f_1(x) &gt; f_2(x), \\ [f_2'(x),\, f_1'(x)] &amp; \text{if } f_1(x) = f_2(x), \\ \{f_2'(x)\} &amp; \text{if } f_2(x) &gt; f_1(x). \end{cases}</span></p>
+<p>At points where one function strictly dominates, <span class="math inline">f</span> inherits its gradient. At the “kink” where <span class="math inline">f_1 = f_2</span>, the subdifferential fills in the interval between the two one-sided slopes—exactly as in the absolute value example.</p>
+<div id="fig-max-subdifferential" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-max-subdifferential-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch06-max-subdifferential.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;8.5: Subdifferential of f = \max\{f_1, f_2\}: graph of the pointwise maximum (left) and the set-valued subdifferential map (right), showing the interval at the crossing point."><img src="figures/ch06-max-subdifferential.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-max-subdifferential-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.5: Subdifferential of <span class="math inline">f = \max\{f_1, f_2\}</span>: graph of the pointwise maximum (left) and the set-valued subdifferential map (right), showing the interval at the crossing point.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-ex-lagrange-dual" class="level3" data-number="8.3.5">
+<h3 data-number="8.3.5" class="anchored" data-anchor-id="sec-ex-lagrange-dual"><span class="header-section-number">8.3.5</span> Lagrange Dual</h3>
+<p>Subgradients also arise naturally in duality theory. Consider the Lagrange dual function associated with <span class="math inline">\min_x f(x)</span> subject to <span class="math inline">f_1(x) \leq 0</span>:</p>
+<p><span class="math display">g(\lambda) = \inf_x \{f(x) + \lambda \cdot f_1(x)\}.</span></p>
+<p>Since <span class="math inline">g</span> is the pointwise infimum of affine functions in <span class="math inline">\lambda</span>, it is concave on its effective domain <span class="math inline">\operatorname{dom}(g) = \{\lambda : g(\lambda) &gt; -\infty\}</span>. We can identify a subgradient of <span class="math inline">h(\lambda) = -g(\lambda)</span> (a convex function) explicitly.</p>
+<p>Fix any <span class="math inline">\lambda_0 \in \operatorname{dom}(g)</span> and let <span class="math inline">x_0</span> be a minimizer attaining <span class="math inline">g(\lambda_0) = f(x_0) + \lambda_0 \cdot f_1(x_0)</span>. Define the convex function <span class="math inline">h(\lambda) = -g(\lambda)</span>. For any <span class="math inline">\lambda \in \operatorname{dom}(g)</span>, we lower-bound <span class="math inline">h(\lambda)</span> by evaluating at <span class="math inline">x_0</span> instead of minimizing:</p>
+<p><span class="math display">\begin{aligned}
+h(\lambda) &amp;= -\min_x \{f(x) + \lambda \cdot f_1(x)\} \\
+&amp;\geq -(f(x_0) + \lambda \cdot f_1(x_0)) \\
+&amp;= h(\lambda_0) + (\lambda - \lambda_0) \cdot (-f_1(x_0)).
+\end{aligned}</span></p>
+<p>This is exactly the subgradient inequality <span class="math inline">h(\lambda) \geq h(\lambda_0) + \langle g, \lambda - \lambda_0 \rangle</span> with <span class="math inline">g = -f_1(x_0)</span>, so</p>
+<p><span class="math display">-f_1(x_0) \in \partial h(\lambda_0).</span></p>
+<p>In other words, the <strong>negative constraint value</strong> at the minimizer provides a subgradient of the negated dual function. This fact is central to dual decomposition methods and sensitivity analysis in optimization.</p>
+</section>
+<section id="sec-ex-indicator" class="level3" data-number="8.3.6">
+<h3 data-number="8.3.6" class="anchored" data-anchor-id="sec-ex-indicator"><span class="header-section-number">8.3.6</span> Indicator Function</h3>
+<p>The indicator function of a convex set <span class="math inline">C</span> encodes the constraint <span class="math inline">x \in C</span> as an optimization penalty:</p>
+<p><span class="math display">I_C(x) = \begin{cases} 0 &amp; \text{if } x \in C, \\ \infty &amp; \text{if } x \notin C. \end{cases}</span></p>
+<p>Computing its subdifferential reveals a fundamental geometric object. Let <span class="math inline">x \in C</span>. By definition, <span class="math inline">y \in \partial I_C(x)</span> if and only if the subgradient inequality holds:</p>
+<p><span class="math display">I_C(z) \geq I_C(x) + \langle y,\, z - x \rangle \quad \forall\, z.</span></p>
+<p>Since <span class="math inline">x \in C</span>, we have <span class="math inline">I_C(x) = 0</span>. For <span class="math inline">z \notin C</span>, the left side is <span class="math inline">+\infty</span>, so the inequality is automatically satisfied. The only binding requirement comes from <span class="math inline">z \in C</span>, where <span class="math inline">I_C(z) = 0</span> as well, giving:</p>
+<p><span class="math display">\langle y,\, z - x \rangle \leq 0 \quad \forall\, z \in C.</span></p>
+<p>This says that <span class="math inline">y</span> makes an obtuse (or right) angle with every feasible direction <span class="math inline">z - x</span>. The set of all such vectors is called the <strong>normal cone</strong>:</p>
+<p><span class="math display">\partial I_C(x) = \{y : \langle y,\, z - x \rangle \leq 0 \;\; \forall\, z \in C\} = N_C(x),</span></p>
+<p>the <strong>normal cone</strong> of <span class="math inline">C</span> at <span class="math inline">x</span>. The normal cone collects all outward-pointing vectors that make an obtuse angle with every feasible direction—exactly the vectors from the projection characterization in <a href="05b-projected-gradient-descent.html#sec-proj-characterization" class="quarto-xref"><span>Section 7.1.1</span></a>.</p>
+<div id="fig-normal-cone" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-normal-cone-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch06-normal-cone.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;8.6: Normal cone N_{\mathcal{C}}(x) = \partial I_{\mathcal{C}}(x): at a boundary point x, the normal cone consists of all vectors pointing outward from \mathcal{C}; at an interior point, N_{\mathcal{C}}(x) = \{0\}."><img src="figures/ch06-normal-cone.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-normal-cone-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.6: Normal cone <span class="math inline">N_{\mathcal{C}}(x) = \partial I_{\mathcal{C}}(x)</span>: at a boundary point <span class="math inline">x</span>, the normal cone consists of all vectors pointing outward from <span class="math inline">\mathcal{C}</span>; at an interior point, <span class="math inline">N_{\mathcal{C}}(x) = \{0\}</span>.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Optimality via Normal Cone
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Recall the first-order optimality condition for <span class="math inline">\min f(x)</span> s.t. <span class="math inline">x \in C</span>:</p>
+<p><span class="math display">x^* \text{ is optimal} \quad \Longleftrightarrow \quad -\nabla f(x^*) \in N_C(x^*).</span></p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-lipschitz-bounded" class="level2" data-number="8.4">
+<h2 data-number="8.4" class="anchored" data-anchor-id="sec-lipschitz-bounded"><span class="header-section-number">8.4</span> Lipschitzness and Boundedness of Subgradients</h2>
+<p>A key connection between the global behavior of a convex function and its local subdifferential is the equivalence between Lipschitz continuity and boundedness of subgradients. This relationship is fundamental for the convergence analysis of subgradient methods.</p>
+<p>A function <span class="math inline">f</span> is <strong><span class="math inline">L</span>-Lipschitz</strong> if for all <span class="math inline">x, y \in \operatorname{dom}(f)</span>,</p>
+<p><span class="math display">|f(x) - f(y)| \leq L \cdot \|x - y\|.</span></p>
+<div id="thm-lipschitz-subgrad" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 8.2 (Lipschitzness and Bounded Subgradients)</strong></span> Let <span class="math inline">X \subseteq \operatorname{int}(\operatorname{dom}(f))</span> be a set. Consider:</p>
+<p><strong>(i)</strong> <span class="math inline">|f(x) - f(y)| \leq L \cdot \|x - y\|</span> for all <span class="math inline">x, y \in X</span>.</p>
+<p><strong>(ii)</strong> <span class="math inline">\|g\|_* \leq L</span> for any <span class="math inline">g \in \partial f(x)</span>, for all <span class="math inline">x \in X</span>.</p>
+<p>Then we have: <strong>(ii)</strong> <span class="math inline">\Rightarrow</span> <strong>(i)</strong>.</p>
+<p>Moreover, if <span class="math inline">X</span> is an open set, then <strong>(i)</strong> <span class="math inline">\Rightarrow</span> <strong>(ii)</strong>.</p>
+<p>For example, <span class="math inline">X = \operatorname{dom}(f)</span> is an open set.</p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span><strong>(a). Bounded subgradients imply Lipschitzness: (ii) <span class="math inline">\Rightarrow</span> (i).</strong></p>
+<p>Pick any <span class="math inline">x, y \in X</span> and any subgradient <span class="math inline">g_x \in \partial f(x)</span>. By the subgradient inequality and the Cauchy–Schwarz inequality (in its generalized norm/dual-norm form):</p>
+<p><span class="math display">f(y) - f(x) \leq \langle g_x,\, y - x \rangle \leq \|g_x\|_* \cdot \|x - y\| \leq L \cdot \|x - y\|.</span></p>
+<p>The first step uses the definition of subgradient, the second is Cauchy–Schwarz, and the third applies the bound <span class="math inline">\|g_x\|_* \leq L</span>. Swapping the roles of <span class="math inline">x</span> and <span class="math inline">y</span> and using <span class="math inline">g_y \in \partial f(y)</span>:</p>
+<p><span class="math display">f(x) - f(y) \leq \langle g_y,\, x - y \rangle \leq \|g_y\|_* \cdot \|x - y\| \leq L \cdot \|x - y\|.</span></p>
+<p>Combining both inequalities gives <span class="math inline">|f(x) - f(y)| \leq L \cdot \|x - y\|</span>, which is exactly the Lipschitz condition.</p>
+<p><strong>(b). Lipschitzness implies bounded subgradients: (i) <span class="math inline">\Rightarrow</span> (ii).</strong></p>
+<p>This direction requires <span class="math inline">X</span> to be open, so we can “probe” the function in any direction from <span class="math inline">x</span>. Fix any <span class="math inline">x \in X</span> and <span class="math inline">g \in \partial f(x)</span>. We want to show <span class="math inline">\|g\|_* \leq L</span>.</p>
+<p>The idea is to evaluate the subgradient inequality along the direction that maximizes <span class="math inline">\langle g, \cdot \rangle</span>. By the definition of the dual norm, there exists a unit vector <span class="math inline">g^+</span> with <span class="math inline">\|g^+\| = 1</span> such that <span class="math inline">\langle g^+, g \rangle = \|g\|_*</span>. Since <span class="math inline">X</span> is open, for sufficiently small <span class="math inline">\varepsilon &gt; 0</span> the perturbed point <span class="math inline">x + \varepsilon g^+</span> remains in <span class="math inline">X</span>. Combining the Lipschitz bound (upper) and the subgradient inequality (lower):</p>
+<p><span class="math display">L \cdot \varepsilon = L \cdot \|\varepsilon g^+\| \geq f(x + \varepsilon g^+) - f(x) \geq \langle g,\, \varepsilon g^+ \rangle = \varepsilon \cdot \|g\|_*.</span></p>
+<p>Dividing by <span class="math inline">\varepsilon &gt; 0</span> yields <span class="math inline">\|g\|_* \leq L</span>. The key step is the “sandwiching”: Lipschitz continuity controls the function change from above, while the subgradient inequality controls it from below. <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+<section id="sec-strong-monotonicity" class="level2" data-number="8.5">
+<h2 data-number="8.5" class="anchored" data-anchor-id="sec-strong-monotonicity"><span class="header-section-number">8.5</span> (Strong) Convexity and (Strong) Monotonicity of <span class="math inline">\partial f</span></h2>
+<p>Recall that for differentiable functions, <span class="math inline">\mu</span>-strong convexity (<span class="math inline">\mu \geq 0</span>) is equivalent to the <strong>strong monotonicity</strong> of the gradient:</p>
+<p><span class="math display">\langle \nabla f(x) - \nabla f(y),\, x - y \rangle \geq \mu \cdot \|x - y\|_2^2.</span></p>
+<p>This characterization extends naturally to nonsmooth convex functions by replacing gradients with subgradients. The resulting property—strong monotonicity of the subdifferential—is the nonsmooth analog and plays the same role in convergence analysis.</p>
+<div id="lem-strong-monotonicity" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 8.1 (Strong Monotonicity of Subdifferential)</strong></span> If <span class="math inline">f</span> is <span class="math inline">\mu</span>-strongly convex (<span class="math inline">\mu \geq 0</span>), then for any <span class="math inline">g_1 \in \partial f(x_1)</span>, <span class="math inline">g_2 \in \partial f(x_2)</span>,</p>
+<p><span class="math display">\langle g_1 - g_2,\, x_1 - x_2 \rangle \geq \mu \cdot \|x_1 - x_2\|_2^2.</span></p>
+<p>When <span class="math inline">\mu = 0</span> (plain convexity), this reduces to <strong>monotonicity</strong>: <span class="math inline">\langle g_1 - g_2, x_1 - x_2 \rangle \geq 0</span>, meaning subgradients always “agree” with the direction between the points.</p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>By the subgradient inequality applied to the <span class="math inline">\mu</span>-strongly convex function <span class="math inline">f</span>:</p>
+<p><span class="math display">f(x_2) \geq f(x_1) + \langle g_1, x_2 - x_1 \rangle + \frac{\mu}{2}\|x_2 - x_1\|_2^2,</span> <span class="math display">f(x_1) \geq f(x_2) + \langle g_2, x_1 - x_2 \rangle + \frac{\mu}{2}\|x_1 - x_2\|_2^2.</span></p>
+<p>Adding these two inequalities, the <span class="math inline">f(x_1)</span> and <span class="math inline">f(x_2)</span> terms cancel:</p>
+<p><span class="math display">0 \geq \langle g_1, x_2 - x_1 \rangle + \langle g_2, x_1 - x_2 \rangle + \mu\|x_1 - x_2\|_2^2.</span></p>
+<p>Rearranging gives <span class="math inline">\langle g_1 - g_2, x_1 - x_2 \rangle \geq \mu \|x_1 - x_2\|_2^2</span>, as desired. <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+<section id="sec-calculus" class="level2" data-number="8.6">
+<h2 data-number="8.6" class="anchored" data-anchor-id="sec-calculus"><span class="header-section-number">8.6</span> Subgradient Calculus</h2>
+<p>Just as the gradient calculus (chain rule, product rule, sum rule) enables efficient computation of gradients for composed functions, the <strong>subgradient calculus</strong> provides analogous rules for computing subdifferentials of functions built from simpler pieces. These rules are essential both for verifying optimality conditions and for implementing subgradient methods in practice.</p>
+<section id="sec-calc-scaling" class="level3" data-number="8.6.1">
+<h3 data-number="8.6.1" class="anchored" data-anchor-id="sec-calc-scaling"><span class="header-section-number">8.6.1</span> Scaling</h3>
+<p>For any <span class="math inline">\alpha &gt; 0</span>, scaling a function scales its subdifferential:</p>
+<p><span class="math display">\partial(\alpha \cdot f)(x) = \alpha \cdot \partial f(x) = \{\alpha \cdot g : g \in \partial f(x)\}.</span></p>
+<p>This follows directly from the definition: <span class="math inline">g \in \partial f(x)</span> means <span class="math inline">f(y) \geq f(x) + \langle g, y - x \rangle</span> for all <span class="math inline">y</span>, so multiplying both sides by <span class="math inline">\alpha &gt; 0</span> gives <span class="math inline">\alpha f(y) \geq \alpha f(x) + \langle \alpha g, y - x \rangle</span>, which means <span class="math inline">\alpha g \in \partial(\alpha f)(x)</span>.</p>
+</section>
+<section id="sec-calc-summation" class="level3" data-number="8.6.2">
+<h3 data-number="8.6.2" class="anchored" data-anchor-id="sec-calc-summation"><span class="header-section-number">8.6.2</span> Summation</h3>
+<p>The sum rule is the most frequently used calculus rule. It says that the subdifferential of a sum contains the sum of the subdifferentials, with equality under a mild regularity condition.</p>
+<p>Let <span class="math inline">f_1, f_2</span> be two convex functions. For <span class="math inline">x \in \operatorname{dom}(f_1) \cap \operatorname{dom}(f_2)</span>:</p>
+<p><strong>(a)</strong> <span class="math inline">\partial f_1(x) + \partial f_2(x) = \{g_1 + g_2 : g_1 \in \partial f_1(x),\, g_2 \in \partial f_2(x)\} \subseteq \partial(f_1 + f_2)(x)</span>.</p>
+<p><strong>(b)</strong> If <span class="math inline">x \in \operatorname{int}(\operatorname{dom}(f_1)) \cap \operatorname{int}(\operatorname{dom}(f_2))</span>, then</p>
+<p><span class="math display">\partial f_1(x) + \partial f_2(x) = \partial(f_1 + f_2)(x).</span></p>
+<p>If <span class="math inline">\operatorname{dom}(f_1) = \operatorname{dom}(f_2) = \mathbb{R}^n</span>, we can let <span class="math inline">x \in \mathbb{R}^n</span>.</p>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span><strong>Proof of (a).</strong> Take any <span class="math inline">g_1 \in \partial f_1(x)</span> and <span class="math inline">g_2 \in \partial f_2(x)</span>. By the subgradient inequality for each function:</p>
+<p><span class="math display">f_1(y) \geq f_1(x) + \langle g_1, y - x \rangle, \qquad f_2(y) \geq f_2(x) + \langle g_2, y - x \rangle.</span></p>
+<p>Adding these two inequalities:</p>
+<p><span class="math display">(f_1 + f_2)(y) \geq (f_1 + f_2)(x) + \langle g_1 + g_2, y - x \rangle,</span></p>
+<p>which shows <span class="math inline">g_1 + g_2 \in \partial(f_1 + f_2)(x)</span>. Since this holds for every choice of <span class="math inline">g_1 \in \partial f_1(x)</span> and <span class="math inline">g_2 \in \partial f_2(x)</span>, we conclude <span class="math inline">\partial f_1(x) + \partial f_2(x) \subseteq \partial(f_1 + f_2)(x)</span>.</p>
+<p>The reverse inclusion <span class="math inline">\partial(f_1 + f_2)(x) \subseteq \partial f_1(x) + \partial f_2(x)</span> requires the interior condition in <strong>(b)</strong> and is more delicate; we omit it here. <span class="math inline">\blacksquare</span></p>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>General Summation Rule
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>For <span class="math inline">f_1, f_2, \ldots, f_m : \mathbb{R}^n \to \mathbb{R}</span> convex,</p>
+<p><span class="math display">\partial\Bigl(\sum_{i=1}^{m} \alpha_i \cdot f_i\Bigr)(x) = \sum_{i=1}^{m} \alpha_i \cdot \partial f_i(x) \quad \forall\, x \in \mathbb{R}^n.</span></p>
+</div>
+</div>
+</section>
+<section id="sec-calc-ex-l1" class="level3" data-number="8.6.3">
+<h3 data-number="8.6.3" class="anchored" data-anchor-id="sec-calc-ex-l1"><span class="header-section-number">8.6.3</span> Example: <span class="math inline">\ell_1</span>-Norm</h3>
+<p>As a first application of the summation rule, consider the <span class="math inline">\ell_1</span>-norm <span class="math inline">f(x) = \|x\|_1 = \sum_{i=1}^{n} |x_i|</span>. Since <span class="math inline">f</span> decomposes as a sum of separable functions <span class="math inline">f_i(x) = |x_i|</span>, the summation rule gives <span class="math inline">\partial f(x) = \sum_{i=1}^{n} \partial f_i(x)</span>. From the absolute value example, each component contributes:</p>
+<p><span class="math display">\partial f_i(x) = \begin{cases} \{\operatorname{sign}(x_i)\} \cdot e_i &amp; \text{if } x_i \neq 0, \\ [-1, 1] \cdot e_i &amp; \text{if } x_i = 0, \end{cases}</span></p>
+<p>where <span class="math inline">e_i</span> is the <span class="math inline">i</span>-th standard basis vector. Summing over all components, the subdifferential of <span class="math inline">\|x\|_1</span> is the set of vectors whose <span class="math inline">i</span>-th coordinate is <span class="math inline">\operatorname{sign}(x_i)</span> when <span class="math inline">x_i \neq 0</span>, and any value in <span class="math inline">[-1, 1]</span> when <span class="math inline">x_i = 0</span>.</p>
+</section>
+<section id="sec-calc-affine" class="level3" data-number="8.6.4">
+<h3 data-number="8.6.4" class="anchored" data-anchor-id="sec-calc-affine"><span class="header-section-number">8.6.4</span> Affine Transformation</h3>
+<p>When a convex function is composed with an affine mapping, the subdifferential transforms by the transpose of the linear part—just as in smooth calculus where <span class="math inline">\nabla_x f(Ax + b) = A^\top \nabla f(Ax + b)</span>. Specifically, if <span class="math inline">h(x) = f(Ax + b)</span>, then</p>
+<p><span class="math display">\partial h(x) = A^\top \partial f(Ax + b) = \{A^\top g : g \in \partial f(Ax + b)\},</span></p>
+<p>for all <span class="math inline">x</span> satisfying <span class="math inline">x \in \operatorname{int}(\operatorname{dom}(h))</span> and <span class="math inline">Ax + b \in \operatorname{int}(\operatorname{dom}(f))</span>. This rule is used extensively in machine learning, where the loss function often takes the form <span class="math inline">\ell(Ax + b)</span> for a weight matrix <span class="math inline">A</span> and bias <span class="math inline">b</span>.</p>
+<div id="exm-l1-affine" class="theorem example">
+<p><span class="theorem-title"><strong>Example 8.2 (Subdifferential of <span class="math inline">\|Ax + b\|_1</span>)</strong></span> Combining the affine transformation rule with the <span class="math inline">\ell_1</span>-norm subdifferential gives an explicit formula for the regularizer <span class="math inline">f(x) = \|Ax + b\|_1</span>, which appears frequently in compressed sensing and sparse recovery problems.</p>
+<p>Let <span class="math inline">A = \begin{pmatrix} a_1^\top \\ \vdots \\ a_m^\top \end{pmatrix}</span> with rows <span class="math inline">a_i \in \mathbb{R}^n</span>, and <span class="math inline">b = \begin{pmatrix} b_1 \\ \vdots \\ b_m \end{pmatrix}</span>. Partition the indices into the <strong>active set</strong> <span class="math inline">I_0(x) = \{i : a_i^\top x + b_i = 0\}</span> (where the <span class="math inline">\ell_1</span>-norm has a kink) and the <strong>smooth set</strong> <span class="math inline">I_+(x) = \{i : a_i^\top x + b_i \neq 0\}</span>.</p>
+<p>By the affine rule, <span class="math inline">\partial f(x) = A^\top \partial g(Ax + b)</span> where <span class="math inline">g(y) = \|y\|_1</span>. From the <span class="math inline">\ell_1</span> example:</p>
+<p><span class="math display">\partial g(y) = \sum_{i:\, y_i \neq 0} \operatorname{sign}(y_i) \cdot e_i + \sum_{i:\, y_i = 0} [-e_i, e_i].</span></p>
+<p>Applying <span class="math inline">A^\top</span> maps each component <span class="math inline">e_i</span> to the row <span class="math inline">a_i</span>, giving <span class="math inline">\partial f(x) = \sum_{i \in I_+} \operatorname{sign}(a_i^\top x + b_i) \cdot a_i + \sum_{i \in I_0} [-a_i, a_i]</span>.</p>
+</div>
+<div id="exm-l2-affine" class="theorem example">
+<p><span class="theorem-title"><strong>Example 8.3 (Subdifferential of <span class="math inline">\|Ax + b\|_2</span>)</strong></span> Similarly, for <span class="math inline">f(x) = \|Ax + b\|_2</span>, the affine rule combined with the Euclidean norm subdifferential yields: at any point <span class="math inline">x_0</span> where <span class="math inline">Ax_0 + b = 0</span> (the non-smooth point), the subdifferential is the image of the unit ball under <span class="math inline">A^\top</span>:</p>
+<p><span class="math display">\partial f(x_0) = \{A^\top y : \|y\|_2 \leq 1\}.</span></p>
+<p>At points where <span class="math inline">Ax + b \neq 0</span>, the function is differentiable and <span class="math inline">\nabla f(x) = A^\top \frac{Ax + b}{\|Ax + b\|_2}</span>.</p>
+</div>
+</section>
+<section id="sec-calc-chain" class="level3" data-number="8.6.5">
+<h3 data-number="8.6.5" class="anchored" data-anchor-id="sec-calc-chain"><span class="header-section-number">8.6.5</span> Chain Rule</h3>
+<p>When a differentiable nondecreasing convex function is composed with a convex function, the subdifferential obeys a chain-like rule. The key requirement is that the outer function <span class="math inline">g</span> be <strong>nondecreasing</strong>—this ensures convexity is preserved under composition.</p>
+<div id="thm-chain-rule" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 8.3 (Subgradient Chain Rule)</strong></span> Let <span class="math inline">f : \mathbb{R}^n \to \mathbb{R}</span> be a convex function, and <span class="math inline">g : \mathbb{R} \to \mathbb{R}</span> be a nondecreasing convex function. Suppose <span class="math inline">g</span> is differentiable. (Then <span class="math inline">g \circ f</span> is convex.) Let <span class="math inline">h = g \circ f</span>. Then</p>
+<p><span class="math display">\partial h(x) = g'(f(x)) \cdot \partial f(x).</span></p>
+</div>
+<p>The intuition mirrors the smooth chain rule <span class="math inline">\nabla(g \circ f)(x) = g'(f(x)) \cdot \nabla f(x)</span>: the outer derivative <span class="math inline">g'(f(x)) \geq 0</span> (since <span class="math inline">g</span> is nondecreasing) simply scales every subgradient of the inner function <span class="math inline">f</span>.</p>
+</section>
+<section id="sec-calc-composition" class="level3" data-number="8.6.6">
+<h3 data-number="8.6.6" class="anchored" data-anchor-id="sec-calc-composition"><span class="header-section-number">8.6.6</span> Composition</h3>
+<p>The chain rule generalizes to compositions with multivariate outer functions. Suppose <span class="math inline">h(x) = g(f_1(x), \ldots, f_m(x))</span>, where <span class="math inline">f_1, \ldots, f_m</span> are convex and <span class="math inline">g : \mathbb{R}^m \to \mathbb{R}</span> is differentiable, nondecreasing in each argument, and convex. The gradient of <span class="math inline">g</span> at the point <span class="math inline">(f_1(x), \ldots, f_m(x))</span> provides the “mixing weights” for the subgradients of the individual <span class="math inline">f_i</span>.</p>
+<p>For any given <span class="math inline">x</span>, let</p>
+<p><span class="math display">\widehat{g} = \nabla h(y)\big|_{y = \begin{pmatrix} f_1(x) \\ \vdots \\ f_m(x) \end{pmatrix}}.</span></p>
+<p>Then</p>
+<p><span class="math display">\partial h(x) = \Bigl\{\sum_{i=1}^{m} \widehat{g}_i \cdot g_i \;\Big|\; g_i \in \partial f_i(x)\Bigr\}.</span></p>
+<p>Each subgradient of the composition is a weighted combination of subgradients of the component functions, where the weights <span class="math inline">\widehat{g}_i</span> come from the gradient of <span class="math inline">g</span>.</p>
+<div id="exm-l1-squared" class="theorem example">
+<p><span class="theorem-title"><strong>Example 8.4 (Subdifferential of <span class="math inline">\|x\|_1^2</span>)</strong></span> As an application of the scalar chain rule, consider <span class="math inline">f(x) = \|x\|_1^2 = \bigl(\sum_{i=1}^{n} |x_i|\bigr)^2</span>. We decompose this as <span class="math inline">f = h \circ g</span> where <span class="math inline">h(t) = t^2</span> (differentiable, nondecreasing for <span class="math inline">t \geq 0</span>, and convex) and <span class="math inline">g(x) = \|x\|_1</span> (convex, nonnegative). Since <span class="math inline">h'(t) = 2t</span>, the chain rule gives:</p>
+<p><span class="math display">\partial f(x) = h'(g(x)) \cdot \partial g(x) = 2\|x\|_1 \cdot \partial\|x\|_1.</span></p>
+<p>At <span class="math inline">x = 0</span>, we get <span class="math inline">\partial f(0) = \{0\}</span>, consistent with the fact that <span class="math inline">\|x\|_1^2</span> is differentiable at the origin with gradient zero (it is “smoother” than <span class="math inline">\|x\|_1</span>).</p>
+</div>
+</section>
+<section id="sec-calc-pointwise-max" class="level3" data-number="8.6.7">
+<h3 data-number="8.6.7" class="anchored" data-anchor-id="sec-calc-pointwise-max"><span class="header-section-number">8.6.7</span> Pointwise Maximum</h3>
+<p>The pointwise maximum of finitely many convex functions is one of the most important constructions in non-smooth optimization. Let <span class="math inline">f(x) = \max_{1 \leq i \leq k} f_i(x)</span>. The subdifferential is determined by the <strong>active functions</strong>—those achieving the maximum at <span class="math inline">x</span>:</p>
+<p><span class="math display">\partial f(x) = \operatorname{ConvHull}\Bigl(\bigcup_{i \in \mathcal{I}(x)} \partial f_i(x)\Bigr),</span></p>
+<p>where <span class="math inline">\mathcal{I}(x) = \{i : f_i(x) = f(x)\}</span> is the active index set and <span class="math inline">x \in \bigcap_{i=1}^{k} \operatorname{int}(\operatorname{dom}(f_i))</span>. Inactive functions (<span class="math inline">f_i(x) &lt; f(x)</span>) do not contribute to the subdifferential at all.</p>
+<p>Written out explicitly, this is the <strong>convex hull of subdifferentials of all active functions</strong>:</p>
+<p><span class="math display">= \Bigl\{\sum_{j=1}^{k} \lambda_j \cdot g_j \;\Big|\; \lambda_j = 0 \text{ if } j \notin \mathcal{I}(x),\; \sum_{j=1}^{k} \lambda_j = 1,\; \lambda_j \geq 0,\; g_j \in \partial f_j(x)\Bigr\}.</span></p>
+<p>When exactly one function is active (<span class="math inline">|\mathcal{I}(x)| = 1</span>), the subdifferential reduces to <span class="math inline">\partial f_i(x)</span> for that single active <span class="math inline">i</span>. When multiple functions tie, we must take convex combinations of their subgradients.</p>
+</section>
+<section id="sec-calc-pointwise-sup" class="level3" data-number="8.6.8">
+<h3 data-number="8.6.8" class="anchored" data-anchor-id="sec-calc-pointwise-sup"><span class="header-section-number">8.6.8</span> Pointwise Supremum</h3>
+<p>When the maximum is taken over an <strong>infinite</strong> (possibly uncountable) family of convex functions, the result extends with one extra topological step: we must take the <strong>closure</strong> of the convex hull. If <span class="math inline">f(x) = \sup_{\alpha \in \mathcal{A}} f_\alpha(x)</span>, then for all <span class="math inline">x \in \bigcap_{\alpha \in \mathcal{A}} \operatorname{int}(\operatorname{dom}(f_\alpha))</span>:</p>
+<p><span class="math display">\partial f(x) = \operatorname{Closure}\Bigl(\operatorname{ConvHull}\Bigl(\bigcup_{\alpha \in \mathcal{I}(x)} \partial f_\alpha(x)\Bigr)\Bigr),</span></p>
+<p>where <span class="math inline">\mathcal{I}(x) = \{\alpha : f_\alpha(x) = f(x)\}</span> is the <strong>active index set</strong>—the collection of all indices <span class="math inline">\alpha</span> for which the function <span class="math inline">f_\alpha</span> attains the supremum at <span class="math inline">x</span>. The closure is needed because an infinite union of convex sets may not be closed. For finite families (<span class="math inline">|\mathcal{A}| &lt; \infty</span>), the closure is automatic and we recover the formula above.</p>
+<div id="exm-piecewise-linear" class="theorem example">
+<p><span class="theorem-title"><strong>Example 8.5 (Piecewise Linear Function)</strong></span> Every piecewise linear convex function can be written as the maximum of affine functions: <span class="math inline">f(x) = \max_{1 \leq i \leq m} \{a_i^\top x + b_i\}</span>. Since each <span class="math inline">f_i(x) = a_i^\top x + b_i</span> is differentiable with <span class="math inline">\nabla f_i(x) = a_i</span>, the pointwise maximum rule gives</p>
+<p><span class="math display">\partial f(x) = \operatorname{ConvHull}\{a_i : i \in \mathcal{I}(x)\},</span></p>
+<p>where <span class="math inline">\mathcal{I}(x) = \{i : a_i^\top x + b_i = f(x)\}</span> is the set of active hyperplanes. At a vertex of the piecewise linear graph (where many hyperplanes meet), the subdifferential is a polytope; on a flat piece where only one hyperplane is active, it is the singleton <span class="math inline">\{a_i\}</span>.</p>
+</div>
+<div id="exm-linf-norm" class="theorem example">
+<p><span class="theorem-title"><strong>Example 8.6 (<span class="math inline">\ell_\infty</span> Norm)</strong></span> The <span class="math inline">\ell_\infty</span>-norm <span class="math inline">f(x) = \|x\|_\infty = \max_{1 \leq i \leq n} |x_i|</span> is a pointwise maximum of <span class="math inline">2n</span> affine functions (<span class="math inline">+x_i</span> and <span class="math inline">-x_i</span> for each coordinate). By the pointwise maximum rule, only the coordinates achieving the maximum contribute:</p>
+<p><span class="math display">\partial f(x) = \operatorname{ConvHull}\{\operatorname{sign}(x_i) \cdot e_i : |x_i| = \|x\|_\infty\}.</span></p>
+<p>For instance, if <span class="math inline">x = (3, -3, 1)^\top</span>, then <span class="math inline">\|x\|_\infty = 3</span> and <span class="math inline">\partial f(x) = \operatorname{ConvHull}\{e_1, -e_2\}</span>—a line segment between the first and (negated) second basis vectors.</p>
+</div>
+</section>
+</section>
+<section id="sec-optimality" class="level2" data-number="8.7">
+<h2 data-number="8.7" class="anchored" data-anchor-id="sec-optimality"><span class="header-section-number">8.7</span> Optimality Conditions</h2>
+<p>With the subdifferential calculus from <a href="#sec-calculus" class="quarto-xref"><span>Section 8.6</span></a> in hand, we can now state optimality conditions that work for nonsmooth convex problems—generalizing the familiar condition <span class="math inline">\nabla f(x^*) = 0</span> from smooth optimization.</p>
+<section id="sec-opt-unconstrained" class="level3" data-number="8.7.1">
+<h3 data-number="8.7.1" class="anchored" data-anchor-id="sec-opt-unconstrained"><span class="header-section-number">8.7.1</span> Unconstrained Case</h3>
+<p>The fundamental optimality condition for unconstrained minimization of a convex function is that the zero vector belongs to the subdifferential at the minimizer. In smooth optimization this reduces to the familiar <span class="math inline">\nabla f(x^*) = 0</span>, but the subdifferential version applies to all convex functions, including non-differentiable ones like <span class="math inline">\|x\|_1</span>.</p>
+<div id="thm-unconstrained-opt" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 8.4 (Unconstrained Optimality Condition)</strong></span> Let <span class="math inline">f : D \to \mathbb{R}</span> be a convex function. Then</p>
+<p><span class="math display">x^* \in \operatorname{argmin}\{f(x) : x \in \mathbb{R}^n\} \quad \Longleftrightarrow \quad 0 \in \partial f(x^*).</span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span><strong>(<span class="math inline">\Leftarrow</span> Sufficiency.)</strong> Suppose <span class="math inline">0 \in \partial f(x^*)</span>. Since <span class="math inline">0</span> is a subgradient at <span class="math inline">x^*</span>, the subgradient inequality gives: <span class="math display">f(x) \geq f(x^*) + \langle 0,\, x - x^*\rangle = f(x^*) \quad \forall\, x \in D.</span> This says <span class="math inline">f(x) \geq f(x^*)</span> for every <span class="math inline">x</span>, which is exactly the definition of <span class="math inline">x^*</span> being a global minimizer.</p>
+<p><strong>(<span class="math inline">\Rightarrow</span> Necessity.)</strong> Suppose <span class="math inline">x^*</span> is a global minimizer, so <span class="math inline">f(x) \geq f(x^*)</span> for all <span class="math inline">x \in D</span>. We can rewrite this as: <span class="math display">f(x) \geq f(x^*) + \langle 0,\, x - x^*\rangle \quad \forall\, x \in D.</span> By definition, this means <span class="math inline">g = 0</span> is a subgradient of <span class="math inline">f</span> at <span class="math inline">x^*</span>, i.e., <span class="math inline">0 \in \partial f(x^*)</span>. <span class="math inline">\blacksquare</span></p>
+</div>
+<p>Note the power of this result: for convex functions, <span class="math inline">0 \in \partial f(x^*)</span> is both necessary and sufficient for global optimality—there are no issues with local minima or saddle points.</p>
+<div id="exm-piecewise-linear-opt" class="theorem example">
+<p><span class="theorem-title"><strong>Example 8.7 (Optimality for Piecewise Linear Functions)</strong></span> Consider <span class="math inline">f(x) = \max_{i=1,\ldots,k} \{a_i^\top x + b_i\}</span>, and let <span class="math inline">\mathcal{I}(x) = \{i : a_i^\top x + b_i = f(x)\}</span> be the active set. From <a href="#exm-piecewise-linear" class="quarto-xref">Example&nbsp;<span>8.5</span></a>, we have <span class="math inline">\partial f(x) = \operatorname{ConvHull}\{a_i : i \in \mathcal{I}(x)\}</span>. By the optimality condition <span class="math inline">0 \in \partial f(x^*)</span>, the point <span class="math inline">x^*</span> is a minimizer if and only if the origin lies in the convex hull of the active gradients:</p>
+<p><span class="math display">0 \in \Bigl\{\sum_{i \in \mathcal{I}(x^*)} \lambda_i a_i \;\Big|\; \sum \lambda_i = 1,\; \lambda_i \geq 0\Bigr\}.</span></p>
+<p>Geometrically, this means the active hyperplane normals “balance out” at the minimizer—no single direction is left uncancelled.</p>
+</div>
+</section>
+<section id="sec-opt-constrained" class="level3" data-number="8.7.2">
+<h3 data-number="8.7.2" class="anchored" data-anchor-id="sec-opt-constrained"><span class="header-section-number">8.7.2</span> Convex and Constrained Case</h3>
+<p>For the constrained problem <span class="math inline">\min_x f(x)</span> s.t. <span class="math inline">x \in C</span> (with <span class="math inline">C</span> a closed convex set), the optimality condition involves both the subdifferential and the normal cone from <a href="#sec-ex-indicator" class="quarto-xref"><span>Section 8.3.6</span></a>.</p>
+<div id="thm-constrained-opt" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 8.5 (Constrained Optimality Condition)</strong></span> <span class="math inline">x^*</span> is optimal if and only if there exists <span class="math inline">g \in \partial f(x^*)</span> such that</p>
+<p><span class="math display">\langle g,\, x - x^* \rangle \geq 0 \quad \forall\, x \in C.</span></p>
+<p>Equivalently, <span class="math inline">-g \in N_C(x^*)</span>, i.e., the negative subgradient points into the normal cone.</p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>The key idea is to reformulate the constrained problem as an unconstrained one using the indicator function. Write <span class="math inline">\min_{x \in C} f(x) = \min_x \{f(x) + I_C(x)\}</span>, where <span class="math inline">I_C</span> is the indicator function from <a href="#sec-ex-indicator" class="quarto-xref"><span>Section 8.3.6</span></a>. By the unconstrained optimality condition (<a href="#thm-unconstrained-opt" class="quarto-xref">Theorem&nbsp;<span>8.4</span></a>), <span class="math inline">x^*</span> is optimal if and only if <span class="math inline">0 \in \partial(f + I_C)(x^*)</span>. Applying the summation rule gives <span class="math inline">\partial(f + I_C)(x^*) = \partial f(x^*) + \partial I_C(x^*) = \partial f(x^*) + N_C(x^*)</span>. Therefore, the condition becomes: there exist <span class="math inline">g \in \partial f(x^*)</span> and <span class="math inline">n \in N_C(x^*)</span> such that <span class="math inline">0 = g + n</span>, i.e., <span class="math inline">-g \in N_C(x^*)</span>. Unrolling the definition of the normal cone <span class="math inline">N_C(x^*) = \{v : \langle v, x - x^* \rangle \leq 0 \;\forall x \in C\}</span> gives <span class="math inline">\langle g, x - x^* \rangle \geq 0</span> for all <span class="math inline">x \in C</span>. <span class="math inline">\blacksquare</span></p>
+</div>
+<p>This condition has a clean geometric interpretation: at the optimum, the “downhill direction” <span class="math inline">-g</span> must point outward from <span class="math inline">C</span>, meaning there is no feasible descent direction. This generalizes the smooth condition <span class="math inline">-\nabla f(x^*) \in N_C(x^*)</span> from <a href="05b-projected-gradient-descent.html#sec-proj-characterization" class="quarto-xref"><span>Section 7.1.1</span></a>.</p>
+<div id="exm-simplex-opt" class="theorem example">
+<p><span class="theorem-title"><strong>Example 8.8 (Optimality over the Probability Simplex)</strong></span> A particularly important special case is optimization over the probability simplex <span class="math inline">C = \Delta_n = \{x \geq 0 : \sum_i x_i = 1\}</span>, which arises in maximum entropy, portfolio optimization, and softmax derivations. (See Example 3.69 in <a href="https://doi.org/10.1137/1.9781611974997">[Beck]</a>.)</p>
+<p>The constrained optimality condition <span class="math inline">g^\top(x - x^*) \geq 0</span> for all <span class="math inline">x \in \Delta_n</span> can be characterized coordinate-wise: there exists a threshold <span class="math inline">\mu \in \mathbb{R}</span> such that</p>
+<p><span class="math display">g_i = \mu \quad \text{if } x_i^* &gt; 0, \qquad g_i \geq \mu \quad \text{if } x_i^* = 0.</span></p>
+<p>Intuitively, all “active” coordinates (where <span class="math inline">x_i^* &gt; 0</span>) must have the same subgradient value <span class="math inline">\mu</span>, while “inactive” coordinates (<span class="math inline">x_i^* = 0</span>) must have subgradient at least <span class="math inline">\mu</span>—otherwise it would be profitable to shift mass toward them.</p>
+</div>
+<div id="exm-softmax" class="theorem example">
+<p><span class="theorem-title"><strong>Example 8.9 (Softmax from Optimality Conditions)</strong></span> As an elegant application, we derive the <strong>softmax function</strong> by minimizing negative entropy minus a linear term over the simplex:</p>
+<p><span class="math display">\min_{x \in \Delta_n} \; f(x) = \sum_{i=1}^{n} x_i \log x_i - \sum_{i=1}^{n} y_i x_i.</span></p>
+<p>This objective is differentiable (on the interior of <span class="math inline">\Delta_n</span>), with partial derivatives:</p>
+<p><span class="math display">\frac{\partial f}{\partial x_i}(x^*) = \log x_i^* + 1 - y_i.</span></p>
+<p>Applying the simplex optimality condition from <a href="#exm-simplex-opt" class="quarto-xref">Example&nbsp;<span>8.8</span></a> with <span class="math inline">g_i = \log x_i^* + 1 - y_i</span>, all active coordinates must share the same value <span class="math inline">\mu</span>:</p>
+<p><span class="math display">\log x_i^* + 1 - y_i = \mu \quad \text{if } x_i^* &gt; 0, \qquad \log x_i^* + 1 - y_i &gt; \mu \quad \text{if } x_i^* = 0.</span></p>
+<p>But <span class="math inline">x_i^* = 0</span> would require <span class="math inline">\log 0 = -\infty</span>, violating <span class="math inline">g_i \geq \mu</span>. Therefore every <span class="math inline">x_i^* &gt; 0</span>, and solving <span class="math inline">\log x_i^* = y_i + \mu - 1</span> gives:</p>
+<p><span class="math display">x_i^* = \exp(y_i + \mu - 1) = \alpha \cdot \exp(y_i), \quad \forall\, i \in [n],</span></p>
+<p>where <span class="math inline">\alpha = e^{\mu - 1}</span> is a normalizing constant. Enforcing <span class="math inline">\sum_{i=1}^{n} x_i^* = 1</span> determines <span class="math inline">\alpha = \bigl(\sum_{i=1}^{n} e^{y_i}\bigr)^{-1}</span>, yielding the familiar softmax:</p>
+<p><span class="math display">x_i^* = \frac{e^{y_i}}{\sum_{j=1}^{n} e^{y_j}}.</span></p>
+<p>This derivation shows that softmax is not just a convenient parametrization—it is the <strong>unique optimum</strong> of an entropy-regularized linear objective over the simplex.</p>
+</div>
+</section>
+<section id="sec-opt-kkt" class="level3" data-number="8.7.3">
+<h3 data-number="8.7.3" class="anchored" data-anchor-id="sec-opt-kkt"><span class="header-section-number">8.7.3</span> General Case: KKT Condition</h3>
+<p>For problems with explicit inequality and equality constraints, the optimality conditions take the familiar KKT form—but now with subdifferentials replacing gradients since the objective and constraints may be non-smooth. Consider:</p>
+<p><span class="math display">\min \; f(x) \quad \text{s.t.} \quad f_i(x) \leq 0,\; i = 1, \ldots, m, \quad h_j(x) = 0,\; j = 1, \ldots, p,</span></p>
+<p>where <span class="math inline">f, f_1, \ldots, f_m</span> are convex and <span class="math inline">h_1, \ldots, h_p</span> are linear (affine).</p>
+<div id="thm-kkt" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 8.6 (KKT Conditions)</strong></span> Assuming the <strong>Slater condition</strong> holds (i.e., there exists a strictly feasible point <span class="math inline">\widehat{x}</span> with <span class="math inline">f_i(\widehat{x}) &lt; 0</span> for all <span class="math inline">i</span>),</p>
+<p><span class="math display">x^* \text{ is optimal} \quad \Longleftrightarrow \quad \exists\; \lambda_1^*, \ldots, \lambda_m^* \geq 0, \; \nu_1^*, \ldots, \nu_p^* \in \mathbb{R}</span></p>
+<p>such that <span class="math inline">(x^*, \lambda^*, \nu^*)</span> satisfies the KKT conditions:</p>
+<p><strong>(a)</strong> <strong>Stationarity:</strong> <span class="math inline">\displaystyle 0 \in \partial f(x^*) + \sum_{i=1}^{m} \lambda_i^* \cdot \partial f_i(x^*) + \sum_{j=1}^{p} \nu_j^* \cdot \nabla h_j(x^*)</span>.</p>
+<p><strong>(b)</strong> <strong>Complementary slackness:</strong> <span class="math inline">\lambda_i^* \cdot f_i(x^*) = 0</span>, <span class="math inline">\forall\, i = 1, 2, \ldots, m</span>.</p>
+<p>Condition <strong>(a)</strong> says that <span class="math inline">x^*</span> minimizes the Lagrangian <span class="math inline">\mathcal{L}(x, \lambda^*, \nu^*) = f(x) + \sum_i \lambda_i^* f_i(x) + \sum_j \nu_j^* h_j(x)</span> over <span class="math inline">x</span>. Condition <strong>(b)</strong> says that each multiplier <span class="math inline">\lambda_i^*</span> is zero unless the corresponding constraint is tight.</p>
+</div>
+</section>
+</section>
+<section id="sec-subgradient-descent" class="level2" data-number="8.8">
+<h2 data-number="8.8" class="anchored" data-anchor-id="sec-subgradient-descent"><span class="header-section-number">8.8</span> Subgradient Descent</h2>
+<p>Having established the theory of subgradients and optimality conditions, we now turn to algorithms. The subgradient method is a natural generalization of gradient descent: replace <span class="math inline">\nabla f(x^k)</span> with any subgradient <span class="math inline">g^k \in \partial f(x^k)</span>. The key challenge is that subgradient steps are not guaranteed to decrease the objective, so the analysis requires a fundamentally different approach from that of gradient descent.</p>
+<section id="sec-unconstrained-subgrad" class="level3" data-number="8.8.1">
+<h3 data-number="8.8.1" class="anchored" data-anchor-id="sec-unconstrained-subgrad"><span class="header-section-number">8.8.1</span> Unconstrained Subgradient Descent</h3>
+<p><span class="math display">\min_x f(x), \quad f \text{ convex.}</span></p>
+<p><strong>Algorithm.</strong> For <span class="math inline">k = 0, 1, 2, \ldots</span>,</p>
+<p><span class="math display">x^{k+1} = x^k - \alpha^k \cdot g^k, \quad \text{where } g^k \in \partial f(x^k).</span></p>
+</section>
+<section id="sec-projected-subgrad" class="level3" data-number="8.8.2">
+<h3 data-number="8.8.2" class="anchored" data-anchor-id="sec-projected-subgrad"><span class="header-section-number">8.8.2</span> Projected Subgradient Descent</h3>
+<p><span class="math display">\min_{x \in C} f(x), \quad f \text{ convex.}</span></p>
+<p><strong>Algorithm.</strong> For <span class="math inline">k = 0, 1, 2, \ldots</span>,</p>
+<p><span class="math display">x^{k+1} = \mathbb{P}_C(x^k - \alpha^k \cdot g^k), \quad \text{where } g^k \in \partial f(x^k).</span></p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Subgradients Are Not Always Descent Directions
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>We know that gradient descent always decreases the objective function when <span class="math inline">\alpha</span> is sufficiently small:</p>
+<p><span class="math display">f(x - \alpha \cdot \nabla f(x)) = f(x) - \alpha \cdot \|\nabla f(x)\|_2^2 + O(\alpha).</span></p>
+<p>But are all vectors in <span class="math inline">-\partial f(x)</span> legitimate descent directions? <span style="color: #C47A6A; font-size: 1.1em;"><strong>No.</strong></span></p>
+</div>
+</div>
+<div id="exm-non-descent" class="theorem example">
+<p><span class="theorem-title"><strong>Example 8.10 (Non-Descent Subgradient Direction)</strong></span> <span class="math inline">f(x) = |x_1| + 2|x_2|</span>, <span class="math inline">x = \begin{pmatrix} x_1 \\ x_2 \end{pmatrix}</span>.</p>
+<p>At point <span class="math inline">z = \begin{pmatrix} 1 \\ 0 \end{pmatrix}</span>,</p>
+<p><span class="math display">\partial f(z) = \Bigl\{\begin{pmatrix} 1 \\ t \end{pmatrix} \;\Big|\; |t| \leq 2\Bigr\}.</span></p>
+<ul>
+<li><p><span class="math inline">g_1 = \begin{pmatrix} 1 \\ 0 \end{pmatrix} \in \partial f(z)</span>. Then <span class="math inline">f(z - t \cdot g_1) = f\bigl(\begin{pmatrix} 1 - t \\ 0 \end{pmatrix}\bigr) = |1 - t| \leq f(z)</span> for <span class="math inline">t \in [0, 1]</span>. <span class="math inline">\Rightarrow</span> <span class="math inline">-g_1</span> <strong>is</strong> a descent direction.</p></li>
+<li><p><span class="math inline">g_2 = \begin{pmatrix} 1 \\ 2 \end{pmatrix}</span>. Then <span class="math inline">f(z - t \cdot g_2) = f\bigl(\begin{pmatrix} 1 - t \\ -2t \end{pmatrix}\bigr) = |1 - t| + 4|t|</span>. For <span class="math inline">t \in (0, 1]</span>: <span class="math inline">= 1 - t + 4t = 1 + 3t</span>. For <span class="math inline">t \geq 1</span>: <span class="math inline">= 5t - 1</span>. <span class="math inline">\Rightarrow</span> <span class="math inline">f(z - t \cdot g_2) &gt; f(z)</span> for all <span class="math inline">t &gt; 0</span>. <span class="math inline">\Rightarrow</span> <span class="math inline">-g_2</span> is <strong>not</strong> a descent direction.</p></li>
+</ul>
+</div>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Why Subgradients May Not Descend
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The root cause is the difference between an <strong>inequality</strong> and an <strong>equality</strong>.</p>
+<p><strong>Subgradient: only an inequality (lower bound).</strong> The subgradient definition gives <span class="math inline">f(y) \geq f(x) + \langle g, y - x \rangle</span> for all <span class="math inline">y</span>. Setting <span class="math inline">y = x - \alpha g</span>:</p>
+<p><span class="math display">f(x - \alpha g) \geq f(x) - \alpha \|g\|^2.</span></p>
+<p>This tells us <span class="math inline">f</span> is bounded <em>from below</em> along the direction <span class="math inline">-g</span>, but says nothing about the value from above. The subgradient inequality is a very <strong>conservative lower bound</strong>—the actual function value <span class="math inline">f(x - \alpha g)</span> could be much larger than <span class="math inline">f(x)</span>. The inequality only guarantees that <span class="math inline">f</span> doesn’t drop <em>too fast</em>, not that it drops at all.</p>
+<p><strong>Gradient: an equality (first-order approximation).</strong> For differentiable <span class="math inline">f</span>, Taylor’s theorem gives an <em>equality</em> up to higher-order terms:</p>
+<p><span class="math display">f(x - \alpha \nabla f(x)) = f(x) - \alpha \|\nabla f(x)\|^2 + o(\alpha).</span></p>
+<p>For sufficiently small <span class="math inline">\alpha &gt; 0</span>, the leading term <span class="math inline">-\alpha\|\nabla f(x)\|^2 &lt; 0</span> dominates, guaranteeing descent. This is why <span class="math inline">-\nabla f(x)</span> is always a descent direction: the Taylor expansion provides a <strong>tight</strong> local approximation, not just a one-sided bound.</p>
+<p><strong>Summary.</strong> Gradient descent works because the gradient gives a <em>local equality</em>; subgradient methods must cope with having only a <em>global inequality</em>. This is why the subgradient method is not a descent method—the function value may increase at individual steps—and convergence must be measured via the best iterate rather than the last iterate.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-convergence" class="level2" data-number="8.9">
+<h2 data-number="8.9" class="anchored" data-anchor-id="sec-convergence"><span class="header-section-number">8.9</span> Convergence Theory</h2>
+<p>We now analyze the convergence of the (projected) subgradient method. The analysis applies uniformly to both the unconstrained and projected variants, since the unconstrained case is simply the projected case with <span class="math inline">C = \mathbb{R}^n</span>.</p>
+<p><strong>The challenge: non-monotone progress.</strong> <a href="#fig-gd-vs-subgradient" class="quarto-xref">Figure&nbsp;<span>8.7</span></a> illustrates the fundamental difference from gradient descent. The left panel shows gradient descent on a smooth function: <span class="math inline">f(x^k)</span> decreases monotonically at every step. The right panel shows the subgradient method on a nonsmooth function: the iterates oscillate and <span class="math inline">f(x^k)</span> may <em>increase</em> at some steps. Since we cannot hope for monotonic decrease in <span class="math inline">\{f(x^k)\}_{k \geq 0}</span>, convergence must be measured differently.</p>
+<div id="fig-gd-vs-subgradient" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-gd-vs-subgradient-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch06-gd-vs-subgradient.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Figure&nbsp;8.7: Gradient descent vs.&nbsp;subgradient method: monotone decrease in the smooth case (left) versus non-monotone oscillation requiring best-iterate tracking (right)."><img src="figures/ch06-gd-vs-subgradient.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-gd-vs-subgradient-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.7: Gradient descent vs.&nbsp;subgradient method: monotone decrease in the smooth case (left) versus non-monotone oscillation requiring best-iterate tracking (right).
+</figcaption>
+</figure>
+</div>
+<p><strong>Convergence metric: best iterate.</strong> Instead of the last iterate, we track the <strong>best iterate</strong> <span class="math inline">\mathrm{Err}_{\mathrm{best}} = \min_{0 \leq k \leq K} (f(x^k) - f^*)</span>. To bound this, we use a weighted average of errors as an intermediate quantity:</p>
+<p><span class="math display">\mathrm{Err}_{\mathrm{best}} = \min_{0 \leq k \leq K} (f(x^k) - f^*) \leq \frac{\sum_{k=0}^{K} \alpha^k \cdot (f(x^k) - f^*)}{\sum_{k=0}^{K} \alpha^k} =: \mathrm{Err}_{\mathrm{ave}},</span></p>
+<p>where <span class="math inline">x^* \in \operatorname{argmin}_{x \in C} f(x)</span>. The strategy is to bound <span class="math inline">\mathrm{Err}_{\mathrm{ave}}</span>, which automatically bounds <span class="math inline">\mathrm{Err}_{\mathrm{best}}</span>.</p>
+<p><strong>Function class.</strong> Throughout this section, we assume <span class="math inline">f</span> is <strong>convex and <span class="math inline">L</span>-Lipschitz</strong>, meaning <span class="math inline">|f(x) - f(x')| \leq L \|x - x'\|_2</span> for all <span class="math inline">x, x'</span>. By <a href="#thm-lipschitz-subgrad" class="quarto-xref">Theorem&nbsp;<span>8.2</span></a>, this is equivalent to all subgradients being bounded: <span class="math inline">\|g\|_2 \leq L</span> for every <span class="math inline">g \in \partial f(x)</span> and every <span class="math inline">x</span>. The Lipschitz constant <span class="math inline">L</span> controls the “noise” from the subgradient step.</p>
+<div id="thm-sublinear-convergence" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 8.7 (Sublinear Convergence)</strong></span> Consider (projected) subgradient descent with stepsizes <span class="math inline">\{\alpha^k\}_{k \geq 0}</span>. Then we have:</p>
+<p><span id="eq-sublinear-bound"><span class="math display">\min_{0 \leq k \leq K} \{f(x^k) - f^*\} \leq \underbrace{\frac{\sum_{k=0}^{K} \alpha^k \cdot (f(x^k) - f^*)}{\sum_{k=0}^{K} \alpha^k}}_{\mathrm{Err}_{\mathrm{ave}}} \leq \frac{\|x^0 - x^*\|_2^2 + L^2 \sum_{k=0}^{K} (\alpha^k)^2}{2 \sum_{k=0}^{K} \alpha^k}. \tag{8.2}</span></span></p>
+</div>
+<section id="sec-implications" class="level3" data-number="8.9.1">
+<h3 data-number="8.9.1" class="anchored" data-anchor-id="sec-implications"><span class="header-section-number">8.9.1</span> Implications of (<a href="#eq-sublinear-bound" class="quarto-xref"><span>8.2</span></a>)</h3>
+<p>The bound (<a href="#eq-sublinear-bound" class="quarto-xref"><span>8.2</span></a>) is a template: different stepsize schedules yield different convergence behaviors. We now examine three natural choices.</p>
+<section id="sec-constant-step" class="level4" data-number="8.9.1.1">
+<h4 data-number="8.9.1.1" class="anchored" data-anchor-id="sec-constant-step"><span class="header-section-number">8.9.1.1</span> Constant Stepsize</h4>
+<p>The simplest choice is a fixed stepsize <span class="math inline">\alpha^k = \alpha</span> for all <span class="math inline">k</span>. Substituting into (<a href="#eq-sublinear-bound" class="quarto-xref"><span>8.2</span></a>) and taking <span class="math inline">K \to \infty</span>:</p>
+<p><span class="math display">\lim_{K \to \infty} \mathrm{Err}_{\mathrm{best}} \leq \lim_{K \to \infty} \frac{\|x^0 - x^*\|_2^2 + L^2 \cdot (K+1) \cdot \alpha^2}{2\alpha \cdot (K+1)} = \frac{L^2}{2} \alpha.</span></p>
+<p>The error converges to a neighborhood of <span class="math inline">f^*</span> but <strong>does not decay to zero</strong>—the method oscillates within an <span class="math inline">O(\alpha)</span> ball. Smaller <span class="math inline">\alpha</span> gives higher accuracy but slower convergence, creating a bias-variance tradeoff.</p>
+</section>
+<section id="sec-decaying-step" class="level4" data-number="8.9.1.2">
+<h4 data-number="8.9.1.2" class="anchored" data-anchor-id="sec-decaying-step"><span class="header-section-number">8.9.1.2</span> Decaying Stepsizes</h4>
+<p>To guarantee convergence to the exact optimum, we need stepsizes that decay but not too fast. The classical conditions are:</p>
+<p><span class="math display">\sum_{k=0}^{\infty} \alpha^k = +\infty \quad \text{(steps are large enough to reach $x^*$)}, \qquad \sum_{k=0}^{\infty} (\alpha^k)^2 &lt; +\infty \quad \text{(noise accumulation is bounded)}.</span></p>
+<p>Under these conditions, the numerator of (<a href="#eq-sublinear-bound" class="quarto-xref"><span>8.2</span></a>) remains bounded while the denominator diverges:</p>
+<p><span class="math display">\frac{\|x^0 - x^*\|_2^2 + L^2 \cdot \sum_{k=0}^{K} (\alpha^k)^2}{\sum_{k=0}^{K} \alpha^k} \longrightarrow 0 \quad \text{as } K \to \infty.</span></p>
+<p>This guarantees that the best iterate converges to the optimum: <span class="math inline">\mathrm{Err}_{\mathrm{best}} \to 0</span>.</p>
+</section>
+<section id="sec-optimal-stepsize" class="level4" data-number="8.9.1.3">
+<h4 data-number="8.9.1.3" class="anchored" data-anchor-id="sec-optimal-stepsize"><span class="header-section-number">8.9.1.3</span> Optimal Choice of <span class="math inline">\alpha^k</span></h4>
+<p>Among polynomial stepsizes <span class="math inline">\alpha^k = k^{-\eta}</span>, what is the best exponent <span class="math inline">\eta</span>? The two conditions above require <span class="math inline">\eta \leq 1</span> (so <span class="math inline">\sum k^{-\eta} = \infty</span>) and <span class="math inline">2\eta &gt; 1</span> (so <span class="math inline">\sum k^{-2\eta} &lt; \infty</span>), giving <span class="math inline">\eta \in (\tfrac{1}{2}, 1]</span>. The convergence rate is:</p>
+<p><span class="math display">\mathrm{Err}_{\mathrm{best}} \leq O\!\left(\frac{\sum_{k=1}^{K} k^{-2\eta}}{\sum_{k=1}^{K} k^{-\eta}}\right) \approx O\!\left(\frac{\int_1^{K} k^{-2\eta}\, dk}{\int_1^{K} k^{-\eta}\, dk}\right) = O\!\left(\frac{1}{K^{1-\eta}}\right).</span></p>
+<p>To make <span class="math inline">K^{1-\eta}</span> grow as fast as possible, we want <span class="math inline">\eta</span> as small as possible. The boundary choice <span class="math inline">\eta = \tfrac{1}{2}</span> gives the fastest rate <span class="math inline">O(1/\sqrt{K})</span> (up to logarithmic factors), leading to the optimal stepsize:</p>
+<p><span class="math display">\boxed{\alpha^k = \frac{1}{\sqrt{k}}} \qquad \Rightarrow \quad \mathrm{Err}_{\mathrm{best}} \leq O\!\left(\frac{\|x^0 - x^*\|_2^2 + L^2 \log K}{\sqrt{K}}\right).</span></p>
+<div id="fig-step-size-strategies" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-step-size-strategies-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch06-step-size-strategies.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-8" title="Figure&nbsp;8.8: Step size strategies for subgradient methods: constant (plateaus), optimal decaying 1/\sqrt{k} (converges), and Polyak (requires f^*)."><img src="figures/ch06-step-size-strategies.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-step-size-strategies-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.8: Step size strategies for subgradient methods: constant (plateaus), optimal decaying <span class="math inline">1/\sqrt{k}</span> (converges), and Polyak (requires <span class="math inline">f^*</span>).
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-average-iterate" class="level4" data-number="8.9.1.4">
+<h4 data-number="8.9.1.4" class="anchored" data-anchor-id="sec-average-iterate"><span class="header-section-number">8.9.1.4</span> Average Iterate</h4>
+<p>The best-iterate bound guarantees that <em>some</em> iterate in the sequence is near-optimal, but it does not tell us <em>which</em> one (without evaluating <span class="math inline">f</span> at every step). An alternative is to output the <strong>weighted average iterate</strong>:</p>
+<p><span class="math display">x_{\mathrm{avg}}^K = \frac{\sum_{k=0}^{K} \alpha^k \cdot x^k}{\sum_{k=0}^{K} \alpha^k}.</span></p>
+<p>Since <span class="math inline">f</span> is convex, Jensen’s inequality gives:</p>
+<p><span class="math display">f(x_{\mathrm{avg}}^K) \leq \frac{\sum_{k=0}^{K} \alpha^k \cdot f(x^k)}{\sum_{k=0}^{K} \alpha^k} = \mathrm{Err}_{\mathrm{ave}} + f^*.</span></p>
+<p>Therefore the average iterate achieves the same convergence rate as the best iterate, without needing to track the minimum:</p>
+<p><span class="math display">f(x_{\mathrm{avg}}^K) - f^* = O\!\left(\frac{\log K}{\sqrt{K}}\right).</span></p>
+</section>
+</section>
+</section>
+<section id="sec-proof-convergence" class="level2" data-number="8.10">
+<h2 data-number="8.10" class="anchored" data-anchor-id="sec-proof-convergence"><span class="header-section-number">8.10</span> Proof of Convergence</h2>
+<section id="sec-three-point" class="level3" data-number="8.10.1">
+<h3 data-number="8.10.1" class="anchored" data-anchor-id="sec-three-point"><span class="header-section-number">8.10.1</span> Three-Point Lemma and Projection</h3>
+<div id="lem-three-point-subgrad" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 8.2 (Three-Point Lemma (Recall))</strong></span> For all <span class="math inline">x, y, z \in \mathbb{R}^n</span>,</p>
+<p><span class="math display">\langle y - x,\, y - z \rangle = \tfrac{1}{2}\|x - y\|_2^2 + \tfrac{1}{2}\|z - y\|_2^2 - \tfrac{1}{2}\|x - z\|_2^2.</span></p>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Property of Projection
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Suppose <span class="math inline">x_C = \mathbb{P}_C(x)</span>. Then for all <span class="math inline">z \in C</span>, we have</p>
+<p><span class="math display">\langle x_C - x,\, x_C - z \rangle \leq 0.</span></p>
+</div>
+</div>
+<p>Let us write <span class="math inline">x^k = x</span>, <span class="math inline">x^{k+1} = x^+</span>, <span class="math inline">g^k = g</span>, <span class="math inline">\alpha^k = \alpha</span>. Then</p>
+<p><span class="math display">x^+ = \mathbb{P}_C(x - \alpha \cdot g).</span></p>
+<p>By the property of projection,</p>
+<p><span class="math display">\langle x^+ - (x - \alpha g),\, x^+ - z \rangle \leq 0 \quad \forall\, z \in C.</span></p>
+</section>
+<section id="sec-fundamental-inequality" class="level3" data-number="8.10.2">
+<h3 data-number="8.10.2" class="anchored" data-anchor-id="sec-fundamental-inequality"><span class="header-section-number">8.10.2</span> Fundamental Inequality</h3>
+<div id="lem-fundamental" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 8.3 (Fundamental Inequality for Projected Subgradient)</strong></span> <span id="eq-fundamental-ineq"><span class="math display">\|x^{k+1} - x^*\|_2^2 \leq \|x^k - x^*\|_2^2 - 2\alpha^k \cdot (f(x^k) - f^*) + (\alpha^k)^2 \cdot \|g^k\|_2^2. \tag{8.3}</span></span></p>
+</div>
+<p>The proof expands <span class="math inline">\|x^{k+1} - x^*\|_2^2</span>, applies the projection characterization from <a href="#lem-three-point-subgrad" class="quarto-xref">Lemma&nbsp;<span>8.2</span></a>, and then uses the subgradient inequality (<a href="#eq-subgradient-def" class="quarto-xref"><span>8.1</span></a>) to relate the inner product to the function value gap.</p>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span><strong>Step 1: Projection reduces distance.</strong> Write <span class="math inline">x^+ = \mathbb{P}_C(x - \alpha g)</span> for shorthand. Since <span class="math inline">x^* \in C</span>, the projection characterization gives <span class="math inline">\langle x^+ - (x - \alpha g),\, x^+ - x^* \rangle \leq 0</span>. Applying the three-point identity to expand this inner product:</p>
+<p><span class="math display">\begin{aligned}
+0 &amp;\geq \langle x^+ - (x - \alpha g),\, x^+ - x^* \rangle \\
+&amp;= \tfrac{1}{2}\|x^+ - (x - \alpha g)\|_2^2 + \tfrac{1}{2}\|x^+ - x^*\|_2^2 - \tfrac{1}{2}\|(x - \alpha g) - x^*\|_2^2.
+\end{aligned}</span></p>
+<p>Dropping the nonnegative first term <span class="math inline">\tfrac{1}{2}\|x^+ - (x - \alpha g)\|_2^2 \geq 0</span> only makes the inequality weaker, giving:</p>
+<p><span class="math display">\|x^{k+1} - x^*\|_2^2 \leq \|x^k - \alpha^k g^k - x^*\|_2^2.</span></p>
+<p>This says that projecting onto <span class="math inline">C</span> can only bring us closer to <span class="math inline">x^*</span>—the distance to the optimum after projection is at most the distance before projection.</p>
+<p><strong>Step 2: Expand the squared norm.</strong> Expanding the right-hand side:</p>
+<p><span class="math display">\begin{aligned}
+\|x^k - \alpha^k g^k - x^*\|_2^2
+&amp;= \|(x^k - x^*) - \alpha^k g^k\|_2^2 \\
+&amp;= \|x^k - x^*\|_2^2 - 2\alpha^k \langle x^k - x^*,\, g^k \rangle + (\alpha^k)^2 \|g^k\|_2^2.
+\end{aligned}</span></p>
+<p><strong>Step 3: Use the subgradient inequality.</strong> By the definition of subgradient, <span class="math inline">g^k \in \partial f(x^k)</span> satisfies <span class="math inline">f(x^*) \geq f(x^k) + \langle g^k, x^* - x^k \rangle</span>. Rearranging:</p>
+<p><span class="math display">\langle x^k - x^*,\, g^k \rangle \geq f(x^k) - f(x^*) = f(x^k) - f^*.</span></p>
+<p>Substituting this lower bound into the inner product term of Step 2 (note the factor <span class="math inline">-2\alpha^k</span> flips the direction):</p>
+<p><span class="math display">\|x^{k+1} - x^*\|_2^2 \leq \|x^k - x^*\|_2^2 - 2\alpha^k(f(x^k) - f^*) + (\alpha^k)^2 \|g^k\|_2^2.</span></p>
+<p>This is the desired fundamental inequality. It decomposes the one-step distance change into a <strong>progress term</strong> <span class="math inline">-2\alpha^k(f(x^k) - f^*)</span> (negative, reducing distance) and a <strong>noise term</strong> <span class="math inline">(\alpha^k)^2\|g^k\|_2^2</span> (positive, from the subgradient step overshoot). <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+<section id="sec-proof-sublinear" class="level3" data-number="8.10.3">
+<h3 data-number="8.10.3" class="anchored" data-anchor-id="sec-proof-sublinear"><span class="header-section-number">8.10.3</span> Proof of <a href="#thm-sublinear-convergence" class="quarto-xref">Theorem&nbsp;<span>8.7</span></a></h3>
+<p><strong>Proof strategy.</strong> We rearrange the fundamental inequality to isolate the suboptimality gap <span class="math inline">f(x^k) - f^*</span> on one side, then sum over all iterations. The left side telescopes, bounding the cumulative progress in terms of the initial distance <span class="math inline">\|x^0 - x^*\|_2^2</span> and the accumulated step sizes.</p>
+<p>Starting from <a href="#lem-fundamental" class="quarto-xref">Lemma&nbsp;<span>8.3</span></a>, rearrange (<a href="09-accelerated-gradient.html#eq-fundamental-ineq" class="quarto-xref"><span>11.10</span></a>) to isolate the progress:</p>
+<p><span class="math display">2\alpha^k \cdot (f(x^k) - f^*) \leq \|x^k - x^*\|_2^2 - \|x^{k+1} - x^*\|_2^2 + (\alpha^k)^2 \cdot \|g^k\|_2^2. \quad (\star)</span></p>
+<p>Since <span class="math inline">f</span> is <span class="math inline">L</span>-Lipschitz, <a href="#thm-lipschitz-subgrad" class="quarto-xref">Theorem&nbsp;<span>8.2</span></a> gives <span class="math inline">\|g^k\|_2 \leq L</span> for all <span class="math inline">k</span>. Summing <span class="math inline">(\star)</span> over <span class="math inline">k = 0, 1, \ldots, K</span>, the distance terms telescope—all intermediate terms <span class="math inline">\|x^1 - x^*\|_2^2, \ldots, \|x^K - x^*\|_2^2</span> cancel:</p>
+<p><span class="math display">2 \sum_{k=0}^{K} \alpha^k \cdot (f(x^k) - f^*) \leq \underbrace{\|x^0 - x^*\|_2^2}_{\text{initial distance}} - \underbrace{\|x^{K+1} - x^*\|_2^2}_{\geq\, 0} + L^2 \sum_{k=0}^{K} (\alpha^k)^2.</span></p>
+<p>Dropping the nonpositive term <span class="math inline">-\|x^{K+1} - x^*\|_2^2</span> and dividing by <span class="math inline">2\sum_k \alpha^k</span> gives the convergence rate for the weighted average of suboptimality gaps. The specific rate depends on the step size schedule: with <span class="math inline">\alpha^k = c/\sqrt{K+1}</span> (constant step), we obtain the <span class="math inline">O(1/\sqrt{K})</span> rate stated in the theorem. <span class="math inline">\blacksquare</span></p>
+</section>
+<section id="sec-polyak" class="level3" data-number="8.10.4">
+<h3 data-number="8.10.4" class="anchored" data-anchor-id="sec-polyak"><span class="header-section-number">8.10.4</span> Polyak’s Rule</h3>
+<p>Can a smarter step size improve the convergence rate? Polyak’s rule uses the current suboptimality gap to set the step size adaptively:</p>
+<p><span class="math display">\alpha^k = \frac{f(x^k) - f^*}{\|g^k\|_2^2}.</span></p>
+<p>This requires knowledge of <span class="math inline">f^*</span>, which is typically unknown in practice. Nevertheless, Polyak’s rule is theoretically illuminating because it achieves the same <span class="math inline">O(1/\sqrt{K})</span> rate while also guaranteeing <strong>monotone decrease in distance to the optimum</strong>.</p>
+<p>Substituting Polyak’s step size into the fundamental inequality (<a href="09-accelerated-gradient.html#eq-fundamental-ineq" class="quarto-xref"><span>11.10</span></a>):</p>
+<p><span class="math display">\|x^{k+1} - x^*\|_2^2 \leq \|x^k - x^*\|_2^2 - \frac{(f(x^k) - f^*)^2}{\|g^k\|_2^2} \leq \|x^k - x^*\|_2^2.</span></p>
+<p>The second term is strictly negative whenever <span class="math inline">f(x^k) &gt; f^*</span>, so the distance <span class="math inline">\|x^k - x^*\|_2</span> is <strong>monotonically non-increasing</strong>. This is a remarkable property: even though the function values may not decrease monotonically, the iterates always move closer to <span class="math inline">x^*</span>.</p>
+<div id="thm-polyak" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 8.8 (Projected Subgradient with Polyak’s Rule)</strong></span> For a convex and <span class="math inline">L</span>-Lipschitz <span class="math inline">f</span>, if we adopt Polyak’s rule, then we have:</p>
+<p><span class="math display">\min_{0 \leq k \leq K} f(x^k) - f(x^*) \leq \frac{L \cdot \|x^0 - x^*\|_2}{\sqrt{K+1}}.</span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>Substituting Polyak’s step size <span class="math inline">\alpha^k = (f(x^k) - f^*)/\|g^k\|_2^2</span> into the fundamental inequality (<a href="09-accelerated-gradient.html#eq-fundamental-ineq" class="quarto-xref"><span>11.10</span></a>) and simplifying, we obtain:</p>
+<p><span class="math display">\|x^{k+1} - x^*\|_2^2 \leq \|x^k - x^*\|_2^2 - \frac{(f(x^k) - f^*)^2}{\|g^k\|_2^2}.</span></p>
+<p>Rearranging to isolate the squared suboptimality gap and using <span class="math inline">\|g^k\|_2 \leq L</span> (by the Lipschitz bound):</p>
+<p><span class="math display">(f(x^k) - f^*)^2 \leq L^2 \cdot \bigl(\|x^k - x^*\|_2^2 - \|x^{k+1} - x^*\|_2^2\bigr).</span></p>
+<p>This is again a telescoping structure. Summing over <span class="math inline">k = 0, 1, \ldots, K</span>:</p>
+<p><span class="math display">\sum_{k=0}^{K} (f(x^k) - f^*)^2 \leq L^2 \cdot \bigl(\|x^0 - x^*\|_2^2 - \|x^{K+1} - x^*\|_2^2\bigr) \leq L^2 \cdot \|x^0 - x^*\|_2^2.</span></p>
+<p>To extract the best-iterate bound, observe that the minimum of a set of nonneg numbers bounds their average from below:</p>
+<p><span class="math display">\sum_{k=0}^{K} (f(x^k) - f^*)^2 \geq (K+1) \cdot \Bigl(\min_{0 \leq k \leq K} f(x^k) - f^*\Bigr)^2.</span></p>
+<p>Combining these two bounds and taking the square root yields the <span class="math inline">O(1/\sqrt{K})</span> rate:</p>
+<p><span class="math display">\mathrm{Err}_{\mathrm{best}} \leq \frac{L \cdot \|x^0 - x^*\|_2}{\sqrt{K+1}}. \qquad \blacksquare</span></p>
+</div>
+</section>
+</section>
+<section id="sec-strongly-convex" class="level2" data-number="8.11">
+<h2 data-number="8.11" class="anchored" data-anchor-id="sec-strongly-convex"><span class="header-section-number">8.11</span> Faster <span class="math inline">O(1/k)</span> Rate for Strongly Convex <span class="math inline">f</span></h2>
+<p>The <span class="math inline">O(1/\sqrt{K})</span> rate established in <a href="#thm-sublinear-convergence" class="quarto-xref">Theorem&nbsp;<span>8.7</span></a> is the best we can hope for with only convexity and Lipschitzness. When <span class="math inline">f</span> is additionally strongly convex, the strong monotonicity of <span class="math inline">\partial f</span> provides extra contraction, yielding a faster rate.</p>
+<div id="thm-strongly-convex-rate" class="theorem">
+<p><span class="theorem-title"><strong>Theorem 8.9 (Convergence for Strongly Convex Functions)</strong></span> Let <span class="math inline">f</span> be <span class="math inline">\mu</span>-strongly convex and <span class="math inline">L</span>-Lipschitz. We set <span class="math inline">\alpha^k = \dfrac{2}{(k+1)\mu}</span>. Then we have</p>
+<p><span class="math display">\mathrm{Err}_{\mathrm{best}} \leq \frac{2L^2}{\mu} \cdot \frac{1}{k}.</span></p>
+</div>
+<section id="sec-extended-fundamental" class="level3" data-number="8.11.1">
+<h3 data-number="8.11.1" class="anchored" data-anchor-id="sec-extended-fundamental"><span class="header-section-number">8.11.1</span> Extended Fundamental Lemma</h3>
+<div id="lem-fundamental-sc" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 8.4 (Fundamental Inequality (Strongly Convex Case))</strong></span> For any choice of <span class="math inline">\alpha^k</span>, when <span class="math inline">f</span> is <span class="math inline">\mu</span>-strongly convex,</p>
+<p><span class="math display">\|x^{k+1} - x^*\|_2^2 \leq (1 - \mu \cdot \alpha^k) \cdot \|x^k - x^*\|_2^2 - 2\alpha^k \cdot (f(x^k) - f^*) + (\alpha^k)^2 \cdot \|g^k\|_2^2.</span></p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>The proof follows the same three-step structure as <a href="#lem-fundamental" class="quarto-xref">Lemma&nbsp;<span>8.3</span></a>. Steps 1 and 2 are identical—we use the projection characterization and expand the squared norm to obtain:</p>
+<p><span class="math display">\|x^{k+1} - x^*\|_2^2 \leq \|x^k - x^*\|_2^2 - 2\alpha^k \langle x^k - x^*,\, g^k \rangle + (\alpha^k)^2 \|g^k\|_2^2.</span></p>
+<p>The key difference is in Step 3. For a <span class="math inline">\mu</span>-strongly convex function, the subgradient inequality is strengthened to:</p>
+<p><span class="math display">f(x^*) \geq f(x^k) + \langle g^k, x^* - x^k \rangle + \frac{\mu}{2}\|x^* - x^k\|_2^2.</span></p>
+<p>Rearranging: <span class="math inline">\langle x^k - x^*, g^k \rangle \geq (f(x^k) - f^*) + \frac{\mu}{2}\|x^k - x^*\|_2^2</span>. Substituting this stronger lower bound into the inner product term:</p>
+<p><span class="math display">\|x^{k+1} - x^*\|_2^2 \leq (1 - \mu\alpha^k)\|x^k - x^*\|_2^2 - 2\alpha^k(f(x^k) - f^*) + (\alpha^k)^2\|g^k\|_2^2.</span></p>
+<p>The additional factor <span class="math inline">(1 - \mu\alpha^k)</span> in front of <span class="math inline">\|x^k - x^*\|_2^2</span> provides extra contraction compared to the convex case, which is what enables the faster <span class="math inline">O(1/k)</span> rate. <span class="math inline">\blacksquare</span></p>
+</div>
+</section>
+<section id="sec-proof-1k" class="level3" data-number="8.11.2">
+<h3 data-number="8.11.2" class="anchored" data-anchor-id="sec-proof-1k"><span class="header-section-number">8.11.2</span> Proof of <span class="math inline">O(1/k)</span> Rate</h3>
+<p><strong>Proof strategy.</strong> We rearrange the strongly convex fundamental inequality to create a telescoping sum, then extract the best-iterate bound. The key trick is to multiply by an appropriate weight <span class="math inline">k</span> so that the distance terms telescope with the step size <span class="math inline">\alpha^k = 2/(\mu(k+1))</span>.</p>
+<p><strong>Step 1: Rearrange the fundamental inequality.</strong> Starting from <a href="#lem-fundamental-sc" class="quarto-xref">Lemma&nbsp;<span>8.4</span></a>, divide by <span class="math inline">2\alpha^k</span> to isolate the suboptimality gap:</p>
+<p><span class="math display">f(x^k) - f^* \leq \frac{1 - \mu \alpha^k}{2\alpha^k} \|x^k - x^*\|_2^2 - \frac{1}{2\alpha^k}\|x^{k+1} - x^*\|_2^2 + \frac{\alpha^k}{2} \cdot \|g^k\|_2^2.</span></p>
+<p><strong>Step 2: Substitute the step size.</strong> With <span class="math inline">\alpha^k = \frac{2}{\mu(k+1)}</span>, the coefficients simplify to:</p>
+<p><span class="math display">1 - \mu \alpha^k = \frac{k - 1}{k + 1}, \qquad \frac{1 - \mu \alpha^k}{2\alpha^k} = \frac{\mu(k-1)}{4}, \qquad \frac{1}{2\alpha^k} = \frac{\mu(k+1)}{4}.</span></p>
+<p>Substituting these into the inequality:</p>
+<p><span class="math display">f(x^k) - f^* \leq \frac{\mu}{4}\bigl((k-1)\|x^k - x^*\|_2^2 - (k+1)\|x^{k+1} - x^*\|_2^2\bigr) + \frac{L^2}{\mu(k+1)}.</span></p>
+<p><strong>Step 3: Multiply by <span class="math inline">k</span> to create a telescoping structure.</strong> Multiplying both sides by <span class="math inline">k</span> and using <span class="math inline">k/(k+1) \leq 1</span>:</p>
+<p><span class="math display">k(f(x^k) - f^*) \leq \frac{\mu}{4}\bigl(k(k-1)\|x^k - x^*\|_2^2 - k(k+1)\|x^{k+1} - x^*\|_2^2\bigr) + \frac{L^2}{\mu}.</span></p>
+<p><strong>Step 4: Telescope.</strong> Define <span class="math inline">a_k = k(k-1)\|x^k - x^*\|_2^2</span>. Summing over <span class="math inline">k = 0, 1, \ldots, K</span>, the distance terms telescope:</p>
+<p><span class="math display">\sum_{k=0}^{K} k(f(x^k) - f^*) \leq \frac{\mu}{4}(a_0 - a_{K+1}) + \frac{(K+1)L^2}{\mu}.</span></p>
+<p>Since <span class="math inline">a_0 = 0 \cdot (-1) \cdot \|x^0 - x^*\|_2^2 = 0</span> and <span class="math inline">a_{K+1} \geq 0</span>, this simplifies to:</p>
+<p><span class="math display">\sum_{k=0}^{K} k(f(x^k) - f^*) \leq \frac{(K+1)L^2}{\mu}.</span></p>
+<p><strong>Step 5: Extract the best-iterate bound.</strong> The left side is bounded below by replacing each <span class="math inline">f(x^k) - f^*</span> with the minimum:</p>
+<p><span class="math display">\sum_{k=0}^{K} k(f(x^k) - f^*) \geq \mathrm{Err}_{\mathrm{best}} \cdot \sum_{k=0}^{K} k = \frac{K(K+1)}{2} \cdot \mathrm{Err}_{\mathrm{best}}.</span></p>
+<p>Combining and dividing by <span class="math inline">K(K+1)/2</span>:</p>
+<p><span class="math display">\mathrm{Err}_{\mathrm{best}} \leq \frac{2L^2}{\mu} \cdot \frac{1}{K}. \qquad \blacksquare</span></p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>What Do These Proofs Actually Use?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>It is worth pausing to note what properties the convergence proofs rely on. Both the <span class="math inline">O(1/\sqrt{K})</span> rate (<a href="#thm-sublinear-convergence" class="quarto-xref">Theorem&nbsp;<span>8.7</span></a>) and the <span class="math inline">O(1/K)</span> rate (<a href="#thm-strongly-convex-rate" class="quarto-xref">Theorem&nbsp;<span>8.9</span></a>) use only <strong>three ingredients</strong>:</p>
+<ol type="1">
+<li><strong>Projection’s optimality condition:</strong> <span class="math inline">\langle \mathbb{P}_C(x) - x,\, \mathbb{P}_C(x) - z \rangle \leq 0</span> for all <span class="math inline">z \in C</span>, which gives the “projection reduces distance” step.</li>
+<li><strong>Monotonicity of <span class="math inline">\partial f</span>:</strong> the subgradient inequality <span class="math inline">\langle g^k, x^k - x^* \rangle \geq f(x^k) - f^*</span> (or its strongly convex strengthening), which converts inner products into function value gaps.</li>
+<li><strong>Boundedness of <span class="math inline">\partial f</span>:</strong> <span class="math inline">\|g^k\|_2 \leq L</span>, which controls the noise term <span class="math inline">(\alpha^k)^2 \|g^k\|_2^2</span>.</li>
+</ol>
+<p><span style="color: #C47A6A; font-size: 1.05em;"><strong>None of these require differentiability.</strong></span> This means these convergence rates apply equally to (projected) <strong>gradient descent</strong> on <span class="math inline">L</span>-Lipschitz convex functions—and in that setting, gradient descent does <strong>not</strong> achieve a faster rate. The <span class="math inline">O(1/\sqrt{K})</span> and <span class="math inline">O(1/K)</span> rates are the price of Lipschitz continuity, not of nonsmoothness. To beat these rates, one needs additional structure such as smoothness (<span class="math inline">L</span>-smooth gradient), which enables the <span class="math inline">O(1/K)</span> rate for plain convex and <span class="math inline">O(e^{-cK})</span> for strongly convex functions via gradient descent.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sec-application" class="level2" data-number="8.12">
+<h2 data-number="8.12" class="anchored" data-anchor-id="sec-application"><span class="header-section-number">8.12</span> Application: Projection to Intersection of Convex Sets</h2>
+<p>We close this chapter by showing how the subgradient method, combined with Polyak’s step size, leads to an elegant algorithm for a fundamental geometric problem: finding a point in the intersection of convex sets. (See Section 8.2.3 of <a href="https://doi.org/10.1137/1.9781611974997">[Beck]</a>.)</p>
+<p><strong>Problem setup.</strong> Let <span class="math inline">S_1, S_2, \ldots, S_m</span> be <span class="math inline">m</span> closed convex sets with nonempty intersection <span class="math inline">S = \bigcap_{i=1}^{m} S_i \neq \emptyset</span>. Our goal is to find a point <span class="math inline">x^* \in S</span>. This is a <strong>feasibility problem</strong>—there is no objective to minimize, only constraints to satisfy.</p>
+<p><strong>Reformulation as optimization.</strong> The key observation is that <span class="math inline">x^* \in S</span> if and only if <span class="math inline">x^*</span> lies in every <span class="math inline">S_i</span>, which means the distance from <span class="math inline">x^*</span> to each set is zero. This lets us reformulate feasibility as minimizing the worst-case distance:</p>
+<p><span class="math display">f(x) = \max_{i \in [m]} d_{S_i}(x), \qquad \text{where} \quad d_{S_i}(x) = \inf_{y \in S_i} \|x - y\|_2</span></p>
+<p>is the Euclidean distance from <span class="math inline">x</span> to <span class="math inline">S_i</span>. If <span class="math inline">x^* \in S</span>, then <span class="math inline">d_{S_i}(x^*) = 0</span> for all <span class="math inline">i</span>, so <span class="math inline">f(x^*) = 0 = f^*</span>. Conversely, <span class="math inline">f(x) = 0</span> implies <span class="math inline">x \in S</span>. This function <span class="math inline">f</span> is convex (as the pointwise maximum of convex functions) and nonsmooth (due to the <span class="math inline">\max</span>), making it a natural target for the subgradient method.</p>
+<p>To apply the convergence theory from <a href="#sec-convergence" class="quarto-xref"><span>Section 8.9</span></a>, we first verify the Lipschitz condition.</p>
+<div id="lem-distance-lipschitz" class="theorem lemma">
+<p><span class="theorem-title"><strong>Lemma 8.5 (Lipschitz Property of Distance Functions)</strong></span> The function <span class="math inline">f(x) = \max_{i \in [m]} d_{S_i}(x)</span> is Lipschitz with constant <span class="math inline">L = 1</span>.</p>
+</div>
+<div class="proof">
+<p><span class="proof-title"><em>Proof</em>. </span>It suffices to show that each distance function <span class="math inline">d_{S_i}</span> is <span class="math inline">1</span>-Lipschitz, since the maximum of <span class="math inline">1</span>-Lipschitz functions is again <span class="math inline">1</span>-Lipschitz. For any <span class="math inline">x, y \in \mathbb{R}^n</span>, the triangle inequality gives:</p>
+<p><span class="math display">d_{S_i}(x) = \|x - \mathbb{P}_{S_i}(x)\|_2 \leq \|x - \mathbb{P}_{S_i}(y)\|_2 \leq \|x - y\|_2 + \|y - \mathbb{P}_{S_i}(y)\|_2 = \|x - y\|_2 + d_{S_i}(y).</span></p>
+<p>Rearranging: <span class="math inline">d_{S_i}(x) - d_{S_i}(y) \leq \|x - y\|_2</span>. By symmetry (swapping <span class="math inline">x</span> and <span class="math inline">y</span>), we get <span class="math inline">|d_{S_i}(x) - d_{S_i}(y)| \leq \|x - y\|_2</span>. Therefore:</p>
+<p><span class="math display">|f(x) - f(y)| \leq \max_{i \in [m]} |d_{S_i}(x) - d_{S_i}(y)| \leq \|x - y\|_2. \qquad \blacksquare</span></p>
+</div>
+<section id="sec-subgrad-of-f" class="level3" data-number="8.12.1">
+<h3 data-number="8.12.1" class="anchored" data-anchor-id="sec-subgrad-of-f"><span class="header-section-number">8.12.1</span> Subgradient of <span class="math inline">f</span></h3>
+<p>To run the subgradient method, we need to compute a subgradient of <span class="math inline">f(x) = \max_i d_{S_i}(x)</span>. By the pointwise maximum rule from <a href="#sec-calc-pointwise-max" class="quarto-xref"><span>Section 8.6.7</span></a>, any subgradient of the active function is a subgradient of <span class="math inline">f</span>. Let <span class="math inline">i_x = \operatorname{argmax}_{i \in [m]} d_{S_i}(x)</span> be the index of the <strong>farthest set</strong>. Then <span class="math inline">\partial d_{S_{i_x}}(x) \subseteq \partial f(x)</span>, so it suffices to compute a subgradient of the distance function <span class="math inline">d_{S_{i_x}}</span>.</p>
+<p><strong>Computing <span class="math inline">\partial d_{S_i}(x)</span>.</strong> The distance function <span class="math inline">d_{S_i}(x) = \|x - \mathbb{P}_{S_i}(x)\|_2</span> is not differentiable (it has a kink at <span class="math inline">x \in S_i</span>), but its square is. The squared distance <span class="math inline">\varphi_i(x) = \frac{1}{2}(d_{S_i}(x))^2</span> is differentiable with gradient:</p>
+<p><span class="math display">\nabla \varphi_i(x) = x - \mathbb{P}_{S_i}(x).</span></p>
+<p>Applying the chain rule (<a href="#thm-chain-rule" class="quarto-xref">Theorem&nbsp;<span>8.3</span></a>) to <span class="math inline">\varphi_i = \frac{1}{2}h \circ d_{S_i}</span> where <span class="math inline">h(t) = t^2</span>, we get <span class="math inline">\nabla \varphi_i(x) = d_{S_i}(x) \cdot \partial d_{S_i}(x)</span>. Dividing by <span class="math inline">d_{S_i}(x)</span> (assuming <span class="math inline">x \notin S_i</span>, so <span class="math inline">d_{S_i}(x) &gt; 0</span>):</p>
+<p><span class="math display">\partial d_{S_i}(x) = \frac{x - \mathbb{P}_{S_i}(x)}{\|x - \mathbb{P}_{S_i}(x)\|_2}.</span></p>
+<p>This is the unit vector pointing from the projection <span class="math inline">\mathbb{P}_{S_i}(x)</span> toward <span class="math inline">x</span>—the direction of steepest increase in distance. Note that <span class="math inline">\|\partial d_{S_i}(x)\|_2 = 1</span>, consistent with the <span class="math inline">1</span>-Lipschitz property.</p>
+</section>
+<section id="sec-polyak-stepsize" class="level3" data-number="8.12.2">
+<h3 data-number="8.12.2" class="anchored" data-anchor-id="sec-polyak-stepsize"><span class="header-section-number">8.12.2</span> Polyak’s Stepsize Yields Projection</h3>
+<p>With the subgradient in hand, we now apply Polyak’s step size rule from <a href="#sec-polyak" class="quarto-xref"><span>Section 8.10.4</span></a>. Since <span class="math inline">f^* = 0</span> and <span class="math inline">\|\partial d_{S_{i_x}}(x)\|_2 = 1</span>, Polyak’s rule simplifies beautifully:</p>
+<p><span class="math display">\alpha = \frac{f(x) - f^*}{\|\partial f(x)\|_2^2} = \frac{d_{S_{i_x}}(x)}{1} = d_{S_{i_x}}(x).</span></p>
+<p>Substituting this step size into the subgradient update, the next iterate becomes:</p>
+<p><span class="math display">\begin{aligned}
+x^+ &amp;= x - \alpha \cdot \partial f(x) = x - d_{S_{i_x}}(x) \cdot \frac{x - \mathbb{P}_{S_{i_x}}(x)}{\|x - \mathbb{P}_{S_{i_x}}(x)\|_2} \\
+&amp;= x - (x - \mathbb{P}_{S_{i_x}}(x)) = \mathbb{P}_{S_{i_x}}(x).
+\end{aligned}</span></p>
+<p>The subgradient step with Polyak’s rule is simply the <strong>projection onto the farthest set</strong>. This is a remarkable simplification: all the machinery of subgradients, Lipschitz constants, and step size rules collapses into a single geometric operation.</p>
+</section>
+<section id="sec-greedy-projection" class="level3" data-number="8.12.3">
+<h3 data-number="8.12.3" class="anchored" data-anchor-id="sec-greedy-projection"><span class="header-section-number">8.12.3</span> Greedy Projection Algorithm</h3>
+<p>Putting everything together, the subgradient method with Polyak’s step size for the feasibility problem is:</p>
+<p><strong>Algorithm (Greedy Projection).</strong> Starting from any <span class="math inline">x^0 \in \mathbb{R}^n</span>, repeat for <span class="math inline">k = 0, 1, 2, \ldots</span>:</p>
+<ol type="1">
+<li>Find the farthest set: <span class="math inline">i_k = \operatorname{argmax}_{i \in [m]} d_{S_i}(x^k)</span>.</li>
+<li>Project onto it: <span class="math inline">x^{k+1} = \mathbb{P}_{S_{i_k}}(x^k)</span>.</li>
+</ol>
+<p>At each step, the algorithm identifies which constraint is most violated and projects onto that set. By <a href="#thm-polyak" class="quarto-xref">Theorem&nbsp;<span>8.8</span></a>, the convergence rate is <span class="math inline">O(1/\sqrt{K})</span>: after <span class="math inline">K</span> iterations, the distance to the intersection satisfies <span class="math inline">\min_{0 \leq k \leq K} d_S(x^k) \leq \|x^0 - x^*\|_2 / \sqrt{K+1}</span>.</p>
+<div id="fig-alternating-projection" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-alternating-projection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="figures/ch06-alternating-projection.svg" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="Figure&nbsp;8.9: Alternating projection between two convex sets S_1 and S_2: starting from x^0, the iterates alternate between projecting onto S_1 and S_2, converging to a point x^* \in S_1 \cap S_2."><img src="figures/ch06-alternating-projection.svg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-alternating-projection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.9: Alternating projection between two convex sets <span class="math inline">S_1</span> and <span class="math inline">S_2</span>: starting from <span class="math inline">x^0</span>, the iterates alternate between projecting onto <span class="math inline">S_1</span> and <span class="math inline">S_2</span>, converging to a point <span class="math inline">x^* \in S_1 \cap S_2</span>.
+</figcaption>
+</figure>
+</div>
+<p><strong>Special case: alternating projection.</strong> When <span class="math inline">m = 2</span>, the farthest set alternates between <span class="math inline">S_1</span> and <span class="math inline">S_2</span> (assuming the iterate is not already in one of them), giving the classical <strong>alternating projection</strong> method:</p>
+<p><span class="math display">x^{k+1} = \mathbb{P}_{S_1}(x^k), \qquad x^{k+2} = \mathbb{P}_{S_2}(x^{k+1}).</span></p>
+<p>This well-known algorithm was introduced by von Neumann for subspaces and later generalized by Bregman to convex sets. The greedy projection method extends it to any number of sets by always targeting the most violated constraint.</p>
+</section>
+</section>
+<section id="summary" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="summary">Summary</h2>
+<p>This chapter extends optimization beyond smooth functions by developing the theory and algorithms for nonsmooth convex optimization:</p>
+<ol type="1">
+<li><p><strong>Why go beyond gradients?</strong> Many important functions are nonsmooth: the <span class="math inline">\ell_1</span>-norm <span class="math inline">\|x\|_1</span>, the pointwise maximum <span class="math inline">\max\{f_1(x), \ldots, f_m(x)\}</span>, and indicator functions of convex sets. At non-differentiable points, the gradient does not exist, so gradient descent cannot be applied directly.</p></li>
+<li><p><strong>What replaces the gradient?</strong> The <strong>subgradient</strong> <span class="math inline">g \in \partial f(x)</span> generalizes the gradient: it defines a supporting hyperplane <span class="math inline">f(y) \ge f(x) + g^\top(y - x)</span> for all <span class="math inline">y</span>. For convex functions, the subdifferential <span class="math inline">\partial f(x)</span> is always nonempty and reduces to <span class="math inline">\{\nabla f(x)\}</span> when <span class="math inline">f</span> is differentiable.</p></li>
+<li><p><strong>Can we compute with subgradients?</strong> Yes — a rich <strong>subgradient calculus</strong> provides rules for sums, compositions, pointwise maxima, and more. This also yields generalized optimality conditions: <span class="math inline">0 \in \partial f(x)</span> characterizes minimizers.</p></li>
+<li><p><strong>How does the subgradient method converge?</strong> Unlike gradient descent, the subgradient method is <em>not</em> a descent method — the function value may increase at some steps. Convergence is measured via the <em>best iterate</em> <span class="math inline">f(x_{\mathrm{best}}) - f^*</span>, yielding <span class="math inline">O(1/\sqrt{K})</span> for convex Lipschitz functions and <span class="math inline">O(1/K)</span> with strong convexity. These rates are slower than the smooth case, reflecting the inherent difficulty of nonsmooth optimization.</p></li>
+</ol>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Setting</th>
+<th><span class="math inline">\alpha^k</span></th>
+<th><span class="math inline">\mathrm{Err}_{\mathrm{best}}</span></th>
+<th>Iterations to get <span class="math inline">\mathrm{Err}_{\mathrm{best}} \leq \varepsilon</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Convex + <span class="math inline">L</span>-Lip</td>
+<td><span class="math inline">\alpha^k = \frac{1}{\sqrt{k}}</span></td>
+<td><span class="math inline">O\!\left(\frac{1}{\sqrt{k}}\right)</span></td>
+<td><span class="math inline">O\!\left(\frac{1}{\varepsilon^2}\right)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\mu</span>-strongly cvx + <span class="math inline">L</span>-Lip</td>
+<td><span class="math inline">\alpha^k \approx \frac{1}{k}</span></td>
+<td><span class="math inline">O\!\left(\frac{1}{k}\right)</span></td>
+<td><span class="math inline">O\!\left(\frac{1}{\varepsilon}\right)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The subdifferential <span class="math inline">\partial f</span> is more general than <span class="math inline">\nabla f</span>, so these convergence results also apply to (projected) gradient descent when <span class="math inline">f</span> is <span class="math inline">L</span>-Lipschitz. Perhaps surprisingly, for differentiable, <span class="math inline">L</span>-Lipschitz, and convex <span class="math inline">f</span>, gradient descent does <strong>not</strong> achieve a faster rate than the subgradient method. The reason is that our proofs rely only on three ingredients—none of which require differentiability: the projection’s optimality condition, monotonicity of <span class="math inline">\partial f</span>, and boundedness of <span class="math inline">\partial f</span>.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Looking Ahead
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In the next chapter we introduce <strong>proximal gradient methods</strong>, which provide a unified framework for minimizing composite objectives <span class="math inline">f(x) = g(x) + h(x)</span> where <span class="math inline">g</span> is smooth and <span class="math inline">h</span> is convex but possibly nonsmooth. Proximal gradient recovers projected gradient descent as a special case and achieves the same convergence rates as gradient descent for smooth problems.</p>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../lectures/05b-projected-gradient-descent.html" class="pagination-link" aria-label="Projected Gradient Descent and Frank--Wolfe">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Projected Gradient Descent and Frank–Wolfe</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../lectures/07-proximal-gradient.html" class="pagination-link" aria-label="Proximal Gradient Methods">
+        <span class="nav-page-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Proximal Gradient Methods</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<script>
+// Plotly Warmtone theming helpers — shared across all lectures
+// Reads CSS custom properties set by _warmtone.scss (light/dark aware)
+const plotlyConfig = {responsive: true, displayModeBar: false};
+const figFont = '"Source Serif 4", Georgia, "Times New Roman", serif';
+const figFontHeading = '"Crimson Pro", Georgia, serif';
+
+function css(v) {
+  return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+}
+
+function legendStyle() {
+  return {
+    font: {family: figFont, size: 13, color: css('--fig-text')},
+    bgcolor: css('--fig-bg') + 'dd',
+    bordercolor: css('--fig-grid'),
+    borderwidth: 1,
+  };
+}
+
+function themeLayout(extra) {
+  return Object.assign({
+    paper_bgcolor: css('--fig-bg'),
+    plot_bgcolor: css('--fig-plot-bg'),
+    font: {family: figFont, color: css('--fig-text'), size: 14},
+  }, extra || {});
+}
+
+function themeAxis(title, extra) {
+  return Object.assign({
+    title: {text: title, font: {family: figFont, size: 14}},
+    gridcolor: css('--fig-grid'),
+    zerolinecolor: css('--fig-grid'),
+    linecolor: css('--fig-axis'),
+    tickfont: {family: figFont, size: 12, color: css('--fig-axis')},
+  }, extra || {});
+}
+
+// Plotly color sequences matching the Warmtone palette
+const warmtonePalette = [
+  '#7b97ad', '#b8995e', '#ad8480', '#7a9a7e', '#907ea0',
+  '#6f9996', '#8a6e5e', '#b56b6b', '#8fa3b8', '#a09488'
+];
+</script>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>
